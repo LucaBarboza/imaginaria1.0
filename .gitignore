@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# IDE / Editor files
+.vscode/
+.idea/
+
+# Temporary & Log files
+*.log
+logs/
+out*.txt
+full_test_log.txt
+server_logs.txt
+logs_utf8*.txt
+api_test_result.json
+
+# Temporary generated assets / media
+generated_images_temp/
+story_generated/
+backend/generated_images_temp/
+backend/story_generated/
+test_img_test.png
+
+# OS junk
+.DS_Store
+Thumbs.db

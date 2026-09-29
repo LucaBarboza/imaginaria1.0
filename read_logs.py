@@ -1,0 +1,1 @@
+import io\n\nwith open('c:\\\\Users\\\\Adriane\\\\Documents\\\\teste-main\\\\server_logs.txt', 'r', encoding='utf-16le', errors='replace') as f:\n    text = f.read()[-10000:]\nwith open('c:\\\\Users\\\\Adriane\\\\Documents\\\\teste-main\\\\out_logs_fix.txt', 'w', encoding='utf-8') as out:\n    out.write(text)\n

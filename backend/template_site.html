@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha História Imaginária</title>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+
+    <!-- PageFlip Library -->
+    <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js"></script>
+
+    <!-- Tailwind-inspired CSS tokens translated to Vanilla CSS -->
+    <style>
+        /* --- Reset & Base --- */
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Colors */
+            --bg-dark: #0F0F0F;
+            --cover-bg: #1a1a1a;
+            --cover-text-bg: #151515;
+
+            --paper-color: #fdfbf7;
+            --paper-border: #e3dccb;
+
+            --text-primary: #1e293b;
+            /* slate-800 */
+            --text-secondary: #64748b;
+            /* slate-500 */
+            --text-light: #cbd5e1;
+            /* slate-300 */
+
+            --gold-light: #fef9c3;
+            /* yellow-100 */
+            --gold-med: #eab308;
+            /* yellow-500 */
+            --gold-dark: #ca8a04;
+            /* yellow-600 */
+
+            /* Fonts */
+            --font-serif-header: 'Cinzel', serif;
+            --font-serif-body: 'Lora', serif;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            /* Radial gradient matching the React app's background ambience */
+            background-image: radial-gradient(circle at center, #0f172a, #0a0a0a, black);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-serif-body);
+            overflow: hidden;
+            color: white;
+        }
+
+        /* Ambient Overlay */
+        .app-bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6));
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* --- UI Controls --- */
+        .controls {
+            position: fixed;
+            top: 50%;
+            width: 100%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            padding: 0 5vw;
+        }
+
+        .btn-nav {
+            pointer-events: auto;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-nav:hover {
+            color: rgba(255, 255, 255, 0.8);
+            transform: scale(1.1);
+        }
+
+        .loading {
+            position: absolute;
+            font-family: var(--font-serif-header);
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.5);
+            animation: pulse 2s infinite;
+            z-index: 200;
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* --- FlipBook Container --- */
+        .flip-book {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            /* shadow-2xl */
+            display: none;
+            /* Hidden until loaded */
+        }
+
+        /* --- Page Base Styles --- */
+        .page {
+            background-color: var(--paper-color);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .texture-leather {
+            position: absolute;
+            inset: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/leather.png');
+            opacity: 0.6;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .texture-paper {
+            position: absolute;
+            inset: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/notebook.png');
+            opacity: 0.4;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* --- Shadows / Spine --- */
+        /* To simulate the fold/gutter */
+        .spine-shadow-left {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            background: linear-gradient(to right, rgba(0, 0, 0, 0.15), transparent);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .spine-shadow-right {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            background: linear-gradient(to left, rgba(0, 0, 0, 0.15), transparent);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .spine-cover {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 16px;
+            background: linear-gradient(to right, rgba(0, 0, 0, 0.6), transparent);
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        /* --- Cover Styles (Page 0) --- */
+        .page.--hard-cover {
+            background-color: var(--cover-bg);
+            /* rounded-r-lg handled by pageFlip usually? Or CSS on page class. */
+        }
+
+        .cover-layout {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Top 65% Image */
+        .cover-top {
+            height: 65%;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 4px solid rgba(202, 138, 4, 0.3);
+            /* yellow-600/30 */
+        }
+
+        .cover-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.9;
+        }
+
+        .cover-overlay {
+            position: absolute;
+            inset: 0;
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+        }
+
+        /* Bottom 35% Text */
+        .cover-bottom {
+            height: 35%;
+            background-color: var(--cover-text-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .edition-badge {
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: rgba(234, 180, 8, 0.6);
+            /* yellow-500/60 */
+            font-size: 10px;
+            font-weight: bold;
+            font-family: var(--font-sans);
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .cover-title {
+            font-family: var(--font-serif-header);
+            font-size: 2.25rem;
+            /* ~text-4xl */
+            font-weight: bold;
+            color: var(--gold-light);
+            line-height: 1.1;
+            margin-bottom: 0.75rem;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            padding: 0 1rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .cover-separator {
+            width: 8rem;
+            height: 1px;
+            background: rgba(202, 138, 4, 0.4);
+            margin: 0.5rem 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .author-tag {
+            font-family: var(--font-serif-header);
+            font-style: italic;
+            font-size: 0.875rem;
+            color: rgba(254, 240, 138, 0.4);
+            /* yellow-200/40 */
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- Content Pages --- */
+
+        /* Image Page (Left) */
+        .page.--image {
+            border-right: 1px solid var(--paper-border);
+        }
+
+        .image-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .image-content {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .vignette {
+            position: absolute;
+            inset: 0;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .pg-num-overlay {
+            position: absolute;
+            bottom: 1rem;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .pg-badge {
+            background: rgba(0, 0, 0, 0.3);
+            color: rgba(255, 255, 255, 0.9);
+            font-family: var(--font-serif-header);
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Text Page (Right) */
+        .page.--text {
+            border-left: 1px solid var(--paper-border);
+        }
+
+        .text-container {
+            height: 100%;
+            padding: 2rem 3rem;
+            /* p-8 md:p-12 */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            position: relative;
+            z-index: 1;
+            /* Above texture */
+        }
+
+        .chapter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+            /* slate-200 */
+            padding-bottom: 1rem;
+        }
+
+        .chap-label {
+            font-family: var(--font-serif-header);
+            font-style: italic;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            /* slate-400 */
+        }
+
+        .chap-num {
+            font-family: var(--font-serif-header);
+            font-weight: bold;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            /* slate-300 */
+        }
+
+        .story-body {
+            font-family: var(--font-serif-body);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-primary);
+            text-align: justify;
+            letter-spacing: 0.025em;
+            /* tracking-wide */
+        }
+
+        .drop-cap {
+            float: left;
+            font-family: var(--font-serif-header);
+            font-size: 3rem;
+            font-weight: bold;
+            color: #0f172a;
+            /* slate-900 */
+            margin-right: 0.5rem;
+            margin-top: -0.5rem;
+            line-height: 1;
+        }
+
+        .footer-deco {
+            margin-top: auto;
+            padding-top: 2rem;
+            display: flex;
+            justify-content: center;
+            opacity: 0.3;
+            font-size: 1.25rem;
+        }
+
+        /* --- Dedication  --- */
+        .dedication-container {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2.5rem;
+            border-left: 1px solid var(--paper-border);
+            position: relative;
+            z-index: 1;
+        }
+
+        .dedication-title {
+            font-family: var(--font-serif-header);
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .dedication-line {
+            height: 1px;
+            width: 5rem;
+            background: var(--text-light);
+            margin: 1.5rem auto;
+        }
+
+        .dedication-text {
+            font-family: var(--font-serif-header);
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        /* --- Copyright --- */
+        .copyright-container {
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 2rem;
+            border-right: 1px solid var(--paper-border);
+            position: relative;
+            z-index: 1;
+        }
+
+        .copyright-text {
+            color: var(--text-secondary);
+            font-size: 0.625rem;
+            /* text-[10px] */
+            font-family: var(--font-sans);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-align: center;
+        }
+
+        /* --- Back Cover --- */
+        .page.--hard-back {
+            background-color: var(--cover-bg);
+            border-left: 8px solid #0f172a;
+            /* slate-900 */
+        }
+
+        .back-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .end-text {
+            color: rgba(234, 179, 8, 0.4);
+            font-size: 0.875rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-family: var(--font-sans);
+        }
+
+        .star-icon {
+            width: 2rem;
+            height: 2rem;
+            border: 2px solid rgba(234, 179, 8, 0.2);
+            border-radius: 99px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(234, 179, 8, 0.2);
+        }
+
+        .generator-tag {
+            margin-top: 3rem;
+            font-size: 0.75rem;
+            color: #475569;
+            /* slate-600 */
+            font-family: var(--font-sans);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-bg-overlay"></div>
+
+    <div id="loading-msg" class="loading">Carregando livro...</div>
+
+    <!-- Perspective Container -->
+    <div style="perspective: 1500px; display: flex; justify-content: center; align-items: center;">
+        <div id="book" class="flip-book">
+            <!-- Pages injected via JS -->
+        </div>
+    </div>
+
+    <!-- Navigation Arrows -->
+    <div class="controls">
+        <button class="btn-nav" id="btnPrev" aria-label="Página anterior">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+            </svg>
+        </button>
+        <button class="btn-nav" id="btnNext" aria-label="Próxima página">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18l6-6-6-6" />
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        // Placeholder for injection
+        // __STORY_DATA_INJECTION__
+
+        const bookEl = document.getElementById('book');
+        const loadingEl = document.getElementById('loading-msg');
+        let pageFlip;
+
+        async function init() {
+            let storyData = null;
+
+            // Check injected data first
+            if (window.embeddedStory) {
+                storyData = window.embeddedStory;
+            } else {
+                // Try fetching story.json
+                try {
+                    const response = await fetch('./story.json');
+                    storyData = await response.json();
+                } catch (e) {
+                    loadingEl.innerHTML = "Erro ao carregar história";
+                    console.error("Failed to load story data", e);
+                    return;
+                }
+            }
+
+            if (!storyData) return;
+
+            // Build HTML
+            buildBookDOM(storyData);
+
+            // Hide Loading, Show Book
+            loadingEl.style.display = 'none';
+            bookEl.style.display = 'block';
+
+            // Init PageFlip
+            // Matching React Config:
+            // width: 700, height: 600, size: 'fixed', minWidth: 350, maxWidth: 1000
+            pageFlip = new St.PageFlip(bookEl, {
+                width: 700,
+                height: 600,
+                size: 'fixed',
+                minWidth: 350,
+                maxWidth: 1000,
+                minHeight: 500,
+                maxHeight: 1500,
+                maxShadowOpacity: 0.5,
+                showCover: true,
+                mobileScrollSupport: true,
+                flippingTime: 1000,
+                drawShadow: true,
+                useMouseEvents: true,
+                usePortrait: false, // Force spread view logic on desktop
+                autoSize: true,
+                startPage: 0
+            });
+
+            // Load pages
+            pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+
+            // Handlers
+            document.getElementById('btnPrev').addEventListener('click', () => pageFlip.flipPrev());
+            document.getElementById('btnNext').addEventListener('click', () => pageFlip.flipNext());
+        }
+
+        function buildBookDOM(story) {
+            let html = '';
+
+            // --- helper to sanitize undefined images ---
+            const coverImg = story.cover_image || '';
+            const title = story.title || 'Sem Título';
+
+            // Page 0: Front Cover
+            // Structure matches BookResult.jsx <Cover>
+            html += `
+            <div class="page --hard-cover" data-density="hard">
+                <div class="spine-cover"></div> <!-- Left spine shadow -->
+                
+                <div class="cover-layout">
+                    <!-- Top 65% Image -->
+                    <div class="cover-top">
+                        <img src="${coverImg}" class="cover-img" alt="Capa">
+                        <div class="cover-overlay"></div>
+                    </div>
+                
+                    <!-- Bottom 35% Text -->
+                    <div class="cover-bottom">
+                         <!-- Leather Texture for bottom part -->
+                         <div class="texture-leather"></div>
+                         
+                         <div class="edition-badge">Edição Especial</div>
+                         <div class="cover-title">${title}</div>
+                         <div class="cover-separator"></div>
+                         <div class="author-tag">Uma criação Imaginária</div>
+                    </div>
+                </div>
+            </div>`;
+
+            // Page 1: Dedication (Left)
+            // Structure matches BookResult.jsx Page 1 (Left)
+            html += `
+            <div class="page" data-density="soft">
+                <div class="texture-paper"></div>
+                <div class="spine-shadow-right"></div> <!-- Gutter on right for left page -->
+                
+                <div class="dedication-container">
+                    <div>
+                        <div class="dedication-title">${title}</div>
+                        <div class="dedication-line"></div>
+                        <div class="dedication-text">"Para todos os viajantes da imaginação."</div>
+                    </div>
+                </div>
+            </div>`;
+
+            // Page 2: Copyright (Right)
+            html += `
+            <div class="page" data-density="soft">
+                <div class="texture-paper"></div>
+                <div class="spine-shadow-left"></div> <!-- Gutter on left for right page -->
+                
+                <div class="copyright-container">
+                    <div class="copyright-text">
+                        © ${new Date().getFullYear()} Imaginária<br>Todos os direitos reservados
+                    </div>
+                </div>
+            </div>`;
+
+            // Content Pages
+            // Logic: React loops parts. part -> [text, prompt]. chapters -> [image_url].
+            // We assume story.chapters is [{text, image}, ...] as saved by backend.
+
+            story.chapters.forEach((chap, index) => {
+                const chapNum = index + 1;
+                // React Layout: Image (Left), Text (Right)
+
+                // LEFT: Image Page
+                // Page Number: Index*2 + 1 if we count from content?
+                // Visual page indexing might vary, let's just stick to a consistent loop count
+                // In React: map((page, i) -> pageNum = i+1). React flattened the array.
+                // Here we iterate chapters, so we generate 2 pages per chapter.
+
+                const imgPageNum = index * 2 + 1;
+                const txtPageNum = index * 2 + 2;
+
+                // --- Image Page (Left) ---
+                html += `
+                <div class="page --image" data-density="soft">
+                    <div class="image-container">
+                        <div class="spine-shadow-right"></div>
+                        <img src="${chap.image}" class="image-content">
+                        <div class="vignette"></div>
+                        <div class="pg-num-overlay">
+                            <span class="pg-badge">${imgPageNum}</span>
+                        </div>
+                    </div>
+                </div>`;
+
+                // --- Text Page (Right) ---
+                const firstLetter = chap.text ? chap.text.charAt(0) : '';
+                const restText = chap.text ? chap.text.slice(1) : '';
+
+                html += `
+                <div class="page --text" data-density="soft">
+                    <div class="texture-paper"></div>
+                    <div class="spine-shadow-left"></div>
+                    
+                    <div class="text-container">
+                        <div class="chapter-header">
+                            <span class="chap-label">Capítulo ${chapNum}</span>
+                            <span class="chap-num">${txtPageNum}</span>
+                        </div>
+                        
+                        <div class="story-body">
+                            <span class="drop-cap">${firstLetter}</span>${restText}
+                        </div>
+                        
+                        <div class="footer-deco">✨</div>
+                    </div>
+                </div>`;
+            });
+
+            // End Page (Blank Left)
+            html += `
+            <div class="page" data-density="soft">
+                <div class="texture-paper"></div>
+                <div class="spine-shadow-right"></div>
+            </div>`;
+
+            // Back Cover (Hard Right)
+            html += `
+            <div class="page --hard-cover --hard-back" data-density="hard">
+                <div class="texture-leather"></div>
+                <div class="spine-cover"></div> <!-- Actually on back cover, spine is on the left edge if it's the back right? Yes. -->
+                
+                <div class="back-content">
+                    <div class="end-text">Fim da História</div>
+                    <div class="star-icon">★</div>
+                    <div class="generator-tag">Generated by Imaginária</div>
+                </div>
+            </div>`;
+
+            bookEl.innerHTML = html;
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
