@@ -103,20 +103,20 @@ const TextPage = forwardRef((props, ref) => {
     const charCount = Math.max(80, rawText.length);
 
     // Auto-Fit Inteligente Baseado na Área Útil da Folha:
-    // Garante que o texto ocupe a página inteira de forma nobre e harmoniosa (~80% a 88% da área útil),
-    // tanto para livros antigos da biblioteca quanto novos, em qualquer display (celular, monitor, TV).
+    // Calibrado sutilmente para preencher ~75% a 82% da folha com respiro perfeito,
+    // tanto para livros antigos da biblioteca quanto novos, em qualquer display.
     const computedFontSize = useMemo(() => {
-        // Cálculo bidimensional: proporção área/caracteres
-        const idealSize = Math.sqrt((0.80 * pageWidth * pageHeight) / charCount);
+        // Cálculo bidimensional: proporção área/caracteres sutilmente reduzida para respiro
+        const idealSize = Math.sqrt((0.70 * pageWidth * pageHeight) / charCount);
         // Piso de legibilidade confortável
         const minFloor = pageWidth < 450 ? 14 : 15;
-        // Teto proporcional para evitar que textos curtos fiquem desproporcionais
-        const maxCeil = Math.round(pageHeight * 0.052);
+        // Teto proporcional
+        const maxCeil = Math.round(pageHeight * 0.048);
         return Math.max(minFloor, Math.min(maxCeil, Math.round(idealSize)));
     }, [pageHeight, pageWidth, charCount]);
 
-    const lineHeight = computedFontSize > 25 ? 1.76 : computedFontSize > 19 ? 1.70 : 1.64;
-    const paraSpacing = Math.round(computedFontSize * (computedFontSize > 23 ? 1.05 : 0.90));
+    const lineHeight = computedFontSize > 24 ? 1.72 : computedFontSize > 18 ? 1.68 : 1.62;
+    const paraSpacing = Math.round(computedFontSize * (computedFontSize > 22 ? 0.92 : 0.82));
 
     return (
         <div
