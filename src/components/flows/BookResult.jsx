@@ -103,24 +103,23 @@ const TextPage = forwardRef((props, ref) => {
     const charCount = Math.max(80, rawText.length);
 
     // Auto-Fit Inteligente Baseado na Área Útil da Folha:
-    // Garante que o texto ocupe a página inteira de forma nobre e harmoniosa (~80% a 88% da área útil),
-    // tanto para livros antigos da biblioteca quanto novos, em qualquer display (celular, monitor, TV).
+    // Garante preenchimento harmonioso da página sem NENHUMA barra de rolagem
     const computedFontSize = useMemo(() => {
-        // Cálculo bidimensional: proporção área/caracteres
-        const idealSize = Math.sqrt((0.80 * pageWidth * pageHeight) / charCount);
+        // Cálculo bidimensional seguro com margem de respiro
+        const idealSize = Math.sqrt((0.65 * pageWidth * pageHeight) / charCount);
         // Piso de legibilidade confortável
         const minFloor = pageWidth < 450 ? 14 : 15;
         // Teto proporcional para evitar que textos curtos fiquem desproporcionais
-        const maxCeil = Math.round(pageHeight * 0.052);
+        const maxCeil = Math.round(pageHeight * 0.046);
         return Math.max(minFloor, Math.min(maxCeil, Math.round(idealSize)));
     }, [pageHeight, pageWidth, charCount]);
 
-    const lineHeight = computedFontSize > 25 ? 1.76 : computedFontSize > 19 ? 1.70 : 1.64;
-    const paraSpacing = Math.round(computedFontSize * (computedFontSize > 23 ? 1.05 : 0.90));
+    const lineHeight = computedFontSize > 25 ? 1.72 : computedFontSize > 19 ? 1.66 : 1.60;
+    const paraSpacing = Math.round(computedFontSize * 0.78);
 
     return (
         <div
-            className="demoPage h-full bg-[#fdfbf7] border-l border-[#e3dccb] overflow-hidden relative flex flex-col"
+            className="demoPage h-full bg-[#fdfbf7] border-l border-[#e3dccb] overflow-hidden relative flex flex-col select-none"
             ref={ref}
             style={{
                 ...props.style,
@@ -134,7 +133,7 @@ const TextPage = forwardRef((props, ref) => {
             <div className="absolute left-0 top-0 bottom-0 w-[30px] bg-gradient-to-r from-black/15 to-transparent pointer-events-none z-10"></div>
 
             <div
-                className="relative z-20 h-full flex flex-col justify-between"
+                className="relative z-20 h-full flex flex-col justify-between overflow-hidden"
                 style={{
                     paddingTop: `${Math.max(14, Math.round(pageHeight * 0.035))}px`,
                     paddingBottom: `${Math.max(10, Math.round(pageHeight * 0.025))}px`,
@@ -164,16 +163,14 @@ const TextPage = forwardRef((props, ref) => {
                     </span>
                 </div>
 
-                {/* Corpo do Texto Preenchendo a Folha */}
+                {/* Corpo do Texto Preenchendo a Folha - TOTALMENTE SEM BARRAS DE ROLAGEM */}
                 <div
-                    className="font-serif text-justify tracking-[0.012em] text-slate-800 [hyphens:auto] overflow-y-auto overflow-x-hidden flex-1 flex flex-col justify-center scrollbar-thin scrollbar-thumb-stone-300/70 hover:scrollbar-thumb-stone-400"
+                    className="font-serif text-justify tracking-[0.012em] text-slate-800 [hyphens:auto] overflow-hidden flex-1 flex flex-col justify-center scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                     lang="pt-BR"
                     style={{
                         fontSize: `${computedFontSize}px`,
                         lineHeight: lineHeight
                     }}
-                    onWheel={(e) => e.stopPropagation()}
-                    onTouchMove={(e) => e.stopPropagation()}
                 >
                     <div className="my-auto w-full">
                         {paragraphs.map((para, index) => {
