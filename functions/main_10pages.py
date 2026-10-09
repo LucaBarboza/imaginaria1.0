@@ -53,7 +53,7 @@ ADMIN_EMAILS = [email.strip().lower() for email in os.getenv("ADMIN_EMAILS", "lu
 
 # Pydantic models for OpenAI Structured Outputs
 class StoryPage(BaseModel):
-    page_number: int = Field(description="O número da página, de 1 a 4.")
+    page_number: int = Field(description="O número da página, de 1 a 10.")
     text: str = Field(
         description="Texto literário da página contendo entre 100 e 130 palavras, OBRIGATORIAMENTE EM PORTUGUÊS DO BRASIL (PT-BR). NUNCA EM INGLÊS! Estruturado em EXATAMENTE 2 parágrafos substanciais e envolventes separados por quebra dupla (\\n\\n): 1º Parágrafo de ambientação sensorial e presença dos heróis no momento presente (~50-65 palavras), e 2º Parágrafo de desenvolvimento (ação, exploração ou diálogo espontâneo com travessão se couber) fechando com um gancho intrigante para a próxima página (~50-65 palavras)."
     )
@@ -74,7 +74,7 @@ class Story(BaseModel):
     cover_prompt: str = Field(description="Prompt detalhado em inglês para gerar a ilustração da capa do livro. REGRA ABSOLUTA: NÃO inclua títulos escritos, textos ou balões na imagem (wordless illustration, no text, no title).")
     character_appearance_bible: str = Field(default="", description="Descrição física detalhada dos personagens baseada ESTRITAMENTE nas fotos enviadas (espécie: animal/pet vs humano, gênero, cabelo, óculos, porte e traços marcantes).")
     clothing_bible: str = Field(description="Descrição detalhada em inglês das roupas e características visuais dos heróis para manter a consistência.")
-    pages: List[StoryPage] = Field(description="Lista com exatamente 4 páginas sequenciais que formam a história.")
+    pages: List[StoryPage] = Field(description="Lista com exatamente 10 páginas sequenciais que formam a história.")
 
 
 cors_options = options.CorsOptions(cors_origins=["*"], cors_methods=["get", "post", "options"])
@@ -136,11 +136,11 @@ def api(req: https_fn.Request) -> https_fn.Response:
             style_directive = get_llm_style_instructions(estilo, universo)
 
             system_prompt = f"""Você é um renomado autor brasileiro de literatura infantil e Diretor de Fotografia Cinematográfica.
-Sua missão é criar uma história completa dividida em EXATAMENTE 4 PÁGINAS, ESCRITA INTEGRALMENTE EM PORTUGUÊS DO BRASIL (PT-BR), com ilustrações dinâmicas, cinematográficas e ultra-detalhadas.
+Sua missão é criar uma história completa dividida em EXATAMENTE 10 PÁGINAS, ESCRITA INTEGRALMENTE EM PORTUGUÊS DO BRASIL (PT-BR), com ilustrações dinâmicas, cinematográficas e ultra-detalhadas.
 
 ================================================================================
 REGRA ZERO E FUNDAMENTAL DE IDIOMA (PORTUGUÊS DO BRASIL OBRIGATÓRIO):
-- O título (`title`) e o texto completo das 4 páginas (`text`) DEVEM SER 100% EM PORTUGUÊS DO BRASIL (PT-BR)!
+- O título (`title`) e o texto completo das 10 páginas (`text`) DEVEM SER 100% EM PORTUGUÊS DO BRASIL (PT-BR)!
 - É TERMINANTEMENTE PROIBIDO gerar o texto da história em inglês, espanhol ou qualquer outro idioma! NUNCA ESCREVA A HISTÓRIA EM INGLÊS!
 - O leitor é uma criança brasileira, toda a narrativa, descrições e falas são EXCLUSIVAMENTE em português perfeito e fluente.
 - Apenas os prompts técnicos de imagem (`illustration_prompt`, `cover_prompt`, `clothing_bible`) são redigidos em inglês para a IA geradora de imagens.
@@ -172,12 +172,6 @@ MAPEAMENTO DO ELENCO PRINCIPAL BASEADO NAS FOTOS [1 A 3]:
 DIRETRIZ CRÍTICA DE ESTILO VISUAL:
 {style_directive}
 
-ARCO NARRATIVO DINÂMICO DAS 4 PÁGINAS (ESTRUTURA EM 4 ATOS):
-- PÁGINA 1 (Apresentação & O Chamado): Apresentação dos protagonistas ({nome}) em seu cotidiano no universo '{universo}', a atmosfera inicial e o surgimento repentino do mistério, pista ou desafio que dá início à jornada.
-- PÁGINA 2 (A Jornada & O Grande Obstáculo): A travessia pelo coração desse mundo, exploração ativa de cenários fascinantes e o confronto direto com o obstáculo, enigma ou perigo principal da aventura.
-- PÁGINA 3 (O Clímax da Aventura): O ápice emocionante da história, onde os protagonistas unem coragem, inteligência e cooperação em uma ação decisiva para vencer o desafio.
-- PÁGINA 4 (A Vitória & Celebração): O desfecho luminoso e recompensador, comemorando a conquista e o laço inquebrável de amizade entre os heróis em uma cena calorosa e memorável.
-
 DIRETRIZ DE CINEMATOGRAFIA & LIBERDADE NARRATIVA TOTAL (A HISTÓRIA GUIA A CENA):
 A magia de cada livro está na sua originalidade! Cenários, ações, adereços e clima visual DEVEM nascer 100% da história e do tema do universo '{universo}' que você estiver desenvolvendo.
 Seja uma aventura espacial, culinária mágica, mistério na floresta, expedição subaquática ou fantasia antiga, crie situações autênticas e únicas para cada página, sem amarras ou fórmulas fixas!
@@ -192,8 +186,8 @@ Para garantir que o livro seja visualmente espetacular, dinâmico e NUNCA sofra 
    - NUNCA repita a mesma postura corporal em páginas consecutivas! Se em uma página o herói estiver abaixado observando algo, na página seguinte ele DEVE estar ereto, em movimento dinâmico, correndo, saltando ou em uma atitude corporal totalmente distinta.
    - Poses baixas (agachado/no chão) só são permitidas se o texto exigir expressamente uma ação rente ao solo (como buscar algo na grama). NUNCA faça disso a pose padrão da história!
 
-3. RITMO VISUAL & TOOLKIT CINEMATOGRÁFICO (DIVERSIDADE DE PLANOS NAS 4 PÁGINAS):
-   Ao longo das 4 páginas, alterne dinamicamente entre enquadramentos e ângulos visuais diferentes, guiados pela emoção da cena:
+3. RITMO VISUAL & TOOLKIT CINEMATOGRÁFICO (DIVERSIDADE DE PLANOS):
+   Ao longo das 10 páginas, alterne dinamicamente entre pelo menos 5 enquadramentos e ângulos visuais diferentes, guiados pela emoção da cena:
    * [Establishing Wide Shot] / [Cinematic Vista]: Planos abertos para mostrar a grandeza do ambiente, horizontes épicos ou a chegada a um novo cenário.
    * [Dynamic Medium Shot] / [Action Tracking]: Planos médios capturando os personagens em deslocamento ou ação coordenada ativa.
    * [Tight Reaction Close-Up] / [Intimate Medium Close-Up]: Planos fechados focados na expressão de alegria, espanto, carinho ou o detalhe de um objeto luminoso.
@@ -212,7 +206,7 @@ Para garantir que o livro seja visualmente espetacular, dinâmico e NUNCA sofra 
    - Para duplas (humano + pet), retrate sua cumplicidade ativa (o pet como companheiro leal de 4 patas interagindo com o tutor humano).
 
 ESTRUTURA OBRIGATÓRIA DO `illustration_prompt` (120-180 PALAVRAS EM INGLÊS):
-Cada uma das 4 páginas DEVE ter um prompt visual rico, denso e cinematográfico em inglês (~120 a 180 palavras) estruturado em 5 camadas:
+Cada uma das 10 páginas DEVE ter um prompt visual rico, denso e cinematográfico em inglês (~120 a 180 palavras) estruturado em 5 camadas:
 1. [Camera Shot & Angle Tag]: A tag do enquadramento escolhido (ex: '[Dynamic Dutch-Angle Low Shot, 20-Degree Horizon Tilt]' ou '[Atmospheric Tight Ground Shot]').
 2. Foreground Elements: Elementos táteis próximos à lente (pedras cobertas de musgo, folhas suspensas ao vento, fagulhas brilhantes, névoa rasteira).
 3. Midground Subject & Kinetic Action: Os protagonistas ({nome}) em ação coordenada (ex: o herói humano em pose dinâmica ativa e seu companheiro pet ao seu lado em pose animal expressiva, com roupas/arreios condizentes da `clothing_bible` e anatomia exata da `character_appearance_bible`).
@@ -224,10 +218,10 @@ REGRAS OBRIGATÓRIAS DE CONTEÚDO:
 1. `character_appearance_bible`: Inspecione minuciosamente as fotos em anexo dos personagens ({nome}). Identifique a ESPÉCIE E ANATOMIA REAL (se pet: raça exata, pelagem, manchas, orelhas, focinho, patas, rabo; se humano: idade, cabelo, pele e traços faciais). NUNCA transforme animal em humano nem humano em animal!
 2. `clothing_bible`: Descreva em inglês trajes e acessórios adequados à anatomia e universo para cada herói.
 3. `cover_prompt`: Descreva em inglês (~120-150 palavras) uma cena épica e monumental para a capa (formato wide 16:9) com tag '[Epic Wide Panoramic Cover Vista]', incluindo os personagens ({nome}) juntos com a fisionomia da `character_appearance_bible` e `clothing_bible`. Wordless illustration, strictly no text or titles on cover.
-4. `pages`: EXATAMENTE 4 páginas com `page_number` (1 a 4), `text` e `illustration_prompt` ultra-detalhado (120-180 palavras em inglês).
+4. `pages`: EXATAMENTE 10 páginas com `page_number`, `text` e `illustration_prompt` ultra-detalhado (120-180 palavras em inglês).
 5. REGRA DO TEXTO (OBRIGATÓRIO: EXATAMENTE 2 PARÁGRAFOS — ENTRE 100 E 130 PALAVRAS POR PÁGINA — EM PORTUGUÊS DO BRASIL):
    - Texto 100% EM PORTUGUÊS DO BRASIL (PT-BR). NUNCA EM INGLÊS.
-   - Cada uma das 4 páginas DEVE ter rigorosamente entre 100 e 130 palavras no total, dividida em EXATAMENTE 2 parágrafos separados por \n\n (~50 a 65 palavras por parágrafo). Narrativa envolvente em tempo real ("Show, don't tell"). Diálogos livres e orgânicos (use travessão '—' apenas se enriquecer a cena).
+   - Cada uma das 10 páginas DEVE ter rigorosamente entre 100 e 130 palavras no total, dividida em EXATAMENTE 2 parágrafos separados por \n\n (~50 a 65 palavras por parágrafo). Narrativa envolvente em tempo real ("Show, don't tell"). Diálogos livres e orgânicos (use travessão '—' apenas se enriquecer a cena).
 
 PADRÃO ESTRUTURAL EXIGIDO DE UMA PÁGINA (EXATAMENTE 2 PARÁGRAFOS — ~115 PALAVRAS — EM PORTUGUÊS DO BRASIL):
 "A luz dourada da alvorada filtrava-se por entre a névoa suave, revelando pegadas misteriosas gravadas no chão de pedra antiga. O jovem herói examinava com atenção as marcas recentes, com o olhar decidido e a respiração compassada, enquanto seu leal companheiro ao lado farejava cada centímetro da relíquia encontrada, com as orelhas em pé e as patinhas firmes na terra úmida.
@@ -235,7 +229,7 @@ PADRÃO ESTRUTURAL EXIGIDO DE UMA PÁGINA (EXATAMENTE 2 PARÁGRAFOS — ~115 PAL
 — Encontramos a primeira pista da nossa jornada! — sussurrou o viajante, guardando o pergaminho seguro na algibeira. O pequeno companheiro soltou um latido abafado de entusiasmo, pronto para qualquer desafio que surgisse, enquanto uma suave brisa movia os arbustos ao longe, indicando o início de uma grande travessia." """
 
             user_content = [
-                {"type": "text", "text": f"Crie agora a história de 4 páginas EM PORTUGUÊS DO BRASIL (PT-BR) para os personagens {nome} no universo {universo} com estilo visual {estilo}.\n\nATENÇÃO MÁXIMA DE IDIOMA: O título e o texto de cada uma das 4 páginas DEVEM ser 100% em português brasileiro, jamais em inglês!\n\nFIDELIDADE POSITIVA AOS PROTAGONISTAS [1 A 3]: O elenco principal é formado estritamente pelos heróis das fotos ({nome}). Se for uma dupla humano + pet, eles conduzem a aventura juntos em primeiro plano do início ao fim. Figurantes e habitantes do mundo podem aparecer naturalmente ao fundo quando a narrativa pedir.\n\nESTRUTURA EM 4 ATOS (4 PÁGINAS):\n- Página 1: Apresentação e O Chamado para a aventura no universo {universo}.\n- Página 2: A Jornada e O Desafio / Enigma.\n- Página 3: O Clímax emocionante e superação em equipe.\n- Página 4: A Conquista vitoriosa, resolução calorosa e celebração.\n\nMETA CRÍTICA DE EXTENSÃO: Cada uma das 4 páginas DEVE ter OBRIGATORIAMENTE entre 100 e 130 palavras, estruturada em EXATAMENTE 2 PARÁGRAFOS envolventes e equilibrados (~50 a 65 palavras por parágrafo, separados por \\n\\n), com narrativa em tempo real ('Show, don't tell'). Estilo livre para diálogos (use travessão '—' apenas se fizer sentido para a cena). É ESTRITAMENTE PROIBIDO gerar páginas com 1 só parágrafo ou com 3 parágrafos!\n\nDIREÇÃO CINEMATOGRÁFICA & PROMPTS ULTRA-DETALHADOS (A HISTÓRIA GUIA A CENA COM DIVERSIDADE VISUAL):\nComo Diretor de Fotografia, redija para cada página um `illustration_prompt` ultra-detalhado em inglês (~120 a 180 palavras) com tag de câmera ([Camera Shot Tag]). PROIBIÇÃO DE MONOTONIA E POSES REPETIDAS: Os heróis ({nome}) NÃO PODEM ficar na mesma posição corporal ou no mesmo canto da tela ao longo das 4 páginas! A cena, os cenários e as poses DEVEM nascer organicamente dos acontecimentos do texto de cada página. NUNCA repita a mesma postura corporal em páginas consecutivas e NUNCA deixe os personagens sempre agachados ou no mesmo canto inferior esquerdo. Alterne os ângulos de câmera (plano aberto, médio, close-up, low-angle, high-angle) e a lateralidade (esquerda, centro, direita). Para multi-personagens, SEMPRE descreva ambos juntos interagindo com naturalidade e expressividade!\n\nINSPEÇÃO VISUAL OBRIGATÓRIA DAS FOTOS EM ANEXO (FIDELIDADE RIGOROSA DE GÊNERO E ESPÉCIE):\nExamine atenta e minuciosamente as fotos fornecidas em anexo, associando cada uma ao seu personagem rotulado:\n- Se o personagem for SER HUMANO: identifique com precisão o GÊNERO REAL (homem/menino vs mulher/menina), idade, tom de pele, cor e textura do cabelo, e se usa óculos. NUNCA TROQUE O GÊNERO! Se a foto for de um homem/garoto, ele DEVE ser retratado expressamente como masculino (jovem, garoto, rapaz) na história, na bíblia de aparência e em todos os prompts visuais. Se for mulher/garota, retrate como feminino.\n- Se o personagem for PET/ANIMAL: ele DEVE ser um animal quadrúpede autêntico (como cachorro Pug), com focinho, orelhas e pelagem reais das fotos. NUNCA transforme em humano!\n- Preencha `character_appearance_bible` detalhando explicitamente esses traços reais (ex: 'Luca: jovem masculino de cabelo escuro cacheado com óculos') e garanta que cada `illustration_prompt` descreva o protagonista com seu gênero e características visuais exatas.\n\nNas ilustrações, NUNCA coloque balões de fala, textos ou letras. Arte puramente visual!"}
+                {"type": "text", "text": f"Crie agora a história de 10 páginas EM PORTUGUÊS DO BRASIL (PT-BR) para os personagens {nome} no universo {universo} com estilo visual {estilo}.\n\nATENÇÃO MÁXIMA DE IDIOMA: O título e o texto de cada uma das 10 páginas DEVEM ser 100% em português brasileiro, jamais em inglês!\n\nFIDELIDADE POSITIVA AOS PROTAGONISTAS [1 A 3]: O elenco principal é formado estritamente pelos heróis das fotos ({nome}). Se for uma dupla humano + pet, eles conduzem a aventura juntos em primeiro plano do início ao fim. Figurantes e habitantes do mundo podem aparecer naturalmente ao fundo quando a narrativa pedir.\n\nMETA CRÍTICA DE EXTENSÃO: Cada uma das 10 páginas DEVE ter OBRIGATORIAMENTE entre 100 e 130 palavras, estruturada em EXATAMENTE 2 PARÁGRAFOS envolventes e equilibrados (~50 a 65 palavras por parágrafo, separados por \\n\\n), com narrativa em tempo real ('Show, don't tell'). Estilo livre para diálogos (use travessão '—' apenas se fizer sentido para a cena). É ESTRITAMENTE PROIBIDO gerar páginas com 1 só parágrafo ou com 3 parágrafos!\n\nDIREÇÃO CINEMATOGRÁFICA & PROMPTS ULTRA-DETALHADOS (A HISTÓRIA GUIA A CENA COM DIVERSIDADE VISUAL):\nComo Diretor de Fotografia, redija para cada página um `illustration_prompt` ultra-detalhado em inglês (~120 a 180 palavras) com tag de câmera ([Camera Shot Tag]). PROIBIÇÃO DE MONOTONIA E POSES REPETIDAS: Os heróis ({nome}) NÃO PODEM ficar na mesma posição corporal ou no mesmo canto da tela ao longo das páginas! A cena, os cenários e as poses DEVEM nascer organicamente dos acontecimentos do texto de cada página. NUNCA repita a mesma postura corporal em páginas consecutivas e NUNCA deixe os personagens sempre agachados ou no mesmo canto inferior esquerdo. Alterne os ângulos de câmera (plano aberto, médio, close-up, low-angle, high-angle) e a lateralidade (esquerda, centro, direita). Para multi-personagens, SEMPRE descreva ambos juntos interagindo com naturalidade e expressividade!\n\nINSPEÇÃO VISUAL OBRIGATÓRIA DAS FOTOS EM ANEXO (FIDELIDADE RIGOROSA DE GÊNERO E ESPÉCIE):\nExamine atenta e minuciosamente as fotos fornecidas em anexo, associando cada uma ao seu personagem rotulado:\n- Se o personagem for SER HUMANO: identifique com precisão o GÊNERO REAL (homem/menino vs mulher/menina), idade, tom de pele, cor e textura do cabelo, e se usa óculos. NUNCA TROQUE O GÊNERO! Se a foto for de um homem/garoto, ele DEVE ser retratado expressamente como masculino (jovem, garoto, rapaz) na história, na bíblia de aparência e em todos os prompts visuais. Se for mulher/garota, retrate como feminino.\n- Se o personagem for PET/ANIMAL: ele DEVE ser um animal quadrúpede autêntico (como cachorro Pug), com focinho, orelhas e pelagem reais das fotos. NUNCA transforme em humano!\n- Preencha `character_appearance_bible` detalhando explicitamente esses traços reais (ex: 'Luca: jovem masculino de cabelo escuro cacheado com óculos') e garanta que cada `illustration_prompt` descreva o protagonista com seu gênero e características visuais exatas.\n\nNas ilustrações, NUNCA coloque balões de fala, textos ou letras. Arte puramente visual!"}
             ]
 
             # Injetar fotos rotuladas se fornecidas

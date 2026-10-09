@@ -780,7 +780,7 @@ export function StoryProvider({ children }) {
 
             const batchStart = new Date();
 
-            // Process all 11 images simultaneously in parallel via Promise.all
+            // Process all images simultaneously in parallel via Promise.all (1 cover + 4 pages = 5 images)
             // Cloud Run with concurrency=1 spins up instances concurrently
             // OpenAI Tier 4/5 account easily handles high concurrent requests
             const allResults = await Promise.all(
@@ -814,7 +814,7 @@ export function StoryProvider({ children }) {
                 throw new Error("Não foi possível gerar nenhuma ilustração válida para o livro. Tente novamente.");
             }
 
-            // Reconstruct chapters array (10 elements)
+            // Reconstruct chapters array (4 elements)
             const allChapterImagesMap = {};
             pageResults.forEach(r => {
                 allChapterImagesMap[r.index] = r.result.success
