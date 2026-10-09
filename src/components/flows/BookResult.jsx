@@ -166,7 +166,7 @@ const TextPage = forwardRef((props, ref) => {
 
                 {/* Corpo do Texto Preenchendo a Folha */}
                 <div
-                    className="font-serif text-justify tracking-[0.012em] text-slate-800 [hyphens:auto] overflow-y-auto overflow-x-hidden flex-1 flex flex-col justify-center scrollbar-thin scrollbar-thumb-stone-300/70 hover:scrollbar-thumb-stone-400"
+                    className="font-serif text-justify tracking-[0.012em] text-slate-800 [hyphens:auto] overflow-y-auto overflow-x-hidden flex-1 flex flex-col justify-center [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                     lang="pt-BR"
                     style={{
                         fontSize: `${computedFontSize}px`,
