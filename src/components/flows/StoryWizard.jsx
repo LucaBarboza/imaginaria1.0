@@ -370,6 +370,7 @@ export default function StoryWizard({ onNext, onBack }) {
     });
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [isUniverseOpen, setIsUniverseOpen] = useState(true);
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
     const [showCharacterModal, setShowCharacterModal] = useState(false);
 
@@ -475,112 +476,192 @@ export default function StoryWizard({ onNext, onBack }) {
                 </div>
 
                 {/* Dashboard Grid (2 Colunas Principais) */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     
                     {/* COLUNA ESQUERDA: Carrossel Vertical de Universos (lg:col-span-5) */}
-                    <div className="lg:col-span-5 flex flex-col bg-white rounded-3xl border border-slate-200/80 shadow-sm p-4 sm:p-5 relative overflow-hidden">
+                    <div className="lg:col-span-5 flex flex-col bg-white rounded-3xl border border-slate-200/80 shadow-sm p-4 sm:p-5 relative overflow-hidden transition-all duration-300">
                         {/* Header do Carrossel */}
-                        <div className="flex items-center justify-between gap-2 mb-3">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-pink-100 text-magic-pink flex items-center justify-center font-bold text-sm">
+                        <div className="flex items-center justify-between gap-2">
+                            <div
+                                onClick={() => setIsUniverseOpen(!isUniverseOpen)}
+                                className="flex items-center gap-2.5 cursor-pointer select-none group"
+                            >
+                                <div className="w-8 h-8 rounded-xl bg-pink-100 text-magic-pink flex items-center justify-center font-bold text-sm shrink-0 group-hover:scale-105 transition-transform">
                                     1
                                 </div>
                                 <div>
-                                    <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">Universo</h2>
-                                    <p className="text-[11px] text-slate-400">Gire a roleta ou clique para escolher</p>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">Universo</h2>
+                                        {!isUniverseOpen && (
+                                            <span className="text-[11px] font-bold text-magic-pink bg-pink-50 border border-pink-200/60 px-2 py-0.5 rounded-full">
+                                                {currentUniverse.label}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-[11px] text-slate-400">
+                                        {isUniverseOpen ? 'Gire a roleta ou clique para escolher' : 'Toque para trocar o universo'}
+                                    </p>
                                 </div>
                             </div>
-                            {/* Setas de rolagem da roleta */}
-                            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+
+                            {/* Controles do topo */}
+                            <div className="flex items-center gap-1.5">
+                                {isUniverseOpen && (
+                                    <div className="flex items-center gap-0.5 bg-slate-100 p-1 rounded-xl">
+                                        <button
+                                            type="button"
+                                            onClick={() => scrollCarousel(-120)}
+                                            className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-all cursor-pointer"
+                                            title="Rolar para cima"
+                                        >
+                                            <ChevronUp size={16} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => scrollCarousel(120)}
+                                            className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-all cursor-pointer"
+                                            title="Rolar para baixo"
+                                        >
+                                            <ChevronDown size={16} />
+                                        </button>
+                                    </div>
+                                )}
                                 <button
                                     type="button"
-                                    onClick={() => scrollCarousel(-120)}
-                                    className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-all cursor-pointer"
-                                    title="Rolar para cima"
+                                    onClick={() => setIsUniverseOpen(!isUniverseOpen)}
+                                    className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                    title={isUniverseOpen ? "Recolher roleta" : "Abrir roleta"}
                                 >
-                                    <ChevronUp size={16} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => scrollCarousel(120)}
-                                    className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-all cursor-pointer"
-                                    title="Rolar para baixo"
-                                >
-                                    <ChevronDown size={16} />
+                                    <span>{isUniverseOpen ? 'Fechar' : 'Trocar'}</span>
+                                    <ChevronDown size={14} className={`transition-transform duration-200 ${isUniverseOpen ? 'rotate-180' : ''}`} />
                                 </button>
                             </div>
                         </div>
 
-                        {/* Barra de Busca de Universos */}
-                        <div className="relative mb-3">
-                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Buscar entre 45 universos..."
-                                className="w-full bg-slate-50 border border-slate-200/80 rounded-xl pl-9 pr-7 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-magic-pink focus:ring-1 focus:ring-pink-100 transition-all"
-                            />
-                            {searchTerm && (
-                                <button
-                                    onClick={() => setSearchTerm('')}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
-                                >
-                                    <X size={14} />
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Roleta / Carrossel Vertical com Snap */}
-                        <div className="relative flex-1 min-h-[380px] max-h-[440px]">
-                            {/* Gradientes para efeito roleta / slot machine */}
-                            <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
-                            <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent pointer-events-none z-10" />
-
-                            <div
-                                ref={carouselRef}
-                                className="h-full overflow-y-auto space-y-2 pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-y snap-mandatory"
+                        {/* ESTADO FECHADO: Resumo compacto elegante com botão de trocar */}
+                        {!isUniverseOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -6 }}
+                                transition={{ duration: 0.2 }}
+                                onClick={() => setIsUniverseOpen(true)}
+                                className="mt-3 p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-pink-50/70 to-slate-50 border border-pink-200/80 hover:border-magic-pink transition-all cursor-pointer flex items-center justify-between group shadow-xs"
                             >
-                                {filteredUniverses.map((u) => {
-                                    const isSelected = data.universe === u.id;
-                                    return (
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${currentUniverse.color} flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform`}>
+                                        <currentUniverse.icon size={22} className="drop-shadow-sm" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="font-bold text-slate-800 text-sm truncate">{currentUniverse.label}</h3>
+                                            <span className="text-[10px] font-bold text-magic-pink bg-pink-100 px-2 py-0.5 rounded-full shrink-0">
+                                                Ativo
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 truncate">{currentUniverse.desc}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1 text-xs font-bold text-magic-pink bg-white px-2.5 py-1 rounded-xl border border-pink-200/80 shadow-xs shrink-0 group-hover:bg-pink-50 transition-colors">
+                                    <span>Trocar</span>
+                                    <ChevronRight size={13} />
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* ESTADO ABERTO: Busca + Roleta vertical com snap */}
+                        <AnimatePresence>
+                            {isUniverseOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.25 }}
+                                    className="overflow-hidden flex flex-col pt-3"
+                                >
+                                    {/* Barra de Busca de Universos */}
+                                    <div className="relative mb-3">
+                                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            placeholder="Buscar entre 45 universos..."
+                                            className="w-full bg-slate-50 border border-slate-200/80 rounded-xl pl-9 pr-7 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-magic-pink focus:ring-1 focus:ring-pink-100 transition-all"
+                                        />
+                                        {searchTerm && (
+                                            <button
+                                                onClick={() => setSearchTerm('')}
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Roleta / Carrossel Vertical com Snap */}
+                                    <div className="relative min-h-[300px] max-h-[360px]">
+                                        {/* Gradientes para efeito roleta / slot machine */}
+                                        <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
+                                        <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent pointer-events-none z-10" />
+
                                         <div
-                                            key={u.id}
-                                            onClick={(e) => {
-                                                handleSelect('universe', u.id);
-                                                e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                            }}
-                                            className={`snap-center cursor-pointer p-2.5 rounded-2xl flex items-center gap-3 transition-all duration-200 select-none ${
-                                                isSelected
-                                                    ? 'bg-pink-50/90 border-2 border-magic-pink shadow-md scale-[1.01]'
-                                                    : 'bg-slate-50/70 hover:bg-slate-100/80 border border-slate-200/60 hover:border-slate-300'
-                                            }`}
+                                            ref={carouselRef}
+                                            className="h-[340px] overflow-y-auto space-y-2 pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-y snap-mandatory"
                                         >
-                                            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${u.color} flex items-center justify-center text-white shrink-0 shadow-sm ${isSelected ? 'scale-105' : ''}`}>
-                                                <u.icon size={22} className="drop-shadow-sm" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className={`font-bold text-sm truncate ${isSelected ? 'text-magic-pink' : 'text-slate-800'}`}>
-                                                    {u.label}
-                                                </h3>
-                                                <p className="text-[11px] text-slate-400 truncate">{u.desc}</p>
-                                            </div>
-                                            {isSelected && (
-                                                <div className="w-5 h-5 rounded-full bg-magic-pink text-white flex items-center justify-center text-[10px] shrink-0 font-bold shadow-sm">
-                                                    ✓
+                                            {filteredUniverses.map((u) => {
+                                                const isSelected = data.universe === u.id;
+                                                return (
+                                                    <div
+                                                        key={u.id}
+                                                        onClick={() => {
+                                                            handleSelect('universe', u.id);
+                                                            setIsUniverseOpen(false); // Fecha o widget após selecionar
+                                                        }}
+                                                        className={`snap-center cursor-pointer p-2.5 rounded-2xl flex items-center gap-3 transition-all duration-200 select-none ${
+                                                            isSelected
+                                                                ? 'bg-pink-50/90 border-2 border-magic-pink shadow-md scale-[1.01]'
+                                                                : 'bg-slate-50/70 hover:bg-slate-100/80 border border-slate-200/60 hover:border-slate-300'
+                                                        }`}
+                                                    >
+                                                        <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${u.color} flex items-center justify-center text-white shrink-0 shadow-sm ${isSelected ? 'scale-105' : ''}`}>
+                                                            <u.icon size={22} className="drop-shadow-sm" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className={`font-bold text-sm truncate ${isSelected ? 'text-magic-pink' : 'text-slate-800'}`}>
+                                                                {u.label}
+                                                            </h3>
+                                                            <p className="text-[11px] text-slate-400 truncate">{u.desc}</p>
+                                                        </div>
+                                                        {isSelected && (
+                                                            <div className="w-5 h-5 rounded-full bg-magic-pink text-white flex items-center justify-center text-[10px] shrink-0 font-bold shadow-sm">
+                                                                ✓
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+
+                                            {filteredUniverses.length === 0 && (
+                                                <div className="text-center py-12 text-slate-400 text-xs">
+                                                    Nenhum universo encontrado para "{searchTerm}"
                                                 </div>
                                             )}
                                         </div>
-                                    );
-                                })}
-
-                                {filteredUniverses.length === 0 && (
-                                    <div className="text-center py-12 text-slate-400 text-xs">
-                                        Nenhum universo encontrado para "{searchTerm}"
                                     </div>
-                                )}
-                            </div>
-                        </div>
+
+                                    {/* Botão de Fechar / Confirmar seleção */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsUniverseOpen(false)}
+                                        className="mt-3 w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                    >
+                                        <span>Confirmar {currentUniverse.label}</span>
+                                        <Check size={14} className="text-magic-pink" />
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                     {/* COLUNA DIREITA: Escolha do Tema & Ideia da História (lg:col-span-7) */}
