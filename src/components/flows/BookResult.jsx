@@ -10,13 +10,18 @@ import BackButton from '../ui/BackButton';
 // 1. Capa (Hardcover) - Mantendo um tone mais sóbrio mas harmonioso
 const Cover = forwardRef((props, ref) => {
     const [imgError, setImgError] = useState(false);
+    const pageHeight = props.pageHeight || 700;
+    const coverFontSize = Math.max(16, Math.min(52, Math.round(pageHeight * 0.026)));
 
     return (
         <div
             className="demoPage bg-[#f3eee0] h-full overflow-hidden relative shadow-2xl flex flex-col items-center p-2"
             ref={ref}
             data-density="hard"
-            style={props.style}
+            style={{
+                ...props.style,
+                '--book-font-size': `${coverFontSize}px`
+            }}
         >
             {/* Texture Overlay (Paper) */}
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/notebook.png')] opacity-30 mix-blend-multiply pointer-events-none z-0"></div>
@@ -93,11 +98,34 @@ const TextPage = forwardRef((props, ref) => {
         ? rawText.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0)
         : [rawText];
 
+    const pageHeight = props.pageHeight || 700;
+    const pageWidth = props.pageWidth || Math.round(pageHeight * 0.70);
+    const charCount = Math.max(80, rawText.length);
+
+    // Auto-Fit Inteligente Baseado na Área Útil da Folha:
+    // Garante que o texto ocupe a página inteira de forma nobre e harmoniosa (~75% a 82% da área útil),
+    // tanto para livros antigos da biblioteca quanto novos, em qualquer display (celular, monitor, TV).
+    const computedFontSize = useMemo(() => {
+        // Cálculo bidimensional: proporção área/caracteres
+        const idealSize = Math.sqrt((0.68 * pageWidth * pageHeight) / charCount);
+        // Piso de legibilidade confortável
+        const minFloor = pageWidth < 450 ? 14 : 15;
+        // Teto proporcional para evitar que textos curtos fiquem desproporcionais
+        const maxCeil = Math.round(pageHeight * 0.046);
+        return Math.max(minFloor, Math.min(maxCeil, Math.round(idealSize)));
+    }, [pageHeight, pageWidth, charCount]);
+
+    const lineHeight = computedFontSize > 26 ? 1.76 : computedFontSize > 20 ? 1.70 : 1.64;
+    const paraSpacing = Math.round(computedFontSize * (computedFontSize > 24 ? 0.95 : 0.82));
+
     return (
         <div
             className="demoPage h-full bg-[#fdfbf7] border-l border-[#e3dccb] overflow-hidden relative flex flex-col"
             ref={ref}
-            style={props.style}
+            style={{
+                ...props.style,
+                '--book-font-size': `${computedFontSize}px`
+            }}
         >
             {/* Texture Overlay (Paper) */}
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/notebook.png')] opacity-40 mix-blend-multiply pointer-events-none z-0"></div>
@@ -106,91 +134,94 @@ const TextPage = forwardRef((props, ref) => {
             <div className="absolute left-0 top-0 bottom-0 w-[30px] bg-gradient-to-r from-black/15 to-transparent pointer-events-none z-10"></div>
 
             <div
-                className="relative z-20 h-full flex flex-col justify-start"
+                className="relative z-20 h-full flex flex-col justify-between"
                 style={{
-                    padding: 'calc(var(--book-font-size, 16px) * 0.4) calc(var(--book-font-size, 16px) * 0.5)'
+                    paddingTop: `${Math.max(14, Math.round(pageHeight * 0.035))}px`,
+                    paddingBottom: `${Math.max(10, Math.round(pageHeight * 0.025))}px`,
+                    paddingLeft: `${Math.max(26, Math.round(pageWidth * 0.075))}px`,
+                    paddingRight: `${Math.max(20, Math.round(pageWidth * 0.06))}px`
                 }}
             >
+                {/* Cabeçalho */}
                 <div
-                    className="flex items-center justify-between border-b-2 border-slate-200 shrink-0"
+                    className="flex items-center justify-between border-b-2 border-stone-200/80 shrink-0"
                     style={{
-                        margin: 'calc(var(--book-font-size, 16px) * 0.4) calc(var(--book-font-size, 16px) * 0.8) calc(var(--book-font-size, 16px) * 0.4) calc(var(--book-font-size, 16px) * 0.8)',
-                        paddingBottom: 'calc(var(--book-font-size, 16px) * 0.3)'
+                        marginBottom: `${Math.max(10, Math.round(pageHeight * 0.02))}px`,
+                        paddingBottom: `${Math.max(6, Math.round(pageHeight * 0.012))}px`
                     }}
                 >
                     <span
-                        className="font-serif italic text-slate-400"
-                        style={{ fontSize: 'calc(var(--book-font-size, 16px) * 0.82)' }}
+                        className="font-serif italic text-stone-500 font-medium tracking-wide"
+                        style={{ fontSize: `${Math.max(11, Math.round(computedFontSize * 0.78))}px` }}
                     >
                         Capítulo {props.chapter}
                     </span>
                     <span
-                        className="font-serif font-bold text-slate-300"
-                        style={{ fontSize: 'calc(var(--book-font-size, 16px) * 0.75)' }}
+                        className="font-serif font-bold text-stone-400"
+                        style={{ fontSize: `${Math.max(11, Math.round(computedFontSize * 0.72))}px` }}
                     >
                         {props.number}
                     </span>
                 </div>
 
+                {/* Corpo do Texto Preenchendo a Folha */}
                 <div
-                    className="font-serif text-justify tracking-[0.012em] text-slate-800 overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin scrollbar-thumb-stone-300/70 hover:scrollbar-thumb-stone-400"
+                    className="font-serif text-justify tracking-[0.012em] text-slate-800 overflow-y-auto overflow-x-hidden flex-1 flex flex-col justify-center scrollbar-thin scrollbar-thumb-stone-300/70 hover:scrollbar-thumb-stone-400"
                     style={{
-                        fontSize: 'var(--book-font-size, 16px)',
-                        lineHeight: 1.68,
-                        paddingLeft: 'calc(var(--book-font-size, 16px) * 0.8)',
-                        paddingRight: 'calc(var(--book-font-size, 16px) * 0.8)',
-                        paddingBottom: 'calc(var(--book-font-size, 16px) * 0.5)'
+                        fontSize: `${computedFontSize}px`,
+                        lineHeight: lineHeight
                     }}
                     onWheel={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
                 >
-                    {paragraphs.map((para, index) => {
-                        if (index === 0) {
+                    <div className="my-auto w-full">
+                        {paragraphs.map((para, index) => {
+                            if (index === 0) {
+                                return (
+                                    <p
+                                        key={index}
+                                        style={{ marginBottom: `${paraSpacing}px` }}
+                                    >
+                                        {/* Letra Capitular Clássica */}
+                                        <span
+                                            className="float-left font-serif font-bold text-slate-900"
+                                            style={{
+                                                fontSize: `${Math.round(computedFontSize * 2.85)}px`,
+                                                lineHeight: 0.85,
+                                                marginRight: `${Math.round(computedFontSize * 0.35)}px`,
+                                                marginTop: '2px'
+                                            }}
+                                        >
+                                            {para.charAt(0)}
+                                        </span>
+                                        {para.slice(1)}
+                                    </p>
+                                );
+                            }
                             return (
                                 <p
                                     key={index}
-                                    style={{ marginBottom: 'calc(var(--book-font-size, 16px) * 0.85)' }}
+                                    style={{
+                                        marginBottom: `${paraSpacing}px`,
+                                        textIndent: `${Math.round(computedFontSize * 1.2)}px`
+                                    }}
                                 >
-                                    {/* Letra Capitular Clássica */}
-                                    <span
-                                        className="float-left font-serif font-bold text-slate-900"
-                                        style={{
-                                            fontSize: 'calc(var(--book-font-size, 16px) * 2.85)',
-                                            lineHeight: 0.85,
-                                            marginRight: 'calc(var(--book-font-size, 16px) * 0.35)',
-                                            marginTop: '1px'
-                                        }}
-                                    >
-                                        {para.charAt(0)}
-                                    </span>
-                                    {para.slice(1)}
+                                    {para}
                                 </p>
                             );
-                        }
-                        return (
-                            <p
-                                key={index}
-                                style={{
-                                    marginBottom: 'calc(var(--book-font-size, 16px) * 0.85)',
-                                    textIndent: 'calc(var(--book-font-size, 16px) * 1.2)'
-                                }}
-                            >
-                                {para}
-                            </p>
-                        );
-                    })}
-
-                    {/* Footer Deco */}
-                    <div
-                        className="flex justify-center opacity-30 shrink-0"
-                        style={{
-                            marginTop: 'calc(var(--book-font-size, 16px) * 0.5)',
-                            marginBottom: 'calc(var(--book-font-size, 16px) * 0.25)',
-                            fontSize: 'calc(var(--book-font-size, 16px) * 1.1)'
-                        }}
-                    >
-                        ✨
+                        })}
                     </div>
+                </div>
+
+                {/* Footer Deco */}
+                <div
+                    className="flex justify-center opacity-30 shrink-0 text-stone-500 select-none"
+                    style={{
+                        paddingTop: `${Math.max(6, Math.round(pageHeight * 0.012))}px`,
+                        fontSize: `${Math.max(13, Math.round(computedFontSize * 0.95))}px`
+                    }}
+                >
+                    ✨
                 </div>
             </div>
         </div>
@@ -200,6 +231,8 @@ TextPage.displayName = 'TextPage';
 
 const ImagePage = forwardRef((props, ref) => {
     const [imgError, setImgError] = useState(false);
+    const pageHeight = props.pageHeight || 700;
+    const badgeFontSize = Math.max(11, Math.min(30, Math.round(pageHeight * 0.016)));
 
     return (
         <div
@@ -232,8 +265,8 @@ const ImagePage = forwardRef((props, ref) => {
                     <span
                         className="bg-black/30 text-white/90 font-serif font-bold rounded-full backdrop-blur-[4px]"
                         style={{
-                            fontSize: 'calc(var(--book-font-size, 16px) * 0.72)',
-                            padding: 'calc(var(--book-font-size, 16px) * 0.2) calc(var(--book-font-size, 16px) * 0.6)'
+                            fontSize: `${badgeFontSize}px`,
+                            padding: `${Math.round(badgeFontSize * 0.25)}px ${Math.round(badgeFontSize * 0.75)}px`
                         }}
                     >
                         {props.number}
@@ -500,17 +533,43 @@ export default function BookResult({ onClose, story }) {
                     useMouseEvents={true}
                 >
                     {/* Cover (Page 0) */}
-                    <Cover title={result.title} image={result.cover_image} style={{ '--book-font-size': `${baseFontSize}px` }} />
+                    <Cover
+                        title={result.title}
+                        image={result.cover_image}
+                        pageHeight={dimensions.height}
+                        pageWidth={dimensions.width}
+                        style={{ '--book-font-size': `${baseFontSize}px` }}
+                    />
 
                     {/* Content Pages */}
                     {pages.map((page, i) => {
                         const pageNum = i + 1;
                         if (page.type === 'image') {
-                            return <ImagePage key={page.id} number={pageNum} image={page.content} style={{ '--book-font-size': `${baseFontSize}px` }} />;
+                            return (
+                                <ImagePage
+                                    key={page.id}
+                                    number={pageNum}
+                                    image={page.content}
+                                    pageHeight={dimensions.height}
+                                    pageWidth={dimensions.width}
+                                    style={{ '--book-font-size': `${baseFontSize}px` }}
+                                />
+                            );
                         } else if (page.type === 'blank') {
                             return <div key={page.id} className="demoPage bg-[#fdfbf7] h-full border-l border-[#e3dccb]"></div>;
                         } else {
-                            return <TextPage key={page.id} number={pageNum} chapter={page.chapter} style={{ '--book-font-size': `${baseFontSize}px` }}>{page.content}</TextPage>;
+                            return (
+                                <TextPage
+                                    key={page.id}
+                                    number={pageNum}
+                                    chapter={page.chapter}
+                                    pageHeight={dimensions.height}
+                                    pageWidth={dimensions.width}
+                                    style={{ '--book-font-size': `${baseFontSize}px` }}
+                                >
+                                    {page.content}
+                                </TextPage>
+                            );
                         }
                     })}
 
