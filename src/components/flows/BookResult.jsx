@@ -103,19 +103,19 @@ const TextPage = forwardRef((props, ref) => {
     const charCount = Math.max(80, rawText.length);
 
     // Auto-Fit Inteligente Baseado na Área Útil da Folha:
-    // Garante preenchimento harmonioso da página sem NENHUMA barra de rolagem
+    // Tamanho generoso e nobre que preenche a folha com imponência, 100% SEM BARRAS DE ROLAGEM
     const computedFontSize = useMemo(() => {
-        // Cálculo bidimensional seguro com margem de respiro
-        const idealSize = Math.sqrt((0.65 * pageWidth * pageHeight) / charCount);
+        // Cálculo bidimensional de preenchimento completo (~80% a 88%)
+        const idealSize = Math.sqrt((0.80 * pageWidth * pageHeight) / charCount);
         // Piso de legibilidade confortável
         const minFloor = pageWidth < 450 ? 14 : 15;
-        // Teto proporcional para evitar que textos curtos fiquem desproporcionais
-        const maxCeil = Math.round(pageHeight * 0.046);
+        // Teto proporcional
+        const maxCeil = Math.round(pageHeight * 0.052);
         return Math.max(minFloor, Math.min(maxCeil, Math.round(idealSize)));
     }, [pageHeight, pageWidth, charCount]);
 
-    const lineHeight = computedFontSize > 25 ? 1.72 : computedFontSize > 19 ? 1.66 : 1.60;
-    const paraSpacing = Math.round(computedFontSize * 0.78);
+    const lineHeight = computedFontSize > 25 ? 1.76 : computedFontSize > 19 ? 1.70 : 1.64;
+    const paraSpacing = Math.round(computedFontSize * (computedFontSize > 23 ? 1.05 : 0.90));
 
     return (
         <div
@@ -135,8 +135,8 @@ const TextPage = forwardRef((props, ref) => {
             <div
                 className="relative z-20 h-full flex flex-col justify-between overflow-hidden"
                 style={{
-                    paddingTop: `${Math.max(14, Math.round(pageHeight * 0.035))}px`,
-                    paddingBottom: `${Math.max(10, Math.round(pageHeight * 0.025))}px`,
+                    paddingTop: `${Math.max(12, Math.round(pageHeight * 0.025))}px`,
+                    paddingBottom: `${Math.max(8, Math.round(pageHeight * 0.018))}px`,
                     paddingLeft: `${Math.max(26, Math.round(pageWidth * 0.075))}px`,
                     paddingRight: `${Math.max(20, Math.round(pageWidth * 0.06))}px`
                 }}
