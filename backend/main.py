@@ -7,11 +7,11 @@ from pydantic import BaseModel
 import uvicorn
 import traceback
 
-# Import the service
+# Import OpenAI Service
 try:
-    from backend.genai_service import generate_story_with_gemini, generate_image_with_gemini
+    from backend.openai_service import generate_story_with_openai, generate_image_with_openai
 except ImportError:
-    from genai_service import generate_story_with_gemini, generate_image_with_gemini
+    from openai_service import generate_story_with_openai, generate_image_with_openai
 import shutil
 import uuid
 import os
@@ -128,7 +128,10 @@ async def generate_story_endpoint(
                             if resp.status_code == 200:
                                 processed_images.append({
                                     "data": resp.content,
-                                    "mime_type": resp.headers.get("Content-Type", "image/jpeg")
+                                    "mime_type": resp.headers.get("Content-Type", "image/jpeg"),
+                                    "name": item.get("name", "Personagem"),
+                                    "character_type": item.get("character_type", "person"),
+                                    "species_breed": item.get("species_breed")
                                 })
                             else:
                                 print(f"Failed to download {url}: {resp.status_code}")
@@ -158,8 +161,9 @@ async def generate_story_endpoint(
             # It's possible to generate without images, but usually we want them
             print("Warning: No images provided for story generation")
 
-        # Generate story (fully async now)
-        story_data = await generate_story_with_gemini(
+        # Generate story with OpenAI (GPT-4o-mini com Structured Outputs)
+        print(f"INFO: Generating story text with OpenAI (GPT-4o-mini) for style '{estilo}'...")
+        story_data = await generate_story_with_openai(
             nome=nome,
             estilo=estilo,
             universo=universo,
@@ -185,45 +189,62 @@ async def generate_image_endpoint(
     prompt: str = Form(...),
     person_name: str = Form(...),
     universe_context: str = Form(...),
+    style: str = Form("universe_default"),
+    is_cover: Optional[bool] = Form(None),
+    clothing_bible: Optional[str] = Form(None),
+    character_appearance_bible: Optional[str] = Form(None),
     reference_image_urls_json: Optional[str] = Form(None),
     reference_images: Optional[List[UploadFile]] = File(None),
     style_reference_url: Optional[str] = Form(None),
+    character_details_json: Optional[str] = Form(None),
 ):
-    print(f"DEBUG: generate_image_endpoint. Prompt={prompt[:20]}, Urls={bool(reference_image_urls_json)}, Files={len(reference_images) if reference_images else 0}")
+    print(f"DEBUG: generate_image_endpoint. Prompt={prompt[:20]}, Urls={bool(reference_image_urls_json)}, Files={len(reference_images) if reference_images else 0}, HasClothingBible={bool(clothing_bible)}")
     try:
         processed_images = []
         
         # Determine if reference_images is None (because of default=None)
         if reference_images is None:
             reference_images = []
-        
-        # Determine if reference_images is None (because of default=None)
-        if reference_images is None:
-            reference_images = []
+
+        # Parse character details if provided
+        character_details = None
+        if character_details_json:
+            try:
+                character_details = json.loads(character_details_json)
+            except Exception as e:
+                print(f"WARN: Error parsing character_details_json: {e}")
 
         # 1. Download images from URLs
         if reference_image_urls_json:
             try:
                 urls_data = json.loads(reference_image_urls_json) # List of {"url": ..., "name": ...}
+                if not character_details:
+                    character_details = []
+                    for item in urls_data:
+                        character_details.append({
+                            "name": item.get("name"),
+                            "character_type": item.get("character_type") or item.get("type", "person"),
+                            "species_breed": item.get("species_breed")
+                        })
                 for item in urls_data:
                     url = item.get("url")
                     name = item.get("name", "reference")
                     if url:
                         try:
-                            # print(f"Downloading image ref: {url}")
-                            resp = requests.get(url, timeout=10)
+                            print(f"DEBUG: Downloading image ref for character '{name}': {url[:60]}...")
+                            resp = await run_in_threadpool(lambda u=url: requests.get(u, timeout=10))
                             if resp.status_code == 200:
                                 processed_images.append({
                                     "data": resp.content,
                                     "mime_type": resp.headers.get("Content-Type", "image/jpeg"),
-                                    "filename": f"character_{name}_ref.jpg" # Fake filename to trigger identity lock logic
+                                    "filename": f"character_{name}_ref.jpg" # Identifica foto do protagonista
                                 })
                             else:
-                                print(f"Failed to download image ref {url}: {resp.status_code}")
+                                print(f"WARN: Failed to download image ref {url}: {resp.status_code}")
                         except Exception as e:
-                            print(f"Error downloading image ref {url}: {e}")
+                            print(f"ERROR downloading image ref {url}: {e}")
             except Exception as e:
-                 print(f"Error processing reference_image_urls_json: {e}")
+                print(f"Error processing reference_image_urls_json: {e}")
 
         # 2. Process uploaded files
         if reference_images:
@@ -254,12 +275,19 @@ async def generate_image_endpoint(
             except Exception as e:
                 print(f"Error reading style_reference_url from disk: {e}")
 
-        # Generate image
-        result = await generate_image_with_gemini(
+        # Generate image (OpenAI GPT Image 2.5)
+        is_cover_computed = is_cover if is_cover is not None else ("capa" in prompt.lower() or "cover" in prompt.lower())
+        print(f"INFO: Generating image with OpenAI (GPT Image 2.5) - Style='{style}', Universe='{universe_context}', Cover={is_cover_computed}...")
+        result = await generate_image_with_openai(
             prompt=prompt,
             reference_images=processed_images,
             person_name=person_name,
-            universe_context=universe_context
+            universe_context=universe_context,
+            style=style,
+            clothing_bible=clothing_bible,
+            character_appearance_bible=character_appearance_bible,
+            is_cover=is_cover_computed,
+            character_details=character_details
         )
         
         image_bytes = result["image_data"]
@@ -309,9 +337,11 @@ async def generate_images_batch_endpoint(
     prompts_json: str = Form(..., description="A JSON string representing a list of strings (prompts)."),
     person_name: str = Form(...),
     universe_context: str = Form(...),
+    style: str = Form("universe_default"),
     reference_image_urls_json: Optional[str] = Form(None),
     reference_images: Optional[List[UploadFile]] = File(None),
     style_reference_url: Optional[str] = Form(None),
+    character_details_json: Optional[str] = Form(None),
 ):
     try:
         prompts = json.loads(prompts_json)
@@ -324,10 +354,25 @@ async def generate_images_batch_endpoint(
         if reference_images is None:
             reference_images = []
 
+        character_details = None
+        if character_details_json:
+            try:
+                character_details = json.loads(character_details_json)
+            except Exception:
+                pass
+
         # 1. Download images from URLs ONCE for the whole batch
         if reference_image_urls_json:
             try:
                 urls_data = json.loads(reference_image_urls_json)
+                if not character_details:
+                    character_details = []
+                    for item in urls_data:
+                        character_details.append({
+                            "name": item.get("name"),
+                            "character_type": item.get("character_type") or item.get("type", "person"),
+                            "species_breed": item.get("species_breed")
+                        })
                 for item in urls_data:
                     url = item.get("url")
                     name = item.get("name", "reference")
@@ -378,11 +423,15 @@ async def generate_images_batch_endpoint(
         async def process_single_image(prompt: str, idx: int):
             print(f"DEBUG: Processing image {idx + 1}/{len(prompts)} for prompt snippet: {prompt[:20]}...")
             try:
-                result = await generate_image_with_gemini(
+                is_cover = "capa" in prompt.lower() or "cover" in prompt.lower()
+                result = await generate_image_with_openai(
                     prompt=prompt,
-                    reference_images=processed_images, # Reusing the processed refs
+                    reference_images=processed_images,
                     person_name=person_name,
-                    universe_context=universe_context
+                    universe_context=universe_context,
+                    style=style,
+                    is_cover=is_cover,
+                    character_details=character_details
                 )
                 
                 image_bytes = result["image_data"]

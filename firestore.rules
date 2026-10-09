@@ -1,9 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite que o usuário acesse apenas seus próprios dados
-    match /users/{userId}/{document=**} {
+    match /users/{userId} {
+      // Perfil do usuário: apenas o próprio dono
       allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Heróis cadastrados: 100% privados para o proprietário
+      match /characters/{charId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Histórias:
+      match /stories/{storyId} {
+        // Apenas o dono pode listar o acervo completo, salvar ou deletar
+        allow list, delete, write: if request.auth != null && request.auth.uid == userId;
+        // Leitura de história individual permitida para link público compartilhado
+        allow get: if true;
+      }
+
+      // Controle de cota diária (apenas Cloud Function / Admin grava)
+      match /daily_usage/{dayId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+
+      // Transações de cristais
+      match /transactions/{transId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 }

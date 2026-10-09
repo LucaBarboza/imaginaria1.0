@@ -1,15 +1,15 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Scroll, Loader2, Search, PenTool, Image as ImageIcon, Save, Sparkles } from 'lucide-react';
+import { BookOpen, Scroll, Loader2, Search, PenTool, Image as ImageIcon, Save, Sparkles, AlertCircle, X, ArrowLeft } from 'lucide-react';
 import { useStory } from '../../context/StoryContext';
 
 const LOADING_TIPS = [
-    "Sabia que cada jornada custa apenas 1 Cristal Mágico? 💎",
+    "Cada história ganha ilustrações exclusivas geradas por inteligência artificial! 🎨",
     "Use o botão de dado 🎲 para ter ideias de histórias surpreendentes!",
     "Você pode criar vários heróis e escolher quem participará da aventura. 🦸‍♂️",
     "Experimente o estilo 'Pixel Art' para uma pegada retrô incrível! 🎮",
     "Na Biblioteca, você pode reler todas as suas histórias épicas! 📚",
-    "Precisa de mais cristais? Visite a Loja para recarregar sua magia! ✨",
+    "Você pode escolher até 3 heróis para viverem a aventura juntos! ✨",
     "Dê um papel e personalidade para cada herói na Etapa 3 da criação! 🎭",
     "Explore universos como Star Wars ou Harry Potter para cenários únicos! 🏰",
     "O estilo 'Studio Ghibli' deixa suas ilustrações com um ar poético. 🍃",
@@ -21,9 +21,9 @@ const LOADING_TIPS = [
     "Sua criatividade é o limite! Sinta-se livre para inventar qualquer trama. 🌈"
 ];
 
-export default function LoadingAgent() {
-    const { generationState } = useStory();
-    const { step, stepProgress } = generationState;
+export default function LoadingAgent({ onCancel }) {
+    const { generationState, resetGeneration } = useStory();
+    const { step, stepProgress, error } = generationState;
     const [currentTip, setCurrentTip] = useState(0);
 
     // Troca a dica periodicamente
@@ -34,6 +34,37 @@ export default function LoadingAgent() {
         return () => clearInterval(interval);
     }, []);
 
+    const handleCancel = () => {
+        if (resetGeneration) resetGeneration();
+        if (onCancel) onCancel();
+    };
+
+    // Tela de Erro Amigável
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center relative overflow-hidden bg-[#faf9fe]">
+                <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl border border-red-100 flex flex-col items-center text-center relative z-10 animate-fade-in">
+                    <div className="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-5">
+                        <AlertCircle size={36} />
+                    </div>
+                    <h3 className="text-2xl font-bold font-heading text-slate-800 mb-2">
+                        A Magia Encontrou um Desafio
+                    </h3>
+                    <p className="text-slate-600 text-sm mb-6 leading-relaxed bg-red-50/50 p-4 rounded-xl border border-red-100">
+                        {error}
+                    </p>
+                    <button
+                        onClick={handleCancel}
+                        className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-100 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                    >
+                        <ArrowLeft size={18} />
+                        <span>Voltar ao Menu Principal</span>
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const steps = [
         { name: "Analisando Vislumbres", icon: Search, color: "text-emerald-500" },
         { name: "Tecendo o Enredo", icon: PenTool, color: "text-blue-500" },
@@ -43,6 +74,15 @@ export default function LoadingAgent() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center relative overflow-hidden bg-[#faf9fe]">
+            {/* Botão de Cancelar Geração */}
+            <button
+                onClick={handleCancel}
+                className="fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 hover:bg-white text-slate-500 hover:text-red-600 border border-slate-200/80 shadow-sm transition-all text-xs font-bold hover:scale-105 active:scale-95 cursor-pointer"
+                title="Cancelar geração e voltar"
+            >
+                <X size={16} />
+                <span>Cancelar</span>
+            </button>
             {/* Background Mágico Dinâmico */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <motion.div 

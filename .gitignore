@@ -42,3 +42,8 @@ test_img_test.png
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Firebase local cache
+.firebase/
+firebase-debug.log
+firebase-debug.*.log

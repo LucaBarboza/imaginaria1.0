@@ -1,6 +1,7 @@
 import React, { useRef, useMemo, forwardRef, useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Share2, Check } from 'lucide-react';
 import { useStory } from '../../context/StoryContext';
+import { useAuth } from '../../context/AuthContext';
 import HTMLFlipBook from 'react-pageflip';
 import { motion } from 'framer-motion';
 import BackButton from '../ui/BackButton';
@@ -68,6 +69,12 @@ const Cover = forwardRef((props, ref) => {
 Cover.displayName = 'Cover';
 
 const TextPage = forwardRef((props, ref) => {
+    const rawText = typeof props.children === 'string' ? props.children : '';
+    // Separa parágrafos por quebras duplas ou quebras de linha com espaços
+    const paragraphs = rawText
+        ? rawText.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0)
+        : [rawText];
+
     return (
         <div className="demoPage h-full bg-[#fdfbf7] border-l border-[#e3dccb] overflow-hidden relative flex flex-col" ref={ref}>
             {/* Texture Overlay (Paper) */}
@@ -83,18 +90,31 @@ const TextPage = forwardRef((props, ref) => {
                 </div>
 
                 <div
-                    className="font-serif text-[14px] sm:text-[15px] md:text-[16px] lg:text-[17px] leading-[1.8] text-justify tracking-[0.02em] text-slate-800 overflow-hidden px-4 md:px-8 pb-8 flex-1"
+                    className="font-serif text-[14px] sm:text-[15px] md:text-[15.5px] lg:text-[16px] leading-[1.65] md:leading-[1.7] text-justify tracking-[0.012em] text-slate-800 overflow-y-auto overflow-x-hidden px-4 md:px-8 pb-4 flex-1 scrollbar-thin scrollbar-thumb-stone-300/70 hover:scrollbar-thumb-stone-400"
                     onWheel={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
                 >
-                    {/* Letra Capitular Clássica */}
-                    <span className="float-left font-serif font-bold text-slate-900 text-4xl md:text-5xl lg:text-6xl mr-2 mt-[2px] leading-[0.8]">
-                        {props.children?.charAt(0)}
-                    </span>
-                    {props.children?.slice(1)}
+                    {paragraphs.map((para, index) => {
+                        if (index === 0) {
+                            return (
+                                <p key={index} className="mb-3.5">
+                                    {/* Letra Capitular Clássica */}
+                                    <span className="float-left font-serif font-bold text-slate-900 text-3xl md:text-4xl lg:text-5xl mr-2 mt-[1px] leading-[0.85]">
+                                        {para.charAt(0)}
+                                    </span>
+                                    {para.slice(1)}
+                                </p>
+                            );
+                        }
+                        return (
+                            <p key={index} className="mb-3.5 indent-4">
+                                {para}
+                            </p>
+                        );
+                    })}
 
                     {/* Footer Deco */}
-                    <div className="mt-8 mb-4 flex justify-center opacity-30 text-xl shrink-0">
+                    <div className="mt-4 mb-2 flex justify-center opacity-30 text-lg shrink-0">
                         ✨
                     </div>
                 </div>
@@ -156,9 +176,44 @@ BackCover.displayName = 'BackCover';
 
 export default function BookResult({ onClose, story }) {
     const { generationState } = useStory();
+    const { currentUser } = useAuth();
     // Prioritize passed story prop, fallback to generation result
     const result = story || generationState.result;
     const bookRef = useRef();
+    const [copied, setCopied] = useState(false);
+
+    const storyId = result?.id || result?.storyId || story?.id;
+    const userId = result?.userId || story?.userId || currentUser?.uid;
+
+    const handleShare = async () => {
+        if (!storyId || !userId) {
+            alert("Para compartilhar este livro, certifique-se de que ele esteja salvo na sua biblioteca.");
+            return;
+        }
+
+        const shareUrl = `${window.location.origin}/?storyId=${storyId}&userId=${userId}`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: result.title || 'Imaginária - Livro Mágico',
+                    text: `Leia esta história mágica: "${result.title}"`,
+                    url: shareUrl
+                });
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            }
+        }
+
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 3000);
+        } catch (e) {
+            prompt("Copie o link abaixo para compartilhar:", shareUrl);
+        }
+    };
 
     // Estado para dimensões responsivas
     const [dimensions, setDimensions] = useState({ width: 650, height: 700, usePortrait: false });
@@ -173,8 +228,10 @@ export default function BookResult({ onClose, story }) {
             const availableHeight = viewportHeight * 0.98; // 98% da altura pra sobrar uma microborda
             const availableWidth = viewportWidth * 0.98;
 
-            // Proporção alvo (levemente menos largo que a última versão)
-            const targetAspectRatio = 1.15; // De 1.3 pra 1.15
+            // Proporção canônica de página de livro vertical (portrait ~0.70)
+            // Em desktop, duas páginas lado a lado somam 1.40, encaixando com perfeição em telas 16:9
+            // e exibindo as ilustrações verticais (1024x1536, ~0.67) sem nenhum corte (crop) indesejado.
+            const targetAspectRatio = 0.70;
 
             let usePortrait = false;
             let pageWidth, pageHeight;
@@ -239,6 +296,7 @@ export default function BookResult({ onClose, story }) {
                     type: 'image',
                     content: img,
                     chapter: chapterNum,
+                    chapterIndex: index,
                     id: `img-${index}`
                 });
             }
@@ -283,6 +341,29 @@ export default function BookResult({ onClose, story }) {
             className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden py-2 md:py-4 bg-black/80 backdrop-blur-sm px-2 md:px-4"
         >
             <BackButton onClick={onClose} />
+
+            {/* Floating Share Button */}
+            {storyId && userId && (
+                <div className="fixed top-4 right-4 md:top-6 md:right-6 z-[110] flex items-center gap-2">
+                    <button
+                        onClick={handleShare}
+                        className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white backdrop-blur-md px-4 py-2.5 rounded-full border border-white/20 shadow-xl font-heading font-medium text-xs md:text-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                        title="Compartilhar link desta história"
+                    >
+                        {copied ? (
+                            <>
+                                <Check size={16} className="text-emerald-300" />
+                                <span className="text-emerald-200 font-bold">Link Copiado!</span>
+                            </>
+                        ) : (
+                            <>
+                                <Share2 size={16} />
+                                <span>Compartilhar Livro</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+            )}
 
             {/* Book Wrapper */}
             <div className="relative z-10 flex items-center justify-center">

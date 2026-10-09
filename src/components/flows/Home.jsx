@@ -5,11 +5,10 @@ import { useStory } from '../../context/StoryContext';
 import { useAuth } from '../../context/AuthContext';
 import HomeMagicBook from '../illustrations/HomeMagicBook';
 import { SparklesIconPremium, HeroGalleryIconPremium, LibraryIconPremium } from '../illustrations/HomeActionIcons';
-import MagicCrystal from '../illustrations/MagicCrystal';
 
 export default function Home({ onCreateCharacter, onStartStory, onOpenLibrary, onOpenHeroes, onLogin, onOpenShop }) {
     const { characters } = useStory();
-    const { logout, currentUser, userCredits } = useAuth();
+    const { logout, currentUser } = useAuth();
     const hasCharacters = characters.length > 0;
 
     return (
@@ -43,18 +42,6 @@ export default function Home({ onCreateCharacter, onStartStory, onOpenLibrary, o
                                         {currentUser.displayName?.split(' ')[0]}
                                     </span>
                                 </div>
-
-                                {/* Botão de Moedas */}
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={onOpenShop}
-                                    className="bg-white/60 backdrop-blur-md rounded-full shadow-sm border border-emerald-200/50 hover:border-pink-300 transition-colors px-3 py-1 flex items-center gap-2"
-                                >
-                                    <MagicCrystal className="w-4 h-4 md:w-5 md:h-5" glow={false} />
-                                    <span className="text-xs font-bold text-slate-600">{userCredits || 0}</span>
-                                    <Plus size={12} md:size={14} className="text-emerald-500" />
-                                </motion.button>
                             </div>
                             <button
                                 onClick={logout}
@@ -133,32 +120,34 @@ export default function Home({ onCreateCharacter, onStartStory, onOpenLibrary, o
                         className="w-full md:w-auto flex-shrink-0 z-10"
                     >
                         {(() => {
-                            const isMainDisabled = currentUser && !hasCharacters;
-                            const isVisualGray = !currentUser || isMainDisabled;
+                            const handleClick = () => {
+                                if (!currentUser) {
+                                    onLogin?.();
+                                } else if (!hasCharacters) {
+                                    onCreateCharacter?.();
+                                } else {
+                                    onStartStory?.();
+                                }
+                            };
+
+                            const label = !currentUser
+                                ? "Faça login"
+                                : (!hasCharacters ? "Criar Meu Primeiro Herói" : "Começar Jornada");
 
                             return (
                                 <button
-                                    onClick={!currentUser ? onLogin : (hasCharacters ? onStartStory : undefined)}
-                                    disabled={isMainDisabled}
-                                    className={`text-lg lg:text-xl px-6 py-3 lg:px-8 lg:py-4 rounded-full w-full md:w-auto flex items-center justify-center gap-3 border-4 transition-all duration-300
-                                        ${!isVisualGray
-                                            ? 'btn-magic shadow-xl shadow-pink-300/50 border-white/30 hover:scale-105 active:scale-95 cursor-pointer'
-                                            : `bg-slate-200 border-slate-100 text-slate-500 shadow-inner opacity-80 ${isMainDisabled ? 'cursor-not-allowed' : 'hover:scale-105 active:scale-95 hover:bg-slate-300 cursor-pointer'}`
-                                        }
-                                    `}
+                                    onClick={handleClick}
+                                    className="text-lg lg:text-xl px-6 py-3 lg:px-8 lg:py-4 rounded-full w-full md:w-auto flex items-center justify-center gap-3 border-4 transition-all duration-300 btn-magic shadow-xl shadow-pink-300/50 border-white/30 hover:scale-105 active:scale-95 cursor-pointer"
                                 >
-                                    <Sparkles size={24} className={!isVisualGray ? "text-white drop-shadow-md" : "text-slate-400"} />
+                                    <Sparkles size={24} className="text-white drop-shadow-md" />
                                     <div className="flex flex-col items-start">
-                                        <span className={`font-bold font-heading whitespace-nowrap ${!isVisualGray ? "text-white drop-shadow-sm" : "text-slate-600"}`}>
-                                            {!currentUser
-                                                ? "Faça login"
-                                                : (!hasCharacters ? "Crie um herói" : "Começar Jornada")}
+                                        <span className="font-bold font-heading whitespace-nowrap text-white drop-shadow-sm">
+                                            {label}
                                         </span>
-                                        {currentUser && hasCharacters && (
+                                        {currentUser && (
                                             <div className="flex items-center gap-1 mt-0.5 opacity-90">
-                                                <MagicCrystal className="w-3 h-3" glow={false} />
-                                                <span className={`text-[10px] uppercase font-bold tracking-wider ${!isVisualGray ? "text-pink-100" : "text-slate-400"}`}>
-                                                    Custo: 1 Cristal
+                                                <span className="text-[10px] uppercase font-bold tracking-wider text-pink-100">
+                                                    {hasCharacters ? "Começar Aventura" : "Foto ou Pet"}
                                                 </span>
                                             </div>
                                         )}

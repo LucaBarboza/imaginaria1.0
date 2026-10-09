@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Book, Trash2, Calendar, Sparkles } from 'lucide-react';
+import { ChevronLeft, Book, Trash2, Calendar, Sparkles, Share2, Check } from 'lucide-react';
 import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from 'firebase/firestore';
 import { ref, listAll, deleteObject } from 'firebase/storage';
 import { db, storage } from '../../firebase';
@@ -14,6 +14,7 @@ export default function StoryLibrary({ onBack }) {
     const [loading, setLoading] = useState(true);
     const [selectedStory, setSelectedStory] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
+    const [copiedStoryId, setCopiedStoryId] = useState(null);
 
     useEffect(() => {
         async function fetchStories() {
@@ -92,6 +93,35 @@ export default function StoryLibrary({ onBack }) {
         setStories(prev => prev.filter(s => s.id !== storyId));
     };
 
+    const handleShareStory = async (e, story) => {
+        e.stopPropagation();
+        const userId = currentUser?.uid;
+        if (!story.id || !userId) return;
+
+        const shareUrl = `${window.location.origin}/?storyId=${story.id}&userId=${userId}`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: story.title || 'Imaginária - Livro Mágico',
+                    text: `Leia esta história mágica: "${story.title}"`,
+                    url: shareUrl
+                });
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            }
+        }
+
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setCopiedStoryId(story.id);
+            setTimeout(() => setCopiedStoryId(null), 2500);
+        } catch (err) {
+            prompt("Copie o link abaixo para compartilhar:", shareUrl);
+        }
+    };
+
     const handleOpenStory = async (story) => {
         // Local details fetch removed - Firebase Only
         let fullStory = story;
@@ -101,12 +131,24 @@ export default function StoryLibrary({ onBack }) {
         // Firestore returns 'chapters' with 'image_url'
         const rawChapters = fullStory.chapters || [];
         const adapted = {
+            id: fullStory.id,
+            storyId: fullStory.id,
+            userId: currentUser?.uid,
             title: fullStory.title,
             cover_image: fullStory.cover_image || fullStory.cover_image_url,
-            // Reconstruct 'parts' for compatibility: [[text, prompt], ...]
+            cover_prompt: fullStory.cover_prompt || fullStory.metadata?.cover_prompt || '',
+            pages: fullStory.pages || rawChapters.map(c => ({ text: c.text, illustration_prompt: c.prompt || "" })),
             parts: fullStory.parts || rawChapters.map(c => [c.text, c.prompt || ""]),
-            // 'chapters' for compatibility: [{image_url: ...}, ...]
-            chapters: rawChapters.map(c => ({ image_url: c.image_url || c.image }))
+            chapters: rawChapters.map(c => ({ image_url: c.image_url || c.image })),
+            cost_data: fullStory.cost_data || null,
+            universe: fullStory.universe || fullStory.metadata?.inputs?.universe,
+            style: fullStory.style || fullStory.metadata?.inputs?.style,
+            character_names: fullStory.character_names || fullStory.metadata?.inputs?.names,
+            clothing_bible: fullStory.clothing_bible || fullStory.metadata?.clothing_bible,
+            character_appearance_bible: fullStory.character_appearance_bible || fullStory.metadata?.character_appearance_bible,
+            character_details: fullStory.character_details || fullStory.metadata?.character_details,
+            url_photos: fullStory.url_photos || fullStory.metadata?.url_photos,
+            metadata: fullStory.metadata
         };
         setSelectedStory(adapted);
     };
@@ -200,13 +242,22 @@ export default function StoryLibrary({ onBack }) {
                                     </div>
 
                                     {/* Actions */}
-                                    <button
-                                        onClick={(e) => handleDelete(e, story.id)}
-                                        className="absolute top-2 right-2 p-2 bg-red-500/20 text-red-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
-                                        title="Apagar história"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                    <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-20">
+                                        <button
+                                            onClick={(e) => handleShareStory(e, story)}
+                                            className="p-2 bg-purple-600/90 hover:bg-purple-600 text-white rounded-full shadow-lg backdrop-blur-sm transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                                            title="Compartilhar link da história"
+                                        >
+                                            {copiedStoryId === story.id ? <Check size={16} className="text-emerald-300" /> : <Share2 size={16} />}
+                                        </button>
+                                        <button
+                                            onClick={(e) => handleDelete(e, story.id)}
+                                            className="p-2 bg-red-500/80 hover:bg-red-600 text-white rounded-full shadow-lg backdrop-blur-sm transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                                            title="Apagar história"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </motion.div>
                             ))}
                         </AnimatePresence>

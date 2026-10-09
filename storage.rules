@@ -1,13 +1,22 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Permite que qualquer usuário logado leia e escreva em sua própria pasta
-    match /users/{userId}/{allPaths=**} {
+    // 1. Fotos reais de referência dos heróis: 100% PRIVADAS para o usuário
+    match /users/{userId}/characters/{allPaths=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-    // Regra de fallback 
+
+    // 2. Livros e ilustrações geradas:
+    // Gravação e deleção apenas pelo dono.
+    // Leitura aberta para permitir abertura via link público compartilhado.
+    match /users/{userId}/stories/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if true;
+    }
+
+    // 3. Bloqueio absoluto de fallback para qualquer outro caminho
     match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

@@ -14,7 +14,7 @@ import {
     GiCatch, GiPirateSkull, GiWesternHat, GiGears, GiNinjaStar, GiDragonBalls, GiPirateHat,
     GiShatteredSword, GiSuperMushroom, GiTriforce, GiWolfHead, GiTRexSkull, GiSpiderWeb,
     GiWinterHat, GiPortal, GiPineapple, GiPineTree,
-    GiSittingDog, GiFedora, GiHedgehog, GiRocketFlight, GiPirateFlag, GiToolbox
+    GiSittingDog, GiFedora, GiHedgehog, GiRocketFlight, GiPirateFlag, GiToolbox, GiOgre
 } from 'react-icons/gi';
 
 import { useStory } from '../../context/StoryContext';
@@ -64,7 +64,7 @@ const UNIVERSES = [
     { id: 'spider_verse', label: 'Aranhaverso', icon: GiSpiderWeb, color: 'from-red-600 to-fuchsia-900', desc: 'Multiverso Aranha' },
     { id: 'the_last_of_us', label: 'The Last of Us', icon: FaBiohazard, color: 'from-green-900 to-stone-800', desc: 'Sobrevivência' },
 
-    // --- ANIMAÇÕES (8) ---
+    // --- ANIMAÇÕES (11) ---
     { id: 'mickey', label: 'Mickey & Amigos', icon: TbMickey, color: 'from-red-600 to-yellow-500', desc: 'Magia Disney' },
     { id: 'south_park', label: 'South Park', icon: GiWinterHat, color: 'from-cyan-400 to-orange-500', desc: 'Humor Ácido' },
     { id: 'rick_morty', label: 'Rick & Morty', icon: GiPortal, color: 'from-green-500 to-blue-400', desc: 'Caos Interdimensional' },
@@ -73,6 +73,9 @@ const UNIVERSES = [
     { id: 'gravity_falls', label: 'Gravity Falls', icon: GiPineTree, color: 'from-green-800 to-amber-700', desc: 'Mistérios e Diários' },
     { id: 'steven_universe', label: 'Steven Universe', icon: FaGem, color: 'from-pink-300 to-blue-400', desc: 'Gemas de Cristal' },
     { id: 'phineas_ferb', label: 'Phineas & Ferb', icon: GiToolbox, color: 'from-orange-400 to-cyan-500', desc: 'Invenções de Verão' },
+    { id: 'toy_story', label: 'Toy Story', icon: GiRocketFlight, color: 'from-sky-500 to-amber-400', desc: 'Ao Infinito e Além' },
+    { id: 'shrek', label: 'Shrek', icon: GiOgre, color: 'from-lime-600 to-emerald-800', desc: 'Pântano & Contos' },
+    { id: 'avatar', label: 'Avatar: Aang', icon: Wind, color: 'from-cyan-500 to-amber-500', desc: 'Dobra dos Elementos' },
 ];
 
 const STYLES = [
@@ -442,33 +445,45 @@ export default function StoryWizard({ onNext, onBack }) {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                            className="space-y-8"
+                            className="space-y-6 sm:space-y-8 max-w-6xl xl:max-w-7xl mx-auto"
                         >
-                            <h2 className="text-4xl md:text-5xl font-bold font-heading text-center text-slate-800">
+                            <h2 className="text-3xl md:text-5xl font-bold font-heading text-center text-slate-800">
                                 Escolha o <span className="text-transparent bg-clip-text bg-gradient-to-r from-magic-pink to-magic-emerald">Universo</span>
                             </h2>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+                            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-9 gap-2 sm:gap-2.5 lg:gap-3 justify-items-center">
                                 {UNIVERSES.map((u) => (
                                     <motion.button
                                         key={u.id}
-                                        whileHover={{ scale: 1.03, y: -4 }}
-                                        whileTap={{ scale: 0.98 }}
+                                        whileHover={{ scale: 1.05, y: -3 }}
+                                        whileTap={{ scale: 0.96 }}
                                         onClick={() => handleSelect('universe', u.id)}
-                                        className={`relative p-5 rounded-[24px] overflow-hidden flex flex-col items-center justify-center text-center transition-all h-auto min-h-[140px] shadow-sm
-                                            ${data.universe === u.id
-                                                ? 'bg-white border-2 border-magic-pink shadow-md ring-4 ring-pink-50'
-                                                : 'bg-white border border-slate-100 hover:border-pink-200 hover:shadow-md'}`}
+                                        className={`relative w-full max-w-[105px] sm:max-w-[115px] lg:max-w-[124px] p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center transition-all min-h-[105px] sm:min-h-[114px] lg:min-h-[122px] group cursor-pointer ${
+                                            data.universe === u.id
+                                                ? 'bg-white border-2 border-magic-pink shadow-lg ring-2 ring-pink-100 scale-[1.03]'
+                                                : 'bg-white border border-slate-100 hover:border-pink-200 hover:shadow-md shadow-sm'
+                                        }`}
                                     >
                                         {/* Icon Container */}
-                                        <div className={`mb-3 transition-all duration-300 flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${u.color} shadow-lg group-hover:scale-110 ${data.universe === u.id ? 'scale-110' : ''}`}>
-                                            <u.icon size={32} strokeWidth={2.5} className="text-white drop-shadow-md" />
+                                        <div
+                                            className={`mb-1.5 transition-all duration-300 flex items-center justify-center w-13 h-13 sm:w-15 sm:h-15 lg:w-[68px] lg:h-[68px] rounded-xl sm:rounded-2xl bg-gradient-to-br ${u.color} shadow-sm group-hover:scale-105 ${
+                                                data.universe === u.id ? 'scale-105 shadow-pink-200' : ''
+                                            }`}
+                                        >
+                                            <u.icon size={30} className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 text-white drop-shadow-sm" />
                                         </div>
 
-                                        <span className={`font-bold text-sm leading-tight transition-colors ${data.universe === u.id ? 'text-magic-pink' : 'text-slate-600'}`}>{u.label}</span>
+                                        <span
+                                            className={`font-bold text-[11px] sm:text-xs lg:text-[13px] leading-tight transition-colors line-clamp-1 w-full px-1 text-center ${
+                                                data.universe === u.id ? 'text-magic-pink' : 'text-slate-700'
+                                            }`}
+                                            title={u.label}
+                                        >
+                                            {u.label}
+                                        </span>
 
                                         {/* Selected Badge */}
                                         {data.universe === u.id && (
-                                            <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-magic-pink" />
+                                            <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-magic-pink ring-2 ring-white" />
                                         )}
                                     </motion.button>
                                 ))}
