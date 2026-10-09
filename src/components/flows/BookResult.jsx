@@ -103,23 +103,24 @@ const TextPage = forwardRef((props, ref) => {
     const charCount = Math.max(80, rawText.length);
 
     // Auto-Fit Inteligente Baseado na Área Útil da Folha:
-    // Tamanho generoso e nobre que preenche a folha com imponência, 100% SEM BARRAS DE ROLAGEM
+    // Garante que o texto ocupe a página inteira de forma nobre e harmoniosa (~80% a 88% da área útil),
+    // tanto para livros antigos da biblioteca quanto novos, em qualquer display (celular, monitor, TV).
     const computedFontSize = useMemo(() => {
-        // Cálculo bidimensional de preenchimento completo (~82% a 90%)
-        const idealSize = Math.sqrt((0.85 * pageWidth * pageHeight) / charCount);
+        // Cálculo bidimensional: proporção área/caracteres
+        const idealSize = Math.sqrt((0.80 * pageWidth * pageHeight) / charCount);
         // Piso de legibilidade confortável
-        const minFloor = pageWidth < 450 ? 15 : 16;
-        // Teto proporcional
-        const maxCeil = Math.round(pageHeight * 0.054);
+        const minFloor = pageWidth < 450 ? 14 : 15;
+        // Teto proporcional para evitar que textos curtos fiquem desproporcionais
+        const maxCeil = Math.round(pageHeight * 0.052);
         return Math.max(minFloor, Math.min(maxCeil, Math.round(idealSize)));
     }, [pageHeight, pageWidth, charCount]);
 
-    const lineHeight = computedFontSize > 24 ? 1.76 : computedFontSize > 18 ? 1.70 : 1.64;
-    const paraSpacing = Math.round(computedFontSize * 1.0);
+    const lineHeight = computedFontSize > 25 ? 1.76 : computedFontSize > 19 ? 1.70 : 1.64;
+    const paraSpacing = Math.round(computedFontSize * (computedFontSize > 23 ? 1.05 : 0.90));
 
     return (
         <div
-            className="demoPage h-full bg-[#fdfbf7] border-l border-[#e3dccb] overflow-hidden relative flex flex-col select-none"
+            className="demoPage h-full bg-[#fdfbf7] border-l border-[#e3dccb] overflow-hidden relative flex flex-col"
             ref={ref}
             style={{
                 ...props.style,
@@ -133,10 +134,10 @@ const TextPage = forwardRef((props, ref) => {
             <div className="absolute left-0 top-0 bottom-0 w-[30px] bg-gradient-to-r from-black/15 to-transparent pointer-events-none z-10"></div>
 
             <div
-                className="relative z-20 h-full flex flex-col justify-between overflow-hidden"
+                className="relative z-20 h-full flex flex-col justify-between"
                 style={{
-                    paddingTop: `${Math.max(12, Math.round(pageHeight * 0.025))}px`,
-                    paddingBottom: `${Math.max(8, Math.round(pageHeight * 0.018))}px`,
+                    paddingTop: `${Math.max(14, Math.round(pageHeight * 0.035))}px`,
+                    paddingBottom: `${Math.max(10, Math.round(pageHeight * 0.025))}px`,
                     paddingLeft: `${Math.max(26, Math.round(pageWidth * 0.075))}px`,
                     paddingRight: `${Math.max(20, Math.round(pageWidth * 0.06))}px`
                 }}
@@ -163,14 +164,16 @@ const TextPage = forwardRef((props, ref) => {
                     </span>
                 </div>
 
-                {/* Corpo do Texto Preenchendo a Folha - TOTALMENTE SEM BARRAS DE ROLAGEM */}
+                {/* Corpo do Texto Preenchendo a Folha */}
                 <div
-                    className="font-serif text-justify tracking-[0.012em] text-slate-800 [hyphens:auto] overflow-hidden flex-1 flex flex-col justify-center scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                    className="font-serif text-justify tracking-[0.012em] text-slate-800 [hyphens:auto] overflow-y-auto overflow-x-hidden flex-1 flex flex-col justify-center scrollbar-thin scrollbar-thumb-stone-300/70 hover:scrollbar-thumb-stone-400"
                     lang="pt-BR"
                     style={{
                         fontSize: `${computedFontSize}px`,
                         lineHeight: lineHeight
                     }}
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
                 >
                     <div className="my-auto w-full">
                         {paragraphs.map((para, index) => {
