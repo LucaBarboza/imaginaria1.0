@@ -103,20 +103,20 @@ const TextPage = forwardRef((props, ref) => {
     const charCount = Math.max(80, rawText.length);
 
     // Auto-Fit Inteligente Baseado na Área Útil da Folha:
-    // Garante que o texto ocupe a página inteira de forma nobre e harmoniosa (~75% a 82% da área útil),
+    // Garante que o texto ocupe a página inteira de forma nobre e harmoniosa (~80% a 88% da área útil),
     // tanto para livros antigos da biblioteca quanto novos, em qualquer display (celular, monitor, TV).
     const computedFontSize = useMemo(() => {
         // Cálculo bidimensional: proporção área/caracteres
-        const idealSize = Math.sqrt((0.68 * pageWidth * pageHeight) / charCount);
+        const idealSize = Math.sqrt((0.80 * pageWidth * pageHeight) / charCount);
         // Piso de legibilidade confortável
         const minFloor = pageWidth < 450 ? 14 : 15;
         // Teto proporcional para evitar que textos curtos fiquem desproporcionais
-        const maxCeil = Math.round(pageHeight * 0.046);
+        const maxCeil = Math.round(pageHeight * 0.052);
         return Math.max(minFloor, Math.min(maxCeil, Math.round(idealSize)));
     }, [pageHeight, pageWidth, charCount]);
 
-    const lineHeight = computedFontSize > 26 ? 1.76 : computedFontSize > 20 ? 1.70 : 1.64;
-    const paraSpacing = Math.round(computedFontSize * (computedFontSize > 24 ? 0.95 : 0.82));
+    const lineHeight = computedFontSize > 25 ? 1.76 : computedFontSize > 19 ? 1.70 : 1.64;
+    const paraSpacing = Math.round(computedFontSize * (computedFontSize > 23 ? 1.05 : 0.90));
 
     return (
         <div
@@ -166,7 +166,8 @@ const TextPage = forwardRef((props, ref) => {
 
                 {/* Corpo do Texto Preenchendo a Folha */}
                 <div
-                    className="font-serif text-justify tracking-[0.012em] text-slate-800 overflow-y-auto overflow-x-hidden flex-1 flex flex-col justify-center scrollbar-thin scrollbar-thumb-stone-300/70 hover:scrollbar-thumb-stone-400"
+                    className="font-serif text-justify tracking-[0.012em] text-slate-800 [hyphens:auto] overflow-y-auto overflow-x-hidden flex-1 flex flex-col justify-center scrollbar-thin scrollbar-thumb-stone-300/70 hover:scrollbar-thumb-stone-400"
+                    lang="pt-BR"
                     style={{
                         fontSize: `${computedFontSize}px`,
                         lineHeight: lineHeight
