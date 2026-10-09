@@ -105,17 +105,17 @@ const TextPage = forwardRef((props, ref) => {
     // Auto-Fit Inteligente Baseado na Área Útil da Folha:
     // Tamanho generoso e nobre que preenche a folha com imponência, 100% SEM BARRAS DE ROLAGEM
     const computedFontSize = useMemo(() => {
-        // Cálculo bidimensional de preenchimento completo (~80% a 88%)
-        const idealSize = Math.sqrt((0.80 * pageWidth * pageHeight) / charCount);
+        // Cálculo bidimensional de preenchimento completo (~82% a 90%)
+        const idealSize = Math.sqrt((0.85 * pageWidth * pageHeight) / charCount);
         // Piso de legibilidade confortável
-        const minFloor = pageWidth < 450 ? 14 : 15;
+        const minFloor = pageWidth < 450 ? 15 : 16;
         // Teto proporcional
-        const maxCeil = Math.round(pageHeight * 0.052);
+        const maxCeil = Math.round(pageHeight * 0.054);
         return Math.max(minFloor, Math.min(maxCeil, Math.round(idealSize)));
     }, [pageHeight, pageWidth, charCount]);
 
-    const lineHeight = computedFontSize > 25 ? 1.76 : computedFontSize > 19 ? 1.70 : 1.64;
-    const paraSpacing = Math.round(computedFontSize * (computedFontSize > 23 ? 1.05 : 0.90));
+    const lineHeight = computedFontSize > 24 ? 1.76 : computedFontSize > 18 ? 1.70 : 1.64;
+    const paraSpacing = Math.round(computedFontSize * 1.0);
 
     return (
         <div
