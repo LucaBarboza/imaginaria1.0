@@ -10,10 +10,6 @@ build/
 .env
 .env.*
 !.env.example
-*.key.json
-*service-account*.json
-firebase-key.json
-service-account.json
 
 # Python
 __pycache__/
@@ -47,7 +43,9 @@ test_img_test.png
 .DS_Store
 Thumbs.db
 
-# Firebase local cache
+# Firebase local cache & keys
 .firebase/
 firebase-debug.log
 firebase-debug.*.log
+*service-account*.json
+firebase-key*.json
