@@ -68,41 +68,41 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                                     exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
                                     transition={{ delay: index * 0.05 }}
                                     onClick={() => handleCharacterSelect(char)}
-                                    className={`relative w-72 aspect-[3/4] rounded-[2rem] overflow-hidden group border-4 transition-all duration-300 cursor-pointer touch-pan-y ${
+                                    className={`relative w-72 aspect-[3/4] rounded-[2rem] overflow-hidden group border-3 transition-all duration-300 cursor-pointer touch-pan-y bg-white ${
                                         isSelected
-                                            ? 'border-magic-pink shadow-[0_10px_30px_-10px_rgba(236,72,153,0.5)] scale-[1.02]'
-                                            : 'border-transparent hover:border-magic-pink/30 hover:scale-[1.02] hover:shadow-[0_20px_40px_-12px_rgba(236,72,153,0.3)] shadow-sm'
+                                            ? 'border-[#9D7FEA] shadow-md shadow-purple-200/50 scale-[1.02]'
+                                            : 'border-[#EAE5DC] hover:border-[#9D7FEA]/50 hover:scale-[1.01] shadow-xs'
                                     }`}
                                 >
                                     {/* Badge Selecionado */}
                                     {isSelected && (
-                                        <div className="absolute top-4 left-4 z-20 px-3 py-1 rounded-full bg-magic-pink text-white text-[11px] font-bold shadow-md flex items-center gap-1">
+                                        <div className="absolute top-4 left-4 z-20 px-3 py-1 rounded-full bg-[#9D7FEA] text-white text-[11px] font-bold shadow-xs flex items-center gap-1">
                                             <Check size={12} strokeWidth={3} />
                                             <span>Selecionado</span>
                                         </div>
                                     )}
 
                                     {/* Character Image / Avatar */}
-                                    <div className="absolute inset-3 bottom-16 rounded-[1.5rem] overflow-hidden bg-slate-100 relative shadow-inner">
+                                    <div className="absolute inset-3 bottom-16 rounded-[1.5rem] overflow-hidden bg-slate-50 relative shadow-inner">
                                         {(char.avatar || (char.photos && char.photos[0])) ? (
                                             <img
                                                 src={char.avatar || char.photos[0]}
                                                 alt={char.name || char.nickname}
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex flex-col items-center justify-center text-pink-200 bg-pink-50/50">
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-purple-200 bg-purple-50/40">
                                                 <User size={80} strokeWidth={1} />
                                             </div>
                                         )}
 
                                         {/* Gradient Overlay for Text Readability */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                                     </div>
 
                                     {/* Content Info */}
-                                    <div className="absolute bottom-0 left-0 w-full h-14 flex flex-col justify-center items-center text-center px-4 z-10 bg-white/60 backdrop-blur-sm border-t border-white/60">
-                                        <h3 className="text-xl font-bold text-slate-800 font-heading transition-colors truncate w-full group-hover:text-magic-pink">
+                                    <div className="absolute bottom-0 left-0 w-full h-14 flex flex-col justify-center items-center text-center px-4 z-10 bg-white border-t border-[#EAE5DC]">
+                                        <h3 className="text-xl font-bold text-slate-800 font-heading transition-colors truncate w-full group-hover:text-[#9D7FEA]">
                                             {char.name || char.nickname}
                                         </h3>
                                     </div>
@@ -111,7 +111,7 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                                     <button
                                         type="button"
                                         onClick={(e) => handleDelete(e, char.id)}
-                                        className="absolute top-4 right-4 p-2.5 bg-white/95 rounded-full text-red-400 hover:bg-red-50 hover:text-red-500 shadow-md hover:shadow-xl transition-all border border-red-100 z-30 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+                                        className="absolute top-4 right-4 p-2.5 bg-white rounded-full text-red-400 hover:bg-red-50 hover:text-red-500 shadow-sm transition-all border border-red-100 z-30 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
                                         title="Excluir Herói"
                                     >
                                         <Trash2 size={16} />
@@ -129,19 +129,18 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                         transition={{ delay: characters.length * 0.05 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={onCreateNew}
-                        className="w-72 aspect-[3/4] rounded-[2rem] border-3 border-dashed border-pink-200/70 hover:border-magic-pink hover:bg-pink-50/40 flex flex-col items-center justify-center gap-6 group cursor-pointer transition-all bg-white/20 backdrop-blur-sm touch-pan-y"
+                        className="w-72 aspect-[3/4] rounded-[2rem] border-2 border-dashed border-[#EAE5DC] hover:border-[#9D7FEA] bg-white flex flex-col items-center justify-center gap-6 group cursor-pointer transition-all shadow-xs hover:shadow-sm touch-pan-y"
                     >
                         <div className="relative pointer-events-none">
-                            <div className="absolute inset-0 bg-magic-pink blur-xl opacity-20 group-hover:opacity-40 transition-opacity rounded-full" />
-                            <div className="relative p-6 rounded-full bg-white shadow-sm border border-pink-100 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all duration-300 text-pink-300 group-hover:text-magic-pink">
+                            <div className="p-6 rounded-full bg-[#F4EEFD] border border-[#EAE5DC] group-hover:scale-105 transition-all text-[#9D7FEA]">
                                 <Plus size={40} />
                             </div>
                         </div>
                         <div className="text-center pointer-events-none">
-                            <span className="block text-xl font-bold font-heading text-slate-400 group-hover:text-magic-pink transition-colors">
+                            <span className="block text-xl font-bold font-heading text-slate-500 group-hover:text-[#9D7FEA] transition-colors">
                                 Novo Herói
                             </span>
-                            <span className="text-sm text-slate-400/70 group-hover:text-pink-400/70 transition-colors">
+                            <span className="text-sm text-slate-400 group-hover:text-purple-400/80 transition-colors">
                                 Crie uma nova lenda
                             </span>
                         </div>
@@ -150,13 +149,13 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
             </main>
 
             {/* Sticky Action Footer Bar - Sempre visível lá embaixo com suporte a safe-area no iPhone */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
+            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t-2 border-[#EAE5DC] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-md">
                 <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
                     {/* Info / Counter */}
                     <div className="text-center sm:text-left">
                         {selectedCharacters.length === 0 ? (
                             <div className="flex items-center gap-2 text-slate-500 text-xs sm:text-sm font-medium">
-                                <Sparkles size={15} className="text-magic-pink shrink-0" />
+                                <Sparkles size={15} className="text-[#9D7FEA] shrink-0" />
                                 <span>Selecione até 3 heróis para viverem esta jornada juntos.</span>
                             </div>
                         ) : (
@@ -164,7 +163,7 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                                 <span className="font-bold text-slate-700">
                                     {selectedCharacters.length} herói{selectedCharacters.length > 1 ? 's' : ''} selecionado{selectedCharacters.length > 1 ? 's' : ''}:
                                 </span>{' '}
-                                <span className="text-magic-pink font-semibold">
+                                <span className="text-[#9D7FEA] font-semibold">
                                     {selectedCharacters.map(c => c.name || c.nickname).join(', ')}
                                 </span>
                             </div>
@@ -176,9 +175,9 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                         type="button"
                         onClick={onNext}
                         disabled={selectedCharacters.length === 0}
-                        className={`w-full sm:w-auto px-8 py-3 rounded-full font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all shadow-md ${
+                        className={`w-full sm:w-auto px-8 py-3 rounded-full font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all cursor-pointer ${
                             selectedCharacters.length > 0
-                                ? 'bg-gradient-to-r from-magic-pink to-magic-emerald text-white hover:scale-105 hover:shadow-pink-200 active:scale-95 cursor-pointer'
+                                ? 'btn-tactile-primary shadow-md'
                                 : 'bg-slate-100 text-slate-400 border border-slate-200/60 cursor-not-allowed'
                         }`}
                     >

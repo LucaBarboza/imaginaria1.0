@@ -314,7 +314,7 @@ export default function BookResult({ onClose, story }) {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: result.title || 'Imaginária - Livro Mágico',
+                    title: result.title || 'Maginária - Livro Mágico',
                     text: `Leia esta história mágica: "${result.title}"`,
                     url: shareUrl
                 });

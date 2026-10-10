@@ -103,7 +103,7 @@ export default function StoryLibrary({ onBack }) {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: story.title || 'Imaginária - Livro Mágico',
+                    title: story.title || 'Maginária - Livro Mágico',
                     text: `Leia esta história mágica: "${story.title}"`,
                     url: shareUrl
                 });

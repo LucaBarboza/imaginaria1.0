@@ -1,366 +1,209 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Check, Wand2, Shuffle, Sparkles, Tv, Cpu, Gem, Skull, Compass, Eye, Cog, Wind, Flame, Anchor, Axe, Star, Gamepad2, Sword, Box, FlaskConical, FastForward, CircleDot, Volleyball, CircleDashed, Flag, Bike, Heart, Snowflake, Bone, Bug, Biohazard, Smile, Users, TestTubes, Waves, Search, TreePine, Wrench, Leaf, BoxSelect, Shapes, Palette, MessageSquare, Camera, Brush, PenTool, Hexagon, Sun, Terminal, Scissors, Castle, X } from 'lucide-react';
 import {
-    FaSpider, FaUserSecret, FaCube, FaFutbol, FaVolleyball, FaBasketball, FaFlagCheckered,
-    FaBicycle, FaHeart, FaBiohazard, FaComputerMouse, FaMagnifyingGlass, FaWrench, FaGem, FaMeteor, FaFlask, FaVanShuttle, FaHatCowboy
+    ChevronRight, Sparkles, Shuffle, Wand2, Users, Search, X, Check,
+    BookOpen, Layers, Palette, Compass, SlidersHorizontal
+} from 'lucide-react';
+import {
+    FaSpider, FaCube, FaFutbol, FaVolleyball, FaBasketball, FaFlagCheckered,
+    FaBicycle, FaHeart, FaBiohazard, FaGem, FaMeteor, FaFlask, FaVanShuttle, FaHatCowboy
 } from 'react-icons/fa6';
-
-import { TbBrandDisney, TbMickey, TbPokeball, TbWand } from 'react-icons/tb';
-import { MdCatchingPokemon } from 'react-icons/md';
-
+import { TbMickey, TbPokeball, TbWand } from 'react-icons/tb';
 import {
-    GiCastle, GiLightSabers, GiFairyWand, GiBatMask, GiQueenCrown, GiDonut, GiCyberEye, GiRing,
-    GiCatch, GiPirateSkull, GiWesternHat, GiGears, GiNinjaStar, GiDragonBalls, GiPirateHat,
+    GiCastle, GiLightSabers, GiBatMask, GiQueenCrown, GiDonut, GiCyberEye, GiRing,
+    GiPirateSkull, GiWesternHat, GiGears, GiNinjaStar, GiDragonBalls,
     GiShatteredSword, GiSuperMushroom, GiTriforce, GiWolfHead, GiTRexSkull, GiSpiderWeb,
-    GiWinterHat, GiPortal, GiPineapple, GiPineTree,
-    GiSittingDog, GiFedora, GiHedgehog, GiRocketFlight, GiPirateFlag, GiToolbox, GiOgre
+    GiWinterHat, GiPortal, GiPineapple, GiPineTree, GiHedgehog, GiRocketFlight, GiToolbox, GiOgre
 } from 'react-icons/gi';
+import {
+    Tv, Cpu, Eye, Wind, Flame, Gamepad2, Box, TestTubes, Leaf,
+    BoxSelect, Shapes, Camera, Brush, PenTool, Hexagon, Sun, Terminal, Scissors, Castle, MessageSquare
+} from 'lucide-react';
 
 import { useStory } from '../../context/StoryContext';
 import BackButton from '../ui/BackButton';
+
 const UNIVERSES = [
-    // --- CLÁSSICOS & FANTASIA (14) ---
-    { id: 'fantasy_medieval', label: 'Medieval', icon: GiCastle, color: 'from-amber-700 to-orange-900', desc: 'Dragões & Reis' },
-    { id: 'star_wars', label: 'Star Wars', icon: GiLightSabers, color: 'from-blue-600 to-cyan-800', desc: 'Força & Sabres' },
-    { id: 'harry_potter', label: 'Harry Potter', icon: TbWand, color: 'from-purple-800 to-indigo-900', desc: 'Magia em Hogwarts' },
-    { id: 'marvel', label: 'Marvel', icon: FaSpider, color: 'from-red-600 to-red-900', desc: 'Super-heróis' },
-    { id: 'dc', label: 'DC Comics', icon: GiBatMask, color: 'from-slate-700 to-slate-900', desc: 'Lendas da Justiça' },
-    { id: 'disney_princess', label: 'Disney Princesas', icon: GiQueenCrown, color: 'from-pink-400 to-rose-600', desc: 'Contos de Fadas' },
-    { id: 'simpsons', label: 'Os Simpsons', icon: GiDonut, color: 'from-yellow-400 to-yellow-600', desc: 'Comédia Amarela' },
-    { id: 'cyberpunk', label: 'Cyberpunk', icon: GiCyberEye, color: 'from-yellow-300 to-yellow-500', desc: 'High Tech Low Life' },
-    { id: 'lord_rings', label: 'Senhor dos Anéis', icon: GiRing, color: 'from-green-700 to-emerald-900', desc: 'Terra Média' },
-    { id: 'pokemon', label: 'Pokémon', icon: TbPokeball, color: 'from-red-500 to-white', desc: 'Temos que pegar!' },
-    { id: 'pirates', label: 'Piratas', icon: GiPirateSkull, color: 'from-blue-900 to-slate-900', desc: '7 Mares' },
-    { id: 'western', label: 'Western', icon: GiWesternHat, color: 'from-orange-800 to-amber-900', desc: 'Bang Bang' },
-    { id: 'noir', label: 'Noir', icon: GiFedora, color: 'from-gray-800 to-black', desc: 'Mistério em P&B' },
-    { id: 'steampunk', label: 'Steampunk', icon: GiGears, color: 'from-amber-600 to-yellow-800', desc: 'Vapor & Engrenagens' },
+    // --- FANTASIA & FICÇÃO (12) ---
+    { id: 'fantasy_medieval', label: 'Medieval', icon: GiCastle, color: 'from-amber-700 to-orange-900', desc: 'Dragões & Reis', category: 'fantasy' },
+    { id: 'star_wars', label: 'Star Wars', icon: GiLightSabers, color: 'from-blue-600 to-cyan-800', desc: 'Força & Sabres', category: 'fantasy' },
+    { id: 'harry_potter', label: 'Harry Potter', icon: TbWand, color: 'from-purple-800 to-indigo-900', desc: 'Magia em Hogwarts', category: 'fantasy' },
+    { id: 'marvel', label: 'Marvel', icon: FaSpider, color: 'from-red-600 to-red-900', desc: 'Super-heróis', category: 'fantasy' },
+    { id: 'dc', label: 'DC Comics', icon: GiBatMask, color: 'from-slate-700 to-slate-900', desc: 'Lendas da Justiça', category: 'fantasy' },
+    { id: 'disney_princess', label: 'Disney Princesas', icon: GiQueenCrown, color: 'from-pink-400 to-rose-600', desc: 'Contos de Fadas', category: 'fantasy' },
+    { id: 'cyberpunk', label: 'Cyberpunk', icon: GiCyberEye, color: 'from-yellow-400 to-amber-600', desc: 'High Tech Low Life', category: 'fantasy' },
+    { id: 'lord_rings', label: 'Senhor dos Anéis', icon: GiRing, color: 'from-green-700 to-emerald-900', desc: 'Terra Média', category: 'fantasy' },
+    { id: 'pirates', label: 'Piratas', icon: GiPirateSkull, color: 'from-blue-900 to-slate-900', desc: '7 Mares', category: 'fantasy' },
+    { id: 'western', label: 'Western', icon: GiWesternHat, color: 'from-orange-800 to-amber-900', desc: 'Bang Bang', category: 'fantasy' },
+    { id: 'noir', label: 'Noir', icon: GiFedora, color: 'from-gray-800 to-black', desc: 'Mistério em P&B', category: 'fantasy' },
+    { id: 'steampunk', label: 'Steampunk', icon: GiGears, color: 'from-amber-600 to-yellow-800', desc: 'Vapor & Engrenagens', category: 'fantasy' },
 
-    // --- ANIMES (5) ---
-    { id: 'naruto', label: 'Naruto', icon: GiNinjaStar, color: 'from-orange-500 to-orange-700', desc: 'O Caminho Ninja' },
-    { id: 'dragon_ball', label: 'Dragon Ball', icon: GiDragonBalls, color: 'from-orange-600 to-yellow-400', desc: 'Nível Saiyajin' },
-    { id: 'one_piece', label: 'One Piece', icon: FaHatCowboy, color: 'from-red-600 to-blue-800', desc: 'Tesouros e Piratas' },
-    { id: 'titan', label: 'Attack on Titan', icon: GiShatteredSword, color: 'from-stone-700 to-red-900', desc: 'Muralhas e Titãs' },
-    { id: 'saint_seiya', label: 'Cavaleiros do Zodíaco', icon: FaMeteor, color: 'from-yellow-400 to-blue-900', desc: 'Pelo Cosmo!' },
+    // --- ANIMES (6) ---
+    { id: 'pokemon', label: 'Pokémon', icon: TbPokeball, color: 'from-red-500 to-slate-700', desc: 'Temos que pegar!', category: 'anime' },
+    { id: 'naruto', label: 'Naruto', icon: GiNinjaStar, color: 'from-orange-500 to-orange-700', desc: 'O Caminho Ninja', category: 'anime' },
+    { id: 'dragon_ball', label: 'Dragon Ball', icon: GiDragonBalls, color: 'from-orange-600 to-yellow-400', desc: 'Nível Saiyajin', category: 'anime' },
+    { id: 'one_piece', label: 'One Piece', icon: FaHatCowboy, color: 'from-red-600 to-blue-800', desc: 'Tesouros e Piratas', category: 'anime' },
+    { id: 'titan', label: 'Attack on Titan', icon: GiShatteredSword, color: 'from-stone-700 to-red-900', desc: 'Muralhas e Titãs', category: 'anime' },
+    { id: 'saint_seiya', label: 'Cavaleiros do Zodíaco', icon: FaMeteor, color: 'from-yellow-400 to-blue-900', desc: 'Pelo Cosmo!', category: 'anime' },
 
-    // --- GAMES (5) ---
-    { id: 'mario', label: 'Super Mario', icon: GiSuperMushroom, color: 'from-red-500 to-blue-500', desc: 'Reino Cogumelo' },
-    { id: 'zelda', label: 'Zelda', icon: GiTriforce, color: 'from-green-600 to-yellow-600', desc: 'Lenda de Hyrule' },
-    { id: 'minecraft', label: 'Minecraft', icon: FaCube, color: 'from-green-500 to-stone-600', desc: 'Mundo de Blocos' },
-    { id: 'arcane', label: 'Arcane (LoL)', icon: FaFlask, color: 'from-blue-600 to-purple-800', desc: 'Magia e Tecnologia' },
-    { id: 'sonic', label: 'Sonic', icon: GiHedgehog, color: 'from-blue-600 to-blue-400', desc: 'Velocidade Máxima' },
-
-    // --- ESPORTES (4) ---
-    { id: 'football', label: 'Futebol', icon: FaFutbol, color: 'from-green-600 to-green-900', desc: 'Rumo ao Gol!' },
-    { id: 'volleyball', label: 'Vôlei', icon: FaVolleyball, color: 'from-blue-400 to-yellow-500', desc: 'Corte e Vitória!' },
-    { id: 'basketball', label: 'Basquete', icon: FaBasketball, color: 'from-orange-500 to-orange-700', desc: 'Enterrada Épica!' },
-    { id: 'f1', label: 'Fórmula 1', icon: FaFlagCheckered, color: 'from-red-700 to-slate-900', desc: 'Velocidade e Pista' },
+    // --- GAMES & ESPORTES (9) ---
+    { id: 'mario', label: 'Super Mario', icon: GiSuperMushroom, color: 'from-red-500 to-blue-500', desc: 'Reino Cogumelo', category: 'games' },
+    { id: 'zelda', label: 'Zelda', icon: GiTriforce, color: 'from-green-600 to-yellow-600', desc: 'Lenda de Hyrule', category: 'games' },
+    { id: 'minecraft', label: 'Minecraft', icon: FaCube, color: 'from-green-500 to-stone-600', desc: 'Mundo de Blocos', category: 'games' },
+    { id: 'arcane', label: 'Arcane (LoL)', icon: FaFlask, color: 'from-blue-600 to-purple-800', desc: 'Magia e Tecnologia', category: 'games' },
+    { id: 'sonic', label: 'Sonic', icon: GiHedgehog, color: 'from-blue-600 to-blue-400', desc: 'Velocidade Máxima', category: 'games' },
+    { id: 'football', label: 'Futebol', icon: FaFutbol, color: 'from-green-600 to-green-900', desc: 'Rumo ao Gol!', category: 'games' },
+    { id: 'volleyball', label: 'Vôlei', icon: FaVolleyball, color: 'from-blue-400 to-yellow-500', desc: 'Corte e Vitória!', category: 'games' },
+    { id: 'basketball', label: 'Basquete', icon: FaBasketball, color: 'from-orange-500 to-orange-700', desc: 'Enterrada Épica!', category: 'games' },
+    { id: 'f1', label: 'Fórmula 1', icon: FaFlagCheckered, color: 'from-red-700 to-slate-900', desc: 'Velocidade e Pista', category: 'games' },
 
     // --- FILMES & SÉRIES (6) ---
-    { id: 'stranger_things', label: 'Stranger Things', icon: FaBicycle, color: 'from-red-900 to-black', desc: 'Anos 80 e Mistério' },
-    { id: 'barbie', label: 'Barbie', icon: FaHeart, color: 'from-pink-400 to-rose-300', desc: 'Mundo Cor-de-Rosa' },
-    { id: 'got', label: 'Game of Thrones', icon: GiWolfHead, color: 'from-slate-400 to-slate-600', desc: 'Guerra de Tronos' },
-    { id: 'jurassic', label: 'Jurassic Park', icon: GiTRexSkull, color: 'from-green-800 to-amber-900', desc: 'Era dos Dinossauros' },
-    { id: 'spider_verse', label: 'Aranhaverso', icon: GiSpiderWeb, color: 'from-red-600 to-fuchsia-900', desc: 'Multiverso Aranha' },
-    { id: 'the_last_of_us', label: 'The Last of Us', icon: FaBiohazard, color: 'from-green-900 to-stone-800', desc: 'Sobrevivência' },
+    { id: 'stranger_things', label: 'Stranger Things', icon: FaBicycle, color: 'from-red-900 to-black', desc: 'Anos 80 e Mistério', category: 'movies' },
+    { id: 'barbie', label: 'Barbie', icon: FaHeart, color: 'from-pink-400 to-rose-400', desc: 'Mundo Cor-de-Rosa', category: 'movies' },
+    { id: 'got', label: 'Game of Thrones', icon: GiWolfHead, color: 'from-slate-400 to-slate-600', desc: 'Guerra de Tronos', category: 'movies' },
+    { id: 'jurassic', label: 'Jurassic Park', icon: GiTRexSkull, color: 'from-green-800 to-amber-900', desc: 'Era dos Dinossauros', category: 'movies' },
+    { id: 'spider_verse', label: 'Aranhaverso', icon: GiSpiderWeb, color: 'from-red-600 to-fuchsia-900', desc: 'Multiverso Aranha', category: 'movies' },
+    { id: 'the_last_of_us', label: 'The Last of Us', icon: FaBiohazard, color: 'from-green-900 to-stone-800', desc: 'Sobrevivência', category: 'movies' },
 
-    // --- ANIMAÇÕES (11) ---
-    { id: 'mickey', label: 'Mickey & Amigos', icon: TbMickey, color: 'from-red-600 to-yellow-500', desc: 'Magia Disney' },
-    { id: 'south_park', label: 'South Park', icon: GiWinterHat, color: 'from-cyan-400 to-orange-500', desc: 'Humor Ácido' },
-    { id: 'rick_morty', label: 'Rick & Morty', icon: GiPortal, color: 'from-green-500 to-blue-400', desc: 'Caos Interdimensional' },
-    { id: 'spongebob', label: 'Bob Esponja', icon: GiPineapple, color: 'from-yellow-400 to-blue-400', desc: 'Fenda do Biquíni' },
-    { id: 'scooby', label: 'Scooby-Doo', icon: FaVanShuttle, color: 'from-purple-700 to-green-500', desc: 'Mistérios e Fantasmas' },
-    { id: 'gravity_falls', label: 'Gravity Falls', icon: GiPineTree, color: 'from-green-800 to-amber-700', desc: 'Mistérios e Diários' },
-    { id: 'steven_universe', label: 'Steven Universe', icon: FaGem, color: 'from-pink-300 to-blue-400', desc: 'Gemas de Cristal' },
-    { id: 'phineas_ferb', label: 'Phineas & Ferb', icon: GiToolbox, color: 'from-orange-400 to-cyan-500', desc: 'Invenções de Verão' },
-    { id: 'toy_story', label: 'Toy Story', icon: GiRocketFlight, color: 'from-sky-500 to-amber-400', desc: 'Ao Infinito e Além' },
-    { id: 'shrek', label: 'Shrek', icon: GiOgre, color: 'from-lime-600 to-emerald-800', desc: 'Pântano & Contos' },
-    { id: 'avatar', label: 'Avatar: Aang', icon: Wind, color: 'from-cyan-500 to-amber-500', desc: 'Dobra dos Elementos' },
+    // --- ANIMAÇÕES (12) ---
+    { id: 'simpsons', label: 'Os Simpsons', icon: GiDonut, color: 'from-yellow-400 to-yellow-600', desc: 'Comédia Amarela', category: 'animation' },
+    { id: 'mickey', label: 'Mickey & Amigos', icon: TbMickey, color: 'from-red-600 to-yellow-500', desc: 'Magia Disney', category: 'animation' },
+    { id: 'south_park', label: 'South Park', icon: GiWinterHat, color: 'from-cyan-400 to-orange-500', desc: 'Humor Ácido', category: 'animation' },
+    { id: 'rick_morty', label: 'Rick & Morty', icon: GiPortal, color: 'from-green-500 to-blue-400', desc: 'Caos Interdimensional', category: 'animation' },
+    { id: 'spongebob', label: 'Bob Esponja', icon: GiPineapple, color: 'from-yellow-400 to-blue-400', desc: 'Fenda do Biquíni', category: 'animation' },
+    { id: 'scooby', label: 'Scooby-Doo', icon: FaVanShuttle, color: 'from-purple-700 to-green-500', desc: 'Mistérios e Fantasmas', category: 'animation' },
+    { id: 'gravity_falls', label: 'Gravity Falls', icon: GiPineTree, color: 'from-green-800 to-amber-700', desc: 'Mistérios e Diários', category: 'animation' },
+    { id: 'steven_universe', label: 'Steven Universe', icon: FaGem, color: 'from-pink-300 to-blue-400', desc: 'Gemas de Cristal', category: 'animation' },
+    { id: 'phineas_ferb', label: 'Phineas & Ferb', icon: GiToolbox, color: 'from-orange-400 to-cyan-500', desc: 'Invenções de Verão', category: 'animation' },
+    { id: 'toy_story', label: 'Toy Story', icon: GiRocketFlight, color: 'from-sky-500 to-amber-400', desc: 'Ao Infinito e Além', category: 'animation' },
+    { id: 'shrek', label: 'Shrek', icon: GiOgre, color: 'from-lime-600 to-emerald-800', desc: 'Pântano & Contos', category: 'animation' },
+    { id: 'avatar', label: 'Avatar: Aang', icon: Wind, color: 'from-cyan-500 to-amber-500', desc: 'Dobra dos Elementos', category: 'animation' },
+];
+
+// Helper to provide GiFedora fallback if missing
+function GiFedora(props) {
+    return <Compass {...props} />;
+}
+
+const UNIVERSE_CATEGORIES = [
+    { id: 'all', label: 'Todos (45)' },
+    { id: 'fantasy', label: 'Fantasia & Ficção' },
+    { id: 'anime', label: 'Animes' },
+    { id: 'games', label: 'Games & Esportes' },
+    { id: 'movies', label: 'Filmes & Séries' },
+    { id: 'animation', label: 'Animações' },
 ];
 
 const STYLES = [
     // --- ESPECIAL ---
-    { id: 'universe_default', label: 'Estilo do Universo', icon: Sparkles, color: 'from-indigo-500 to-purple-600', desc: 'Mantém a estética original do universo escolhido.' },
+    { id: 'universe_default', label: 'Estilo do Universo', icon: Sparkles, color: 'from-[#9D7FEA] to-[#8364D8]', desc: 'Mantém a estética autêntica do universo escolhido.' },
 
-    // --- FAMOSOS (MARCAS/ANIME) ---
-    { id: 'ghibli', label: 'Studio Ghibli', icon: Leaf, color: 'from-emerald-400 to-teal-600', desc: 'Traços detalhados, lúdicos e cores vibrantes.' },
-    { id: 'simpsons_style', label: 'Os Simpsons', icon: Tv, color: 'from-yellow-400 to-yellow-600', desc: 'O clássico traço amarelo de Matt Groening.' },
-    { id: 'naruto_style', label: 'Estilo Naruto', icon: Wind, color: 'from-orange-500 to-orange-700', desc: 'Traço de anime shonen dinâmico e focado em ação.' },
-    { id: 'dragonball_style', label: 'Dragon Ball Z', icon: Flame, color: 'from-orange-600 to-yellow-400', desc: 'Estilo icônico de Akira Toriyama com sombras fortes.' },
-    { id: 'southpark_style', label: 'South Park', icon: Users, color: 'from-cyan-400 to-orange-500', desc: 'Estilo de recorte de papel simples e cômico.' },
-    { id: 'rickmorty_style', label: 'Rick & Morty', icon: TestTubes, color: 'from-green-400 to-sky-400', desc: 'Traço de cartoon sci-fi caótico e expressivo.' },
-    { id: 'spiderverse_style', label: 'Aranhaverso', icon: Bug, color: 'from-red-600 to-fuchsia-900', desc: 'Mistura de 3D com texturas de quadrinhos e grafite.' },
-
-    // --- GENÉRICOS / ARTÍSTICOS ---
-    { id: 'pixar', label: 'Pixar 3D', icon: BoxSelect, color: 'from-blue-400 to-cyan-500', desc: 'Animação 3D moderna, fofa e volumétrica.' },
-    { id: 'disney_2d', label: 'Disney Clássico', icon: Castle, color: 'from-sky-300 to-blue-500', desc: 'Traço tradicional feito à mão dos anos 90.' },
-    { id: 'claymation', label: 'Massinha (Clay)', icon: Shapes, color: 'from-orange-400 to-amber-600', desc: 'Estilo stop-motion tátil e artesanal.' },
-    { id: 'watercolor', label: 'Aquarela', icon: Palette, color: 'from-indigo-300 to-purple-400', desc: 'Pintura suave, artística e fluida.' },
-    { id: 'noir_cartoon', label: 'Cartoon Noir', icon: Eye, color: 'from-gray-700 to-black', desc: 'Desenho animado em P&B com alto contraste.' },
-    { id: 'comic', label: 'Comic Book', icon: MessageSquare, color: 'from-yellow-400 to-red-500', desc: 'Estilo de HQ americana com hachuras e onomatopeias.' },
-    { id: 'realistic', label: 'Fotorealista', icon: Camera, color: 'from-slate-300 to-slate-500', desc: 'Imagens que parecem fotografias da vida real.' },
-    { id: 'cyber_art', label: 'Neon Digital', icon: Cpu, color: 'from-fuchsia-500 to-purple-600', desc: 'Arte futurista com brilhos neon e luzes intensas.' },
-    { id: 'pixel_art', label: 'Pixel Art', icon: Gamepad2, color: 'from-green-400 to-lime-500', desc: 'Estilo retrô de jogos de 16-bit e 32-bit.' },
-    { id: 'oil_painting', label: 'Pintura a Óleo', icon: Brush, color: 'from-amber-700 to-yellow-900', desc: 'Textura clássica de tela e pinceladas visíveis.' },
-    { id: 'sketch_pencil', label: 'Esboço a Lápis', icon: PenTool, color: 'from-slate-400 to-slate-200', desc: 'Desenho feito a grafite com sombreado manual.' },
-    { id: 'low_poly', label: 'Low Poly 3D', icon: Hexagon, color: 'from-emerald-400 to-blue-500', desc: 'Visual geométrico de jogos indie modernos.' },
-    { id: 'pop_art', label: 'Pop Art', icon: Sun, color: 'from-red-400 to-yellow-300', desc: 'Estilo Andy Warhol com cores saturadas e padrões.' },
-    { id: 'cyberpunk_glitch', label: 'Glitch Art', icon: Terminal, color: 'from-cyan-400 to-fuchsia-500', desc: 'Arte digital com distorções e estética hacker.' },
-    { id: 'paper_cutout', label: 'Papel Recortado', icon: Scissors, color: 'from-orange-300 to-rose-400', desc: 'Cenários montados com camadas de papel colorido.' },
-    { id: 'minecraft_voxel', label: 'Voxel (Blocos)', icon: Box, color: 'from-green-600 to-stone-500', desc: 'Mundo construído inteiramente com cubos 3D.' },
+    // --- ARTÍSTICOS E CONSAGRADOS ---
+    { id: 'pixar', label: 'Pixar 3D', icon: BoxSelect, color: 'from-blue-400 to-cyan-500', desc: 'Animação 3D fofa e volumétrica.' },
+    { id: 'ghibli', label: 'Studio Ghibli', icon: Leaf, color: 'from-emerald-400 to-teal-600', desc: 'Traços detalhados, poéticos e lúdicos.' },
+    { id: 'watercolor', label: 'Aquarela Suave', icon: Palette, color: 'from-[#9D7FEA]/80 to-[#FBAE7B]', desc: 'Pintura fluida e artesanal de livro ilustrado.' },
+    { id: 'disney_2d', label: 'Disney Clássico', icon: Castle, color: 'from-sky-400 to-blue-600', desc: 'Traço tradicional nostálgico feito à mão.' },
+    { id: 'claymation', label: 'Massinha (Clay)', icon: Shapes, color: 'from-amber-400 to-orange-500', desc: 'Estilo stop-motion tátil e expressivo.' },
+    { id: 'comic', label: 'Comic Book', icon: MessageSquare, color: 'from-amber-500 to-rose-500', desc: 'Estilo de HQ com hachuras e cores pop.' },
+    { id: 'paper_cutout', label: 'Papel Recortado', icon: Scissors, color: 'from-orange-300 to-rose-400', desc: 'Camadas de papel artesanal recortado.' },
+    { id: 'spiderverse_style', label: 'Aranhaverso', icon: Shapes, color: 'from-rose-500 to-purple-800', desc: '3D expressivo com texturas gráficas.' },
+    { id: 'pixel_art', label: 'Pixel Art', icon: Gamepad2, color: 'from-emerald-400 to-cyan-500', desc: 'Estilo retrô e nostálgico dos games.' },
+    { id: 'oil_painting', label: 'Pintura a Óleo', icon: Brush, color: 'from-amber-700 to-yellow-800', desc: 'Pinceladas visíveis em tela texturizada.' },
+    { id: 'sketch_pencil', label: 'Esboço a Lápis', icon: PenTool, color: 'from-slate-500 to-slate-700', desc: 'Grafite manual com sombreado clássico.' },
+    { id: 'low_poly', label: 'Low Poly 3D', icon: Hexagon, color: 'from-teal-400 to-blue-500', desc: 'Geometria limpa e moderna.' },
+    { id: 'pop_art', label: 'Pop Art', icon: Sun, color: 'from-rose-400 to-amber-300', desc: 'Cores saturadas e grafismo vibrante.' },
+    { id: 'minecraft_voxel', label: 'Voxel (Blocos)', icon: Box, color: 'from-green-600 to-stone-500', desc: 'Mundo construído com cubos 3D.' },
+    { id: 'simpsons_style', label: 'Os Simpsons', icon: Tv, color: 'from-yellow-400 to-amber-500', desc: 'O clássico traço amarelo de cartoon.' },
+    { id: 'naruto_style', label: 'Estilo Anime', icon: Wind, color: 'from-orange-500 to-rose-500', desc: 'Traço de animação japonesa dinâmico.' },
+    { id: 'dragonball_style', label: 'Dragon Ball Z', icon: Flame, color: 'from-orange-600 to-amber-400', desc: 'Sombreamento forte e estilo shonen.' },
+    { id: 'southpark_style', label: 'South Park', icon: Users, color: 'from-cyan-400 to-amber-500', desc: 'Colagem simples e cômica.' },
+    { id: 'rickmorty_style', label: 'Rick & Morty', icon: TestTubes, color: 'from-green-400 to-cyan-500', desc: 'Cartoon sci-fi expressivo.' },
+    { id: 'noir_cartoon', label: 'Cartoon Noir', icon: Eye, color: 'from-slate-700 to-slate-900', desc: 'Preto e branco com sombras marcantes.' },
+    { id: 'realistic', label: 'Fotorealista', icon: Camera, color: 'from-slate-400 to-slate-600', desc: 'Texturas cinematográficas imersivas.' },
+    { id: 'cyber_art', label: 'Neon Digital', icon: Cpu, color: 'from-purple-500 to-indigo-600', desc: 'Luzes neon e reflexos futuristas.' },
+    { id: 'cyberpunk_glitch', label: 'Glitch Art', icon: Terminal, color: 'from-cyan-500 to-purple-600', desc: 'Estética digital contemporânea.' },
 ];
 
 const GENRES = [
-    { id: 'epic', label: 'Aventura Épica', icon: '⚔️' },
-    { id: 'comedy', label: 'Comédia', icon: '🎭' },
-    { id: 'romance', label: 'Romance', icon: '💖' },
-    { id: 'mystery', label: 'Mistério', icon: '🔍' },
-    { id: 'horror', label: 'Terror', icon: '👻' },
-    { id: 'scifi', label: 'Ficção Científica', icon: '🚀' },
-    { id: 'fantasy', label: 'Fantasia', icon: '✨' },
-    { id: 'drama', label: 'Drama', icon: '🎬' },
-    { id: 'fable', label: 'Fábula Moral', icon: '🦊' },
-    { id: 'thriller', label: 'Suspense', icon: '⚡' },
-    { id: 'action', label: 'Ação', icon: '💥' },
-    { id: 'pirate', label: 'Pirata', icon: '🏴‍☠️' },
-    { id: 'sports', label: 'Esporte', icon: '🏆' },
-    { id: 'survival', label: 'Sobrevivência', icon: '🏕️' },
-    { id: 'spy', label: 'Espionagem', icon: '🕵️' },
-    { id: 'superhero', label: 'Super-heróis', icon: '🦸' },
-    { id: 'cyberpunk', label: 'Cyberpunk', icon: '🤖' },
-    { id: 'western', label: 'Faroeste', icon: '🤠' },
+    { id: 'epic', label: 'Aventura Épica' },
+    { id: 'comedy', label: 'Comédia' },
+    { id: 'romance', label: 'Romance' },
+    { id: 'mystery', label: 'Mistério' },
+    { id: 'horror', label: 'Suspense Suave' },
+    { id: 'scifi', label: 'Ficção Científica' },
+    { id: 'fantasy', label: 'Fantasia Mágica' },
+    { id: 'drama', label: 'História Emocionante' },
+    { id: 'fable', label: 'Fábula com Moral' },
+    { id: 'action', label: 'Muita Ação' },
+    { id: 'pirate', label: 'Aventura Pirata' },
+    { id: 'sports', label: 'Superação & Esporte' },
+    { id: 'survival', label: 'Sobrevivência & Coragem' },
+    { id: 'spy', label: 'Missão Secreta' },
+    { id: 'superhero', label: 'Super-Heróis' },
+    { id: 'cyberpunk', label: 'Futuro Tecnológico' },
+    { id: 'western', label: 'Faroeste & Velho Oeste' },
+    { id: 'thriller', label: 'Enigma Inesperado' },
 ];
 
 const GENRE_PROMPTS = {
     epic: [
-        "A busca por um artefato lendário que pode salvar o reino.",
-        "A queda de um império e o nascimento de um novo líder.",
-        "Uma odisseia mágica através de portais proibidos.",
-        "A defesa de uma fortaleza contra uma horda impossível.",
-        "O despertar de uma criatura ancestral que dormia sob as montanhas.",
-        "Uma jornada solitária para acender a última chama do mundo.",
-        "A reunião de cinco clãs rivais para vencer uma sombra comum.",
-        "O resgate de uma linhagem real esquecida há séculos.",
-        "Uma expedição naval em busca de um continente mítico.",
-        "A guerra final entre deuses e mortais pelo destino da terra."
+        "A busca por um artefato lendário que pode salvar o reino da escuridão.",
+        "A jornada para acordar a última estrela cadente antes do sol raiar.",
+        "A travessia de uma ponte dourada que só surge uma vez a cada cem anos.",
+        "O encontro dos quatro guardiões para proteger o cristal da vida."
     ],
     comedy: [
-        "Um dia inteiro onde tudo o que você diz vira piada.",
-        "O herói descobre que seu superpoder é invocar patos.",
-        "Uma troca de corpos entre um guerreiro e um vilão atrapalhado.",
-        "Organizar um casamento no meio de uma invasão alienígena.",
-        "Um robô que tenta aprender a contar piadas, mas é literal demais.",
-        "Uma viagem de carro onde o GPS tenta te matar de rir.",
-        "O vilão desiste do mal para abrir uma padaria de cupcakes.",
-        "Confusão em uma convenção de magos que perderam suas varinhas.",
-        "Um feitiço de amor que atrai apenas animais selvagens.",
-        "O dia em que a gravidade resolveu tirar folga por uma hora."
+        "Um dia inteiro onde todas as palavras pronunciadas viram balões coloridos.",
+        "O herói acidentalmente ganha o poder de falar a língua secreta dos animais domésticos.",
+        "Uma competição culinária mágica onde as sobremesas começam a fugir dos pratos.",
+        "Um feitiço de invisibilidade que falha na hora mais engraçada da festa."
     ],
     romance: [
-        "Amor proibido entre membros de facções rivais no espaço.",
-        "Um reencontro em uma livraria mágica que prevê o futuro.",
-        "Uma viagem no tempo para salvar o primeiro amor da infância.",
-        "Cartas de amor encontradas em uma garrafa no meio de um oceano digital.",
-        "Paixão em um baile de máscaras onde ninguém revela a face.",
-        "Dois estranhos presos em uma estação de trem isolada pela neve.",
-        "O amor que floresce durante a reconstrução de um reino destruído.",
-        "Um pacto de casamento para unir dois mundos em guerra eterna.",
-        "A busca pela pessoa que aparece nos seus sonhos todas as noites.",
-        "Um robô e uma IA que descobrem sentimentos através de música."
+        "Duas almas que se comunicam através de canções levadas pelo vento marinho.",
+        "Um encontro marcado sob a chuva de pétalas luminosas do grande carvalho.",
+        "A viagem mágica para reconstruir o jardim das lembranças queridas."
     ],
     mystery: [
-        "O desaparecimento de um relógio que para o tempo.",
-        "Assassinato em um trem expresso intergaláctico.",
-        "Uma mensagem cifrada escondida em uma pintura renascentista.",
-        "O mistério do vilarejo onde ninguém consegue dormir.",
-        "Um detetive que só resolve crimes que ainda não aconteceram.",
-        "O sumiço da biblioteca que continha todos os segredos do mundo.",
-        "Uma herança deixada por um parente que nunca existiu no registro.",
-        "Um rastro de pegadas que termina no meio de uma parede sólida.",
-        "Uma cidade que aparece no mapa apenas durante o eclipse total.",
-        "O enigma da voz que fala através das sombras de uma mansão."
-    ],
-    horror: [
-        "Uma casa que muda sua arquitetura interna todas as noites.",
-        "O reflexo no espelho que começa a agir de forma independente.",
-        "Um vilarejo onde as sombras das pessoas fogem ao pôr do sol.",
-        "Um aplicativo que mostra exatamente como o usuário vai morrer.",
-        "Uma floresta onde as árvores sussurram seus segredos obscuros.",
-        "O brinquedo antigo que aparece em todos os cômodos da casa.",
-        "Uma névoa vermelha que traz de volta o que foi enterrado.",
-        "O som de passos pesados no sótão de uma mansão vazia.",
-        "Uma criatura que se alimenta das memórias felizes das vítimas.",
-        "A porta que nunca deve ser aberta, mesmo que algo bata nela."
-    ],
-    scifi: [
-        "A primeira colônia humana em um planeta feito de cristal.",
-        "Uma rebelião de androides por direitos básicos de existência.",
-        "O envio de uma mensagem para o passado através de um buraco negro.",
-        "Um mundo onde a consciência humana é carregada em uma nuvem.",
-        "O encontro com uma civilização que vive no núcleo de uma estrela.",
-        "Uma nave à deriva carregando o último frasco de DNA terrestre.",
-        "A invenção de um chip que permite a tradução universal de animais.",
-        "Uma guerra por recursos hídricos em um sistema solar seco.",
-        "O dia em que a internet ganhou consciência e parou o mundo.",
-        "A descoberta de uma megaestrutura alienígena na face oculta da Lua."
+        "O enigma do relógio da torre que começou a girar para trás misteriosamente.",
+        "O mapa que só revela o próximo passo sob a luz da lua cheia.",
+        "O sumiço do livro de receitas do alquimista mais atrapalhado da vila."
     ],
     fantasy: [
-        "Um jovem descobre ser o último guardião de um ovo de dragão.",
-        "Uma escola de magia escondida dentro de uma árvore milenar.",
-        "A busca pela espada que pode cortar a própria realidade.",
-        "Um reino onde as cores das flores definem os poderes do povo.",
-        "O despertar de um deus adormecido sob uma metrópole moderna.",
-        "Uma jornada ao submundo para negociar uma alma perdida.",
-        "O conflito entre o exército da luz e as sombras do abismo.",
-        "Uma maldição que transforma todas as palavras em pedras preciosas.",
-        "A ponte de arco-íris que conecta o mundo humano ao reino elfo.",
-        "O mercado mágico onde se pode comprar e vender tempo de vida."
+        "A descoberta de uma porta secreta que dá para uma biblioteca dentro de uma árvore.",
+        "O guardião do filhote de dragão que tem medo de espirrar fogo.",
+        "O mercado flutuante nas nuvens onde se vendem sonhos engarrafados."
     ],
-    drama: [
-        "A luta de um pai para salvar o filho em um mundo em colapso.",
-        "O peso de uma escolha que mudou o destino de uma família.",
-        "A superação de um trauma através da arte em uma cidade cinza.",
-        "O reencontro de dois irmãos que não se falavam há décadas.",
-        "A solidão de ser o último habitante de uma cidade abandonada.",
-        "O sacrifício de um líder para garantir a sobrevivência do povo.",
-        "A busca por perdão após um erro cometido na juventude.",
-        "A amizade improvável entre uma criança e um veterano de guerra.",
-        "O dilema ético de um médico em meio a uma epidemia global.",
-        "A descoberta de uma verdade dolorosa escondida por gerações."
+    scifi: [
+        "A primeira expedição de uma nave feita de cristal até os anéis luminosos de Saturno.",
+        "Um pequeno robô jardineiro que descobre a primeira flor em um planeta distante.",
+        "A mensagem codificada vinda de uma civilização amiga escondida na nebulosa."
     ],
     fable: [
-        "O rei que queria possuir o sol e acabou na escuridão eterna.",
-        "A árvore que se recusava a dar frutos para quem não agradecia.",
-        "O viajante que trocou sua sombra por sabedoria e se arrependeu.",
-        "O rio que parou de correr para ver se sentiriam sua falta.",
-        "A raposa que tentou enganar a morte com uma charada.",
-        "O espelho que só mostrava a verdadeira alma de quem o olhasse.",
-        "O homem que acumulou tanto ouro que não conseguia mais andar.",
-        "A criança que ensinou a floresta antiga a cantar novamente.",
-        "O pássaro que voou tão alto que viu o início de tudo.",
-        "O segredo da felicidade guardado por um humilde camponês."
-    ],
-    thriller: [
-        "Preso em um elevador com alguém que você suspeita ser um espião.",
-        "Uma contagem regressiva anônima enviada para o seu celular.",
-        "O vizinho que enterra algo estranho no jardim todas as madrugadas.",
-        "Receber fotos suas tiradas de dentro da sua própria casa.",
-        "Um jogo de gato e rato em um shopping fechado durante a noite.",
-        "O único sobrevivente de um acidente que não se lembra de nada.",
-        "Um segredo guardado por uma cidade inteira que começa a vazar.",
-        "Ser vigiado por alguém através das câmeras de segurança da rua.",
-        "O telefone que toca com a voz de alguém que já morreu.",
-        "Um rastro de pistas deixado por um sequestrador em lugares públicos."
+        "A árvore que só florescia quando alguém contava a ela uma história de bondade.",
+        "O pequeno riacho que sonhava em ver o mar e foi ajudado pelos animais da floresta.",
+        "A coruja que aprendeu que ouvir com o coração vale mais do que falar bonito."
     ],
     action: [
-        "Uma perseguição de carros em alta velocidade por uma metrópole futurista.",
-        "A invasão de uma base inimiga para recuperar ogivas roubadas.",
-        "Um mestre de artes marciais enfrentando um exército sozinho.",
-        "Fuga desesperada de um prédio em chamas cercado por mercenários.",
-        "O roubo impossível de um cassino flutuante no meio do oceano.",
-        "Um duelo de espadas sobre o teto de um trem em movimento.",
-        "Sobreviver a um desastre natural enquanto é caçado por vilões.",
-        "A missão secreta para resgatar um embaixador em território hostil.",
-        "Uma batalha épica entre tanques e aviões em um deserto escaldante.",
-        "O herói que precisa desativar uma bomba enquanto luta contra o tempo."
-    ],
-    pirate: [
-        "A busca por um mapa que leva a um tesouro de tempo, não de ouro.",
-        "Um navio fantasma que só aparece sob o brilho de uma lua de sangue.",
-        "A jornada para encontrar a lendária ilha que muda de posição no mapa.",
-        "Um jovem grumete que descobre ter o poder de controlar as correntes marinhas.",
-        "Dois capitães rivais forçados a unir-se para derrotar um Kraken colossal.",
-        "A caçada pelo 'Canto da Sereia', uma melodia mística que acalma tempestades.",
-        "Um navio pirata voador que saqueia reinos escondidos acima das nuvens.",
-        "Ouro amaldiçoado que transforma a tripulação em sombras vivas durante a noite.",
-        "Um código pirata ancestral que, se quebrado, invoca o julgamento de um Leviatã.",
-        "A busca pela bússola mágica que aponta para o que o coração mais deseja."
+        "Uma corrida eletrizante de naves voadoras através dos cânions de cristal.",
+        "A defesa do farol encantado durante a tempestade dos ventos gigantes.",
+        "O resgate audacioso nas profundezas do labirinto das engrenagens perdidas."
     ],
     sports: [
-        "O time de azarões que chega à final do campeonato mundial.",
-        "Um jogador descobre um talento oculto para um esporte proibido.",
-        "A rivalidade histórica entre dois capitães que são melhores amigos.",
-        "Treinar uma equipe de robôs para jogar o esporte favorito dos humanos.",
-        "A jornada de superação de um atleta após uma lesão grave.",
-        "Um campeonato de futebol onde o campo muda de gravidade.",
-        "A busca pela bola de ouro que confere habilidades sobre-humanas.",
-        "Um jovem da periferia que se torna a maior promessa do basquete.",
-        "O torneio de vôlei que unirá duas cidades em pé de guerra.",
-        "A última corrida de um piloto lendário de Fórmula 1."
-    ],
-    survival: [
-        "Preso em uma ilha deserta após um naufrágio misterioso.",
-        "Sobreviver a uma nevasca eterna em um abrigo subterrâneo.",
-        "A fuga de um labirinto mortal que se fecha a cada hora.",
-        "Cruzar um deserto sem fim com apenas um litro de água.",
-        "Escapar de uma cidade tomada por uma horda de infectados.",
-        "Sobreviver a uma queda de avião em uma selva de dinossauros.",
-        "A luta pela vida em uma caverna profunda que está inundando.",
-        "Manter-se vivo em uma estação espacial com os sistemas falhando.",
-        "Fugir de um predador implacável em uma floresta escura e densa.",
-        "A jornada de um grupo de refugiados em busca de uma terra segura."
-    ],
-    spy: [
-        "Infiltrar-se em um baile de gala para roubar segredos de Estado.",
-        "O agente secreto que descobre que sua agência foi corrompida.",
-        "Uma rede de espiões que utiliza sonhos para passar informações.",
-        "O jogo de traições entre agentes infiltrados em uma máfia internacional.",
-        "Recuperar um satélite de espionagem antes que caia em mãos erradas.",
-        "O uso de gadgets futuristas para invadir um bunker inexpugnável.",
-        "Uma missão de vigilância que revela uma conspiração global.",
-        "O espião aposentado que é forçado a voltar para uma última missão.",
-        "Troca de identidades em uma estação de esqui na Suíça.",
-        "O código secreto escondido em uma frequência de rádio esquecida."
-    ],
-    superhero: [
-        "Um herói que perdeu seus poderes e precisa aprender a ser humanos.",
-        "O surgimento do primeiro supervilão em uma cidade pacata.",
-        "A formação de uma liga de heróis para deter uma ameaça cósmica.",
-        "Um adolescente que descobre seus poderes no meio de uma aula.",
-        "O dilema de um herói que precisa escolher entre o amor e a cidade.",
-        "Uma escola para jovens com habilidades extraordinárias.",
-        "A origem secreta de um justiceiro que atua nas sombras.",
-        "O conflito entre heróis que discordam sobre o uso da força.",
-        "O herói que é injustamente acusado de um crime que não cometeu.",
-        "A busca por um sucessor para o maior protetor da Terra."
-    ],
-    cyberpunk: [
-        "Um hacker infiltrado na rede neural da maior megacorporação.",
-        "A vida de um detetive em uma cidade onde nunca para de chover neon.",
-        "A busca por uma IA que fugiu para a web profunda em busca de liberdade.",
-        "O mercado negro de memórias e experiências humanas.",
-        "A luta de uma classe baixa ciborgue contra a elite tecnológica.",
-        "Um robô que começa a sonhar e é caçado pela polícia.",
-        "O uso de implantes cerebrais para viver uma realidade paralela.",
-        "A descoberta de uma planta real em uma cidade feita de metal.",
-        "Um crime cometido em um mundo virtual que afeta a vida real.",
-        "A rebelião dos desconectados contra o sistema de vigilância total."
-    ],
-    western: [
-        "Um pistoleiro solitário em busca de vingança em uma cidade sem lei.",
-        "O assalto a um trem carregado de ouro no meio do deserto.",
-        "A disputa por terras férteis entre xerifes e bandoleiros.",
-        "A lenda do cavalo fantasma que protege os viajantes da trilha.",
-        "Um duelo ao meio-dia em uma praça poeirenta e silenciosa.",
-        "O mistério de uma mina de ouro amaldiçoada.",
-        "Uma jornada de escolta através de território hostil.",
-        "O bando de foras da lei que decide se tornar herói por um dia.",
-        "A construção da primeira ferrovia em meio a traições e ataques.",
-        "O segredo escondido no porão do saloon mais movimentado da cidade."
+        "O time de amigos que se une para vencer o grande torneio com trabalho em equipe.",
+        "A corrida mais veloz do reino onde a persistência vale mais que a velocidade.",
+        "O dia em que a pequena atleta descobriu a magia do passe perfeito."
     ]
 };
 
-const PROMPTS = [
-    "Uma jornada para recuperar um artefato perdido que controla o tempo.",
-    "Um mal-entendido leva a uma aliança improvável entre inimigos.",
-    "Uma descoberta científica muda tudo o que sabemos sobre a realidade.",
-    "Em um mundo onde a música é magia, alguém perdeu sua voz.",
-    "Uma festa surpresa que acaba salvando o reino de uma invasão."
+const DEFAULT_PROMPTS = [
+    "Uma jornada inesquecível para encontrar o vale onde as estrelas descansam.",
+    "Dois amigos que encontram uma chave antiga e descobrem um mundo secreto.",
+    "Um desafio divertido que ensina que a amizade é a maior força de todas.",
+    "Uma aventura cheia de descobertas através de cenários mágicos e inesperados."
 ];
 
 export default function StoryWizard({ onNext, onBack }) {
     const { startGeneration, selectedCharacters } = useStory();
-    const carouselRef = useRef(null);
 
     const [data, setData] = useState({
         universe: null,
@@ -369,8 +212,9 @@ export default function StoryWizard({ onNext, onBack }) {
         description: ''
     });
 
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+    const [isUniverseModalOpen, setIsUniverseModalOpen] = useState(false);
+    const [modalSearchTerm, setModalSearchTerm] = useState('');
+    const [modalCategory, setModalCategory] = useState('all');
     const [showCharacterModal, setShowCharacterModal] = useState(false);
 
     // Customização opcional dos personagens
@@ -394,41 +238,36 @@ export default function StoryWizard({ onNext, onBack }) {
     };
 
     const handleRandomPrompt = () => {
-        const genrePrompts = data.genre ? (GENRE_PROMPTS[data.genre] || PROMPTS) : PROMPTS;
-        const random = genrePrompts[Math.floor(Math.random() * genrePrompts.length)];
+        const pool = data.genre && GENRE_PROMPTS[data.genre] ? GENRE_PROMPTS[data.genre] : DEFAULT_PROMPTS;
+        const random = pool[Math.floor(Math.random() * pool.length)];
         setData(prev => ({ ...prev, description: random }));
     };
-
-    const filteredUniverses = useMemo(() => {
-        if (!searchTerm.trim()) return UNIVERSES;
-        const term = searchTerm.toLowerCase();
-        return UNIVERSES.filter(u =>
-            u.label.toLowerCase().includes(term) || u.desc.toLowerCase().includes(term)
-        );
-    }, [searchTerm]);
 
     const currentUniverse = useMemo(() => {
         return UNIVERSES.find(u => u.id === data.universe) || null;
     }, [data.universe]);
 
     const currentGenre = useMemo(() => {
-        return GENRES.find(g => g.id === data.genre);
+        return GENRES.find(g => g.id === data.genre) || null;
     }, [data.genre]);
 
     const currentStyle = useMemo(() => {
         return STYLES.find(s => s.id === data.style) || STYLES[0];
     }, [data.style]);
 
-    const scrollCarousel = (offset) => {
-        if (carouselRef.current) {
-            carouselRef.current.scrollBy({ top: offset, behavior: 'smooth' });
-        }
-    };
+    // Filtragem no catálogo modal
+    const filteredModalUniverses = useMemo(() => {
+        return UNIVERSES.filter(u => {
+            const matchesCategory = modalCategory === 'all' || u.category === modalCategory;
+            const term = modalSearchTerm.trim().toLowerCase();
+            const matchesSearch = !term || u.label.toLowerCase().includes(term) || u.desc.toLowerCase().includes(term);
+            return matchesCategory && matchesSearch;
+        });
+    }, [modalCategory, modalSearchTerm]);
 
     const handleCreateStory = () => {
         if (!data.universe || !data.genre) return;
 
-        // Merge character details with selectedCharacters
         const charactersWithDetails = selectedCharacters.map(char => {
             const details = characterDetails.find(d => d.id === char.id) || {};
             return {
@@ -439,7 +278,6 @@ export default function StoryWizard({ onNext, onBack }) {
             };
         });
 
-        // Finalize
         startGeneration({
             universe: data.universe,
             style: data.style || 'universe_default',
@@ -453,350 +291,326 @@ export default function StoryWizard({ onNext, onBack }) {
     const isReady = !!data.universe && !!data.genre;
 
     return (
-        <div className="min-h-screen flex flex-col items-center pt-6 px-4 pb-28 relative font-body text-slate-700 bg-[var(--color-bg-primary)]">
-            {/* Soft Background Blobs */}
-            <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-indigo-50/50 to-transparent pointer-events-none" />
-
+        <div className="min-h-screen flex flex-col items-center pt-6 px-4 pb-32 relative font-body text-slate-800 bg-[#FAF8F5]">
             <BackButton onClick={onBack} />
 
             <main className="w-full max-w-6xl z-10 flex flex-col gap-6 mt-14 sm:mt-6">
-                {/* Cabeçalho */}
-                <div className="text-center space-y-1">
-                    <span className="text-xs uppercase tracking-widest font-bold text-slate-400 bg-white/70 px-4 py-1.5 rounded-full border border-slate-200/60 shadow-sm inline-flex items-center gap-1.5">
-                        <Sparkles size={14} className="text-magic-pink" />
-                        Criação da História
-                    </span>
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-heading text-slate-800">
-                        Configure Sua <span className="text-transparent bg-clip-text bg-gradient-to-r from-magic-pink to-magic-emerald">Aventura</span>
+                {/* Header Minimalista & Equilibrado */}
+                <div className="text-center space-y-1.5">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-[#EAE5DC] text-xs font-bold text-[#8364D8] shadow-xs">
+                        <Sparkles size={14} className="text-[#9D7FEA]" />
+                        <span>Estúdio de Criação • Maginária</span>
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-heading text-slate-800 tracking-tight">
+                        Monte o Seu <span className="text-[#8364D8]">Livro Mágico</span>
                     </h1>
-                    <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
-                        Escolha o universo no carrossel, selecione o tema e crie o seu livro em uma única tela.
+                    <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+                        Defina o mundo, a arte e a trama da aventura com tudo em uma tela só e sem distrações.
                     </p>
                 </div>
 
-                {/* Dashboard Grid (2 Colunas Perfeitamente Simétricas) */}
+                {/* GRID 50/50 SIMÉTRICO */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                     
-                    {/* COLUNA ESQUERDA: Universo (50% de largura) */}
-                    <div className="flex flex-col bg-white rounded-3xl border border-slate-200/80 shadow-sm p-5 sm:p-6 justify-between h-full min-h-[490px] lg:h-[510px]">
-                        {/* Header do Card 1 */}
-                        <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-pink-100 text-magic-pink flex items-center justify-center font-bold text-sm shrink-0">
-                                    1
-                                </div>
-                                <div>
-                                    <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">
-                                        Universo
-                                    </h2>
-                                    <p className="text-[11px] text-slate-400">Onde a aventura se passa</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                {currentUniverse ? (
-                                    <span className="text-xs font-bold text-magic-pink bg-pink-50 border border-pink-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                        <Check size={12} strokeWidth={3} />
-                                        <span>{currentUniverse.label}</span>
-                                    </span>
-                                ) : (
-                                    <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200/60 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                        <Sparkles size={11} className="text-amber-500" />
-                                        <span>Escolha um</span>
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Barra de Busca de Universos */}
-                        <div className="relative my-3">
-                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Buscar entre 45 universos..."
-                                className="w-full bg-slate-50 border border-slate-200/80 rounded-xl pl-9 pr-7 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-magic-pink focus:ring-1 focus:ring-pink-100 transition-all"
-                            />
-                            {searchTerm && (
-                                <button
-                                    onClick={() => setSearchTerm('')}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
-                                >
-                                    <X size={14} />
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Roleta / Lista Vertical com Snap */}
-                        <div className="relative flex-1 min-h-[280px] max-h-[300px] overflow-hidden">
-                            <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
-                            <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white to-transparent pointer-events-none z-10" />
-
-                            <div
-                                ref={carouselRef}
-                                className="h-full overflow-y-auto space-y-2 pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-y snap-mandatory"
-                            >
-                                {filteredUniverses.map((u) => {
-                                    const isSelected = data.universe === u.id;
-                                    return (
-                                        <div
-                                            key={u.id}
-                                            onClick={() => handleSelect('universe', u.id)}
-                                            className={`snap-center cursor-pointer p-2.5 rounded-2xl flex items-center gap-3 transition-all duration-200 select-none ${
-                                                isSelected
-                                                    ? 'bg-pink-50/90 border-2 border-magic-pink shadow-md scale-[1.01]'
-                                                    : 'bg-slate-50/70 hover:bg-slate-100/80 border border-slate-200/60 hover:border-slate-300'
-                                            }`}
-                                        >
-                                            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${u.color} flex items-center justify-center text-white shrink-0 shadow-sm ${isSelected ? 'scale-105' : ''}`}>
-                                                <u.icon size={22} className="drop-shadow-sm" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className={`font-bold text-sm truncate ${isSelected ? 'text-magic-pink' : 'text-slate-800'}`}>
-                                                    {u.label}
-                                                </h3>
-                                                <p className="text-[11px] text-slate-400 truncate">{u.desc}</p>
-                                            </div>
-                                            {isSelected && (
-                                                <div className="w-5 h-5 rounded-full bg-magic-pink text-white flex items-center justify-center text-[10px] shrink-0 font-bold shadow-sm">
-                                                    ✓
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-
-                                {filteredUniverses.length === 0 && (
-                                    <div className="text-center py-12 text-slate-400 text-xs">
-                                        Nenhum universo encontrado para "{searchTerm}"
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Rodapé do Card 1 */}
-                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                            <span>{filteredUniverses.length} universos disponíveis</span>
-                            {currentUniverse ? (
-                                <span className="font-semibold text-magic-pink">Selecionado: {currentUniverse.label} ✓</span>
-                            ) : (
-                                <span>Clique para selecionar</span>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* COLUNA DIREITA: Tema & Trama (50% de largura) */}
-                    <div className="flex flex-col bg-white rounded-3xl border border-slate-200/80 shadow-sm p-5 sm:p-6 justify-between h-full min-h-[490px] lg:h-[510px]">
-                        {/* Header do Card 2 */}
-                        <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-magic-emerald flex items-center justify-center font-bold text-sm shrink-0">
-                                    2
-                                </div>
-                                <div>
-                                    <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">
-                                        Tema & Trama
-                                    </h2>
-                                    <p className="text-[11px] text-slate-400">Gênero e ideia da história</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                {currentGenre ? (
-                                    <span className="text-xs font-bold text-magic-emerald bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                        <span>{currentGenre.icon}</span>
-                                        <span>{currentGenre.label}</span>
-                                    </span>
-                                ) : (
-                                    <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200/60 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                        <Sparkles size={11} className="text-amber-500" />
-                                        <span>Escolha um</span>
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Pills de Gênero */}
-                        <div className="my-3">
-                            <div className="flex flex-wrap gap-2 max-h-[170px] overflow-y-auto p-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                                {GENRES.map((g) => {
-                                    const isSelected = data.genre === g.id;
-                                    return (
-                                        <button
-                                            key={g.id}
-                                            type="button"
-                                            onClick={() => handleSelect('genre', g.id)}
-                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer flex items-center gap-1.5 ${
-                                                isSelected
-                                                    ? 'bg-gradient-to-r from-magic-pink to-rose-500 text-white border-transparent shadow-md shadow-pink-200/50 scale-105'
-                                                    : 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-800'
-                                            }`}
-                                        >
-                                            <span>{g.icon}</span>
-                                            <span>{g.label}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Ideia da História (Opcional) */}
-                        <div className="pt-3 border-t border-slate-100 space-y-1.5">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                                    <span>Ideia da História</span>
-                                    <span className="text-[10px] text-slate-400 font-normal lowercase">(opcional)</span>
-                                </label>
-                                <button
-                                    type="button"
-                                    onClick={handleRandomPrompt}
-                                    className="text-xs font-bold text-magic-pink hover:text-pink-600 flex items-center gap-1.5 transition-colors cursor-pointer"
-                                    title="Sugerir ideia aleatória para o tema escolhido"
-                                >
-                                    <Shuffle size={13} />
-                                    <span>Sortear Ideia</span>
-                                </button>
-                            </div>
-                            <textarea
-                                value={data.description}
-                                onChange={(e) => handleSelect('description', e.target.value)}
-                                placeholder={
-                                    data.genre
-                                        ? `Escreva um detalhe especial para esta aventura de ${currentGenre?.label || 'história'} ou clique em 'Sortear Ideia'...`
-                                        : "Selecione um tema acima ou clique em 'Sortear Ideia' para sugestões..."
-                                }
-                                className="w-full h-24 bg-slate-50/80 border border-slate-200 rounded-2xl p-3 text-xs sm:text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-magic-pink focus:ring-1 focus:ring-pink-100 resize-none transition-all"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* SEÇÃO EXPANSÍVEL: Opções Avançadas (Estilo Visual & Heróis) */}
-                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden transition-all">
-                    <button
-                        type="button"
-                        onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-                        className="w-full p-4 sm:p-5 flex items-center justify-between text-left hover:bg-slate-50/70 transition-colors cursor-pointer"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                                <Cog size={18} />
-                            </div>
+                    {/* COLUNA ESQUERDA: O MUNDO & A ARTE */}
+                    <div className="flex flex-col gap-6">
+                        
+                        {/* 1. SELETOR DE UNIVERSO (Card Principal) */}
+                        <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col justify-between min-h-[190px]">
                             <div>
-                                <h3 className="font-heading font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
-                                    Opções Avançadas
-                                    <span className="text-[10px] font-semibold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                                        Opcional
-                                    </span>
-                                </h3>
-                                <p className="text-xs text-slate-400">
-                                    Estilo visual ({currentStyle.label}) {selectedCharacters.length > 0 ? `• ${selectedCharacters.length} herói(s) selecionado(s)` : ''}
-                                </p>
-                            </div>
-                        </div>
-                        <ChevronDown size={20} className={`text-slate-400 transition-transform duration-300 ${isAdvancedOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    <AnimatePresence>
-                        {isAdvancedOpen && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.25 }}
-                                className="overflow-hidden border-t border-slate-100 p-5 sm:p-6 space-y-6 bg-slate-50/40"
-                            >
-                                {/* 1. Seletor de Estilo Visual */}
-                                <div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div>
-                                            <h4 className="font-bold text-sm text-slate-800">Estilo Visual das Ilustrações</h4>
-                                            <p className="text-xs text-slate-400">Por padrão, usamos a arte autêntica do universo</p>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-7 h-7 rounded-xl bg-[#9D7FEA]/15 text-[#8364D8] font-bold text-xs flex items-center justify-center">
+                                            1
                                         </div>
-                                        <span className="text-xs font-bold text-magic-emerald bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                                            Ativo: {currentStyle.label}
-                                        </span>
+                                        <div>
+                                            <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">
+                                                Universo da História
+                                            </h2>
+                                            <p className="text-[11px] text-slate-400">Onde a aventura vai acontecer</p>
+                                        </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 max-h-[220px] overflow-y-auto p-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                                        {STYLES.map((s) => {
-                                            const isStyleSelected = data.style === s.id;
-                                            return (
-                                                <button
-                                                    key={s.id}
-                                                    type="button"
-                                                    onClick={() => handleSelect('style', s.id)}
-                                                    className={`p-2.5 rounded-2xl flex flex-col items-center text-center gap-1.5 transition-all border cursor-pointer ${
-                                                        isStyleSelected
-                                                            ? 'bg-white border-2 border-magic-emerald shadow-md ring-2 ring-emerald-50'
-                                                            : 'bg-white/80 hover:bg-white border-slate-200/70 hover:border-slate-300'
-                                                    }`}
-                                                >
-                                                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${s.color} text-white flex items-center justify-center shrink-0 shadow-sm ${isStyleSelected ? 'scale-105' : ''}`}>
-                                                        <s.icon size={18} />
-                                                    </div>
-                                                    <span className={`font-bold text-xs truncate w-full ${isStyleSelected ? 'text-magic-emerald' : 'text-slate-700'}`}>
-                                                        {s.label}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                                    {currentUniverse ? (
+                                        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#9D7FEA]/10 text-[#8364D8] border border-[#9D7FEA]/30">
+                                            Escolhido
+                                        </span>
+                                    ) : (
+                                        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60">
+                                            Obrigatório
+                                        </span>
+                                    )}
                                 </div>
 
-                                {/* 2. Personalização dos Heróis */}
-                                {selectedCharacters.length > 0 && (
-                                    <div className="pt-4 border-t border-slate-200/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex -space-x-2 overflow-hidden">
-                                                {selectedCharacters.map(char => (
-                                                    <img
-                                                        key={char.id}
-                                                        src={char.avatar || (char.photos && char.photos[0]) || "https://placehold.co/100x120/e2e8f0/cbd5e1"}
-                                                        alt={char.nickname}
-                                                        className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
-                                                    />
-                                                ))}
+                                {/* Preview do Universo Selecionado ou Estado Vazio */}
+                                {currentUniverse ? (
+                                    <div
+                                        onClick={() => setIsUniverseModalOpen(true)}
+                                        className="cursor-pointer p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE5DC] hover:border-[#9D7FEA] transition-all flex items-center justify-between group mt-2"
+                                    >
+                                        <div className="flex items-center gap-3.5 min-w-0">
+                                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${currentUniverse.color} text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform`}>
+                                                <currentUniverse.icon size={24} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h3 className="font-bold text-slate-800 text-sm truncate group-hover:text-[#8364D8] transition-colors">
+                                                    {currentUniverse.label}
+                                                </h3>
+                                                <p className="text-xs text-slate-400 truncate">{currentUniverse.desc}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-xs font-bold text-[#8364D8] bg-white border border-[#EAE5DC] px-3 py-1.5 rounded-xl shrink-0 group-hover:border-[#9D7FEA]">
+                                            <span>Trocar</span>
+                                            <ChevronRight size={13} />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div
+                                        onClick={() => setIsUniverseModalOpen(true)}
+                                        className="cursor-pointer p-4 rounded-2xl bg-[#FAF8F5] border-2 border-dashed border-[#EAE5DC] hover:border-[#9D7FEA] hover:bg-[#FAF8F5]/80 transition-all flex items-center justify-between group mt-2"
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-11 h-11 rounded-xl bg-white border border-[#EAE5DC] text-[#8364D8] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                                <Compass size={22} className="text-[#9D7FEA]" />
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-sm text-slate-800">
-                                                    Heróis da Aventura ({selectedCharacters.map(c => c.nickname).join(', ')})
-                                                </h4>
-                                                <p className="text-xs text-slate-400">Atribua papéis personalizados (ex: Mago, Comandante, Vilão)</p>
+                                                <h3 className="font-bold text-slate-700 text-sm">
+                                                    Nenhum universo selecionado
+                                                </h3>
+                                                <p className="text-xs text-slate-400">Toque para explorar 45 universos disponíveis</p>
                                             </div>
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => setShowCharacterModal(true)}
-                                            className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-xs hover:border-magic-pink hover:text-magic-pink transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                                            className="px-3.5 py-1.5 rounded-xl bg-[#9D7FEA] text-white text-xs font-bold shrink-0 hover:bg-[#8F6EE5] transition-all shadow-xs"
                                         >
-                                            <Users size={15} />
-                                            Personalizar Heróis
+                                            Explorar
                                         </button>
                                     </div>
                                 )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                            </div>
+
+                            <div className="mt-3 pt-3 border-t border-[#EAE5DC]/60 flex items-center justify-between text-[11px] text-slate-400">
+                                <span>45 cenários catalogados</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsUniverseModalOpen(true)}
+                                    className="text-xs font-bold text-[#8364D8] hover:underline cursor-pointer"
+                                >
+                                    Ver todos os 45 mundos →
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 2. ESTILO VISUAL DAS ILUSTRAÇÕES (Card Simétrico) */}
+                        <div className="tactile-card bg-white p-5 sm:p-6 flex-1 flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-7 h-7 rounded-xl bg-[#9D7FEA]/15 text-[#8364D8] font-bold text-xs flex items-center justify-center">
+                                            2
+                                        </div>
+                                        <div>
+                                            <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">
+                                                Estilo Visual da Arte
+                                            </h2>
+                                            <p className="text-[11px] text-slate-400">O traço estético das ilustrações</p>
+                                        </div>
+                                    </div>
+
+                                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#FAF8F5] text-slate-600 border border-[#EAE5DC]">
+                                        {currentStyle.label}
+                                    </span>
+                                </div>
+
+                                {/* Grade Simétrica de Estilos Visuais */}
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[300px] overflow-y-auto p-1 pr-1.5 [scrollbar-width:thin]">
+                                    {STYLES.map((s) => {
+                                        const isSelected = data.style === s.id;
+                                        return (
+                                            <button
+                                                key={s.id}
+                                                type="button"
+                                                onClick={() => handleSelect('style', s.id)}
+                                                className={`p-3 rounded-2xl flex flex-col items-center text-center gap-2 transition-all border cursor-pointer ${
+                                                    isSelected
+                                                        ? 'bg-[#9D7FEA]/10 border-2 border-[#9D7FEA] shadow-xs'
+                                                        : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC] text-slate-700'
+                                                }`}
+                                            >
+                                                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${s.color} text-white flex items-center justify-center shrink-0 shadow-xs ${isSelected ? 'scale-105' : ''}`}>
+                                                    <s.icon size={18} />
+                                                </div>
+                                                <div className="w-full">
+                                                    <span className={`font-bold text-xs block truncate ${isSelected ? 'text-[#8364D8]' : 'text-slate-700'}`}>
+                                                        {s.label}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-[#EAE5DC]/60">
+                                💡 Dica: "Estilo do Universo" mantém a fidelidade exata da animação ou filme original.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* COLUNA DIREITA: A TRAMA & HERÓIS */}
+                    <div className="flex flex-col gap-6">
+                        
+                        {/* 3. SELETOR DE GÊNERO / TEMA */}
+                        <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-7 h-7 rounded-xl bg-[#FBAE7B]/25 text-[#D97736] font-bold text-xs flex items-center justify-center">
+                                            3
+                                        </div>
+                                        <div>
+                                            <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">
+                                                Gênero & Tema
+                                            </h2>
+                                            <p className="text-[11px] text-slate-400">Qual será a pegada da narrativa?</p>
+                                        </div>
+                                    </div>
+
+                                    {currentGenre ? (
+                                        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#9D7FEA] text-white">
+                                            {currentGenre.label}
+                                        </span>
+                                    ) : (
+                                        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60">
+                                            Obrigatório
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Chips Táteis de Gênero */}
+                                <div className="flex flex-wrap gap-2 max-h-[190px] overflow-y-auto p-0.5 [scrollbar-width:thin]">
+                                    {GENRES.map((g) => {
+                                        const isSelected = data.genre === g.id;
+                                        return (
+                                            <button
+                                                key={g.id}
+                                                type="button"
+                                                onClick={() => handleSelect('genre', g.id)}
+                                                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                                                    isSelected
+                                                        ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-xs'
+                                                        : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC] text-slate-600 hover:text-slate-800'
+                                                }`}
+                                            >
+                                                {g.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-[#EAE5DC]/60">
+                                18 gêneros infantis e juvenis prontos para inspirar a história.
+                            </p>
+                        </div>
+
+                        {/* 4. IDEIA DA HISTÓRIA & HERÓIS */}
+                        <div className="tactile-card bg-white p-5 sm:p-6 flex-1 flex flex-col justify-between gap-4">
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-7 h-7 rounded-xl bg-[#FBAE7B]/25 text-[#D97736] font-bold text-xs flex items-center justify-center">
+                                            4
+                                        </div>
+                                        <div>
+                                            <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">
+                                                Ideia da História
+                                            </h2>
+                                            <p className="text-[11px] text-slate-400">Opcional: um gancho ou detalhe especial</p>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleRandomPrompt}
+                                        className="px-3 py-1.5 rounded-xl bg-[#FBAE7B]/15 hover:bg-[#FBAE7B]/25 text-[#D97736] text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                                        title="Sortear ideia para o tema selecionado"
+                                    >
+                                        <Shuffle size={13} />
+                                        <span>Sortear Ideia</span>
+                                    </button>
+                                </div>
+
+                                <div className="relative">
+                                    <textarea
+                                        value={data.description}
+                                        onChange={(e) => handleSelect('description', e.target.value)}
+                                        placeholder={
+                                            data.genre
+                                                ? `Escreva um detalhe para esta aventura de ${currentGenre?.label || 'história'} ou clique em 'Sortear Ideia'...`
+                                                : "Selecione um tema acima ou clique em 'Sortear Ideia' para inspirações..."
+                                        }
+                                        className="w-full h-24 bg-[#FAF8F5] border border-[#EAE5DC] rounded-2xl p-3.5 text-xs sm:text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#9D7FEA] focus:ring-1 focus:ring-[#9D7FEA]/30 resize-none transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Strip de Heróis Participantes */}
+                            {selectedCharacters.length > 0 && (
+                                <div className="pt-3 border-t border-[#EAE5DC]/60 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className="flex -space-x-2 overflow-hidden shrink-0">
+                                            {selectedCharacters.map(char => (
+                                                <img
+                                                    key={char.id}
+                                                    src={char.avatar || (char.photos && char.photos[0]) || "https://placehold.co/100x120/e2e8f0/cbd5e1"}
+                                                    alt={char.nickname}
+                                                    className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover shadow-xs"
+                                                />
+                                            ))}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-bold text-slate-700 truncate">
+                                                {selectedCharacters.map(c => c.nickname).join(', ')}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400">Heróis na história</p>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCharacterModal(true)}
+                                        className="px-3 py-1.5 rounded-xl bg-white border border-[#EAE5DC] text-slate-700 hover:border-[#9D7FEA] hover:text-[#8364D8] font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
+                                    >
+                                        <Users size={14} />
+                                        <span>Personalizar</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
-                {/* BARRA FIXA / CARD DE AÇÃO */}
-                <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-4 z-20">
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <div className={`w-12 h-12 rounded-2xl ${currentUniverse ? `bg-gradient-to-br ${currentUniverse.color} text-white` : 'bg-slate-100 text-slate-400 border border-slate-200'} flex items-center justify-center shrink-0 shadow-md`}>
-                            {currentUniverse ? <currentUniverse.icon size={24} /> : <Sparkles size={24} className="text-magic-pink" />}
+                {/* BARRA FIXA DE SUMÁRIO & CRIAÇÃO */}
+                <div className="bg-white rounded-3xl border border-[#EAE5DC] p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-4 z-20">
+                    <div className="flex items-center gap-3.5 w-full sm:w-auto">
+                        <div className={`w-12 h-12 rounded-2xl ${currentUniverse ? `bg-gradient-to-br ${currentUniverse.color} text-white` : 'bg-[#FAF8F5] text-slate-400 border border-[#EAE5DC]'} flex items-center justify-center shrink-0 shadow-xs`}>
+                            {currentUniverse ? <currentUniverse.icon size={24} /> : <BookOpen size={24} className="text-[#9D7FEA]" />}
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
                                 <span className={`font-bold text-sm sm:text-base ${currentUniverse ? 'text-slate-800' : 'text-slate-400'}`}>
-                                    {currentUniverse ? currentUniverse.label : 'Selecione um universo'}
+                                    {currentUniverse ? currentUniverse.label : '1. Escolha o Universo'}
                                 </span>
                                 <span className="text-slate-300">•</span>
-                                <span className="font-bold text-magic-pink text-xs sm:text-sm">
-                                    {currentGenre ? currentGenre.label : 'Selecione um tema'}
+                                <span className={`font-bold text-xs sm:text-sm ${currentGenre ? 'text-[#8364D8]' : 'text-slate-400'}`}>
+                                    {currentGenre ? currentGenre.label : '2. Escolha o Gênero'}
                                 </span>
                             </div>
                             <p className="text-xs text-slate-400">
-                                Estilo: <span className="font-medium text-slate-600">{currentStyle.label}</span>
+                                Estilo: <span className="font-semibold text-slate-600">{currentStyle.label}</span>
+                                {selectedCharacters.length > 0 && ` • ${selectedCharacters.length} herói(s)`}
                             </p>
                         </div>
                     </div>
@@ -805,102 +619,245 @@ export default function StoryWizard({ onNext, onBack }) {
                         type="button"
                         onClick={handleCreateStory}
                         disabled={!isReady}
-                        className={`w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-base transition-all shadow-xl ${
+                        className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-bold text-base transition-all ${
                             isReady
-                                ? 'bg-gradient-to-r from-magic-pink to-magic-emerald text-white hover:scale-105 active:scale-95 shadow-pink-200 cursor-pointer'
-                                : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                                ? 'bg-[#9D7FEA] hover:bg-[#8F6EE5] text-white border-b-4 border-[#8364D8] active:border-b-0 active:translate-y-1 shadow-md shadow-[#9D7FEA]/20 cursor-pointer'
+                                : 'bg-slate-200 text-slate-400 border-b-4 border-slate-300 cursor-not-allowed shadow-none'
                         }`}
                     >
                         <span>Criar Livro Mágico ✨</span>
-                        <Wand2 size={20} />
+                        <Wand2 size={18} />
                     </button>
                 </div>
             </main>
 
-            {/* Modal de Personalização dos Heróis */}
+            {/* MODAL DE CATÁLOGO DOS 45 UNIVERSOS */}
+            <AnimatePresence>
+                {isUniverseModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsUniverseModalOpen(false)}
+                            className="absolute inset-0 bg-slate-900/40"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                            className="relative w-full max-w-4xl max-h-[88vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-[#EAE5DC]"
+                        >
+                            {/* Modal Header */}
+                            <div className="p-5 sm:p-6 border-b border-[#EAE5DC] bg-[#FAF8F5] flex flex-col gap-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-2xl bg-[#9D7FEA]/15 text-[#8364D8] flex items-center justify-center font-bold">
+                                            <Compass size={22} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-heading font-bold text-slate-800 text-lg sm:text-xl">
+                                                Catálogo de 45 Universos
+                                            </h3>
+                                            <p className="text-xs text-slate-400">Escolha o mundo mágico onde sua história vai se passar</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsUniverseModalOpen(false)}
+                                        className="w-9 h-9 rounded-full bg-white border border-[#EAE5DC] text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-all cursor-pointer"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+
+                                {/* Busca & Categorias */}
+                                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                                    {/* Categorias (Abas) */}
+                                    <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0 [scrollbar-width:none]">
+                                        {UNIVERSE_CATEGORIES.map(cat => {
+                                            const isActive = modalCategory === cat.id;
+                                            return (
+                                                <button
+                                                    key={cat.id}
+                                                    type="button"
+                                                    onClick={() => setModalCategory(cat.id)}
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                                                        isActive
+                                                            ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-xs'
+                                                            : 'bg-white hover:bg-slate-100 border-[#EAE5DC] text-slate-600'
+                                                    }`}
+                                                >
+                                                    {cat.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Busca */}
+                                    <div className="relative min-w-[200px] sm:w-64">
+                                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            value={modalSearchTerm}
+                                            onChange={(e) => setModalSearchTerm(e.target.value)}
+                                            placeholder="Buscar universo..."
+                                            className="w-full bg-white border border-[#EAE5DC] rounded-xl pl-9 pr-7 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#9D7FEA] transition-all"
+                                        />
+                                        {modalSearchTerm && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setModalSearchTerm('')}
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                                            >
+                                                <X size={13} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Grid of Universes */}
+                            <div className="flex-1 overflow-y-auto p-5 sm:p-6 [scrollbar-width:thin]">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                    {filteredModalUniverses.map(u => {
+                                        const isSelected = data.universe === u.id;
+                                        return (
+                                            <div
+                                                key={u.id}
+                                                onClick={() => {
+                                                    handleSelect('universe', u.id);
+                                                    setIsUniverseModalOpen(false);
+                                                }}
+                                                className={`p-3.5 rounded-2xl flex items-center gap-3.5 transition-all border cursor-pointer select-none ${
+                                                    isSelected
+                                                        ? 'bg-[#9D7FEA]/10 border-2 border-[#9D7FEA] shadow-xs'
+                                                        : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC]'
+                                                }`}
+                                            >
+                                                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${u.color} text-white flex items-center justify-center shrink-0 shadow-xs ${isSelected ? 'scale-105' : ''}`}>
+                                                    <u.icon size={22} />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <h4 className={`font-bold text-sm truncate ${isSelected ? 'text-[#8364D8]' : 'text-slate-800'}`}>
+                                                        {u.label}
+                                                    </h4>
+                                                    <p className="text-[11px] text-slate-400 truncate">{u.desc}</p>
+                                                </div>
+                                                {isSelected && (
+                                                    <div className="w-5 h-5 rounded-full bg-[#9D7FEA] text-white flex items-center justify-center text-[10px] shrink-0 font-bold">
+                                                        ✓
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {filteredModalUniverses.length === 0 && (
+                                    <div className="text-center py-16 text-slate-400 text-xs">
+                                        Nenhum universo encontrado para "{modalSearchTerm}".
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="p-4 sm:p-5 border-t border-[#EAE5DC] bg-[#FAF8F5] flex items-center justify-between">
+                                <span className="text-xs text-slate-500">
+                                    {filteredModalUniverses.length} universo(s) exibido(s)
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsUniverseModalOpen(false)}
+                                    className="px-5 py-2 rounded-xl bg-white border border-[#EAE5DC] hover:border-slate-300 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+                                >
+                                    Fechar
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* MODAL DE PERSONALIZAÇÃO DOS HERÓIS */}
             <AnimatePresence>
                 {showCharacterModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center pt-24 pb-8 p-4">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setShowCharacterModal(false)}
-                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                            className="absolute inset-0 bg-slate-900/40"
                         />
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.95, y: 15 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden"
+                            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                            className="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-[#EAE5DC]"
                         >
                             {/* Modal Header */}
-                            <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+                            <div className="flex items-center justify-between p-5 sm:p-6 border-b border-[#EAE5DC] bg-[#FAF8F5]">
                                 <div>
-                                    <h3 className="text-xl font-bold font-heading text-slate-800">
-                                        Personalizar <span className="text-magic-pink">Heróis</span>
+                                    <h3 className="text-lg sm:text-xl font-bold font-heading text-slate-800">
+                                        Personalizar <span className="text-[#8364D8]">Heróis da História</span>
                                     </h3>
-                                    <p className="text-sm text-slate-500 mt-1">Preencha os campos para mudar como eles agem ou quem eles são na sua história (tudo é livre e opcional).</p>
+                                    <p className="text-xs text-slate-500 mt-0.5">Preencha papéis ou traços para enriquecer a narrativa (opcional).</p>
                                 </div>
                                 <button
                                     onClick={() => setShowCharacterModal(false)}
                                     className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all cursor-pointer"
                                 >
-                                    <X size={24} />
+                                    <X size={20} />
                                 </button>
                             </div>
 
-                            {/* Modal Body / Scrollable Area */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            {/* Modal Body */}
+                            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
                                 {selectedCharacters.map((char) => {
                                     const details = characterDetails.find(d => d.id === char.id) || {};
                                     return (
-                                        <div key={char.id} className="p-5 bg-slate-50/80 rounded-2xl border border-slate-200 flex flex-col md:flex-row gap-6 shadow-sm relative overflow-hidden group">
-                                            {/* Decorative colored edge */}
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-magic-pink/20 to-magic-emerald/20 group-hover:from-magic-pink group-hover:to-magic-emerald transition-all duration-300" />
-
-                                            {/* Avatar Info */}
-                                            <div className="flex flex-col items-center gap-3 w-full sm:w-[140px] shrink-0">
-                                                <div className="w-24 sm:w-28 md:w-32 aspect-[3/4] rounded-2xl overflow-hidden border-[3px] border-white shadow-md relative group/photo">
+                                        <div key={char.id} className="p-4 sm:p-5 bg-[#FAF8F5] rounded-2xl border border-[#EAE5DC] flex flex-col sm:flex-row gap-5">
+                                            <div className="flex flex-col items-center gap-2 w-full sm:w-[130px] shrink-0">
+                                                <div className="w-20 sm:w-24 aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white shadow-xs">
                                                     <img
                                                         src={char.avatar || (char.photos && char.photos[0]) || "https://placehold.co/100x120/e2e8f0/cbd5e1"}
                                                         alt={char.nickname}
-                                                        className="absolute inset-0 w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-500"
+                                                        className="w-full h-full object-cover"
                                                     />
                                                 </div>
-                                                <span className="font-bold text-sm text-slate-700 text-center px-2">{char.nickname}</span>
+                                                <span className="font-bold text-xs text-slate-700 text-center">{char.nickname}</span>
                                             </div>
 
-                                            {/* Inputs */}
-                                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-1.5 border border-slate-100 bg-white p-3 rounded-xl hover:border-pink-200 hover:shadow-sm transition-all focus-within:border-magic-pink focus-within:ring-2 focus-within:ring-pink-50">
-                                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-400 pl-1">Apelido na História</label>
+                                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div className="space-y-1 bg-white p-3 rounded-xl border border-[#EAE5DC]">
+                                                    <label className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Apelido na História</label>
                                                     <input
                                                         type="text"
-                                                        placeholder={`Ex: O Grande ${char.nickname}`}
+                                                        placeholder={`Ex: Capitão ${char.nickname}`}
                                                         value={details.nickname}
                                                         onChange={(e) => handleCharacterDetailChange(char.id, 'nickname', e.target.value)}
-                                                        className="w-full bg-transparent px-1 py-1 text-sm font-medium text-slate-700 outline-none"
+                                                        className="w-full bg-transparent text-xs font-semibold text-slate-700 outline-none"
                                                     />
                                                 </div>
-                                                <div className="space-y-1.5 border border-slate-100 bg-white p-3 rounded-xl hover:border-magic-emerald hover:shadow-sm transition-all focus-within:border-magic-emerald focus-within:ring-2 focus-within:ring-emerald-50">
-                                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-400 pl-1">Papel (Herói, Vilão...)</label>
+                                                <div className="space-y-1 bg-white p-3 rounded-xl border border-[#EAE5DC]">
+                                                    <label className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Papel (Herói, Mago...)</label>
                                                     <input
                                                         type="text"
-                                                        placeholder="Ex: Mago Guardião"
+                                                        placeholder="Ex: Mago Protetor"
                                                         value={details.role}
                                                         onChange={(e) => handleCharacterDetailChange(char.id, 'role', e.target.value)}
-                                                        className="w-full bg-transparent px-1 py-1 text-sm font-medium text-slate-700 outline-none"
+                                                        className="w-full bg-transparent text-xs font-semibold text-slate-700 outline-none"
                                                     />
                                                 </div>
-                                                <div className="space-y-1.5 border border-slate-100 bg-white p-3 rounded-xl hover:border-purple-200 hover:shadow-sm transition-all md:col-span-2 focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-50">
-                                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-400 pl-1">Personalidade</label>
+                                                <div className="space-y-1 bg-white p-3 rounded-xl border border-[#EAE5DC] sm:col-span-2">
+                                                    <label className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Personalidade</label>
                                                     <input
                                                         type="text"
-                                                        placeholder="Ex: Corajoso, impulsivo, adora contar piadas ruins em batalhas"
+                                                        placeholder="Ex: Corajoso, leal e sempre pronto para ajudar os amigos"
                                                         value={details.personality}
                                                         onChange={(e) => handleCharacterDetailChange(char.id, 'personality', e.target.value)}
-                                                        className="w-full bg-transparent px-1 py-1 text-sm font-medium text-slate-700 outline-none"
+                                                        className="w-full bg-transparent text-xs font-semibold text-slate-700 outline-none"
                                                     />
                                                 </div>
                                             </div>
@@ -910,16 +867,16 @@ export default function StoryWizard({ onNext, onBack }) {
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="p-6 border-t border-slate-100 bg-white flex justify-end gap-3 z-10">
+                            <div className="p-4 sm:p-5 border-t border-[#EAE5DC] bg-[#FAF8F5] flex justify-end gap-3">
                                 <button
                                     onClick={() => setShowCharacterModal(false)}
-                                    className="px-6 py-3 rounded-xl text-slate-500 font-bold hover:bg-slate-100 transition-all text-sm cursor-pointer"
+                                    className="px-5 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-200 text-xs cursor-pointer"
                                 >
                                     Sair
                                 </button>
                                 <button
                                     onClick={() => setShowCharacterModal(false)}
-                                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-magic-pink to-magic-emerald text-white font-bold hover:shadow-md hover:-translate-y-0.5 transition-all text-sm cursor-pointer"
+                                    className="px-6 py-2.5 rounded-xl bg-[#9D7FEA] text-white font-bold hover:bg-[#8F6EE5] text-xs cursor-pointer shadow-xs"
                                 >
                                     Salvar e Continuar
                                 </button>

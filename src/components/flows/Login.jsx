@@ -38,11 +38,11 @@ const Login = ({ onBack }) => {
                 className="relative z-10 w-full max-w-md p-6"
             >
 
-                <div className="glass-card p-10 flex flex-col items-center text-center space-y-8 relative overflow-hidden">
+                <div className="tactile-card p-10 flex flex-col items-center text-center space-y-8 relative overflow-hidden bg-white">
 
                     {/* Brilhos decorativos estáticos */}
-                    <Sparkles className="absolute top-6 left-6 text-pink-300 w-6 h-6 opacity-50" />
-                    <Sparkles className="absolute bottom-6 right-6 text-emerald-300 w-6 h-6 opacity-50" />
+                    <Sparkles className="absolute top-6 left-6 text-[#9D7FEA]/50 w-6 h-6" />
+                    <Sparkles className="absolute bottom-6 right-6 text-[#FBAE7B]/50 w-6 h-6" />
 
                     {/* Portal Mágico - Arte Vetorial Premium (Animado) */}
                     <div className="w-56 h-56 relative flex items-center justify-center -mt-8 mb-6">
@@ -57,7 +57,7 @@ const Login = ({ onBack }) => {
                             transition={{ delay: 0.3 }}
                             className="text-4xl font-bold font-heading text-slate-800 tracking-tight"
                         >
-                            Imaginaria
+                            Maginária
                         </motion.h1>
                         <motion.p
                             initial={{ y: 10, opacity: 0 }}
