@@ -12,9 +12,9 @@ export default function Home({ onCreateCharacter, onStartStory, onOpenLibrary, o
 
     return (
         <div className="min-h-screen w-full flex flex-col p-4 md:p-6 relative overflow-hidden font-body text-slate-700 bg-[var(--color-bg-primary)]">
-            {/* Background Blobs Animados */}
-            <div className="bg-blob bg-pink-200 w-[500px] h-[500px] -top-20 -left-20" />
-            <div className="bg-blob bg-emerald-100 w-[400px] h-[400px] -bottom-20 -right-20" style={{ animationDelay: '2s' }} />
+            {/* Background Blobs Animados - Harmonizados com a Paleta Lavanda & Dourado */}
+            <div className="bg-blob bg-purple-200 w-[500px] h-[500px] -top-20 -left-20" />
+            <div className="bg-blob bg-amber-100/70 w-[400px] h-[400px] -bottom-20 -right-20" style={{ animationDelay: '2s' }} />
 
             {/* Header */}
             <header className="w-full flex justify-between items-start z-20 max-w-7xl mx-auto mb-2 lg:mb-4">

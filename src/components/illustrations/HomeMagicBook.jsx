@@ -40,25 +40,26 @@ export default function HomeMagicBook({ className = "w-full h-full" }) {
                         <feGaussianBlur stdDeviation="8" result="blur" />
                     </filter>
 
-                    {/* Magic Glow Aura */}
+                    {/* Magic Glow Aura - Lavanda dos Sonhos & Warm Starlight */}
                     <radialGradient id="magicGlow" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="#f472b6" stopOpacity="0.7" />
-                        <stop offset="50%" stopColor="#34d399" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#f8fafc" stopOpacity="0" />
+                        <stop offset="0%" stopColor="#9D7FEA" stopOpacity="0.8" />
+                        <stop offset="45%" stopColor="#C4B5FD" stopOpacity="0.4" />
+                        <stop offset="75%" stopColor="#FDE68A" stopOpacity="0.15" />
+                        <stop offset="100%" stopColor="#FAF8F5" stopOpacity="0" />
                     </radialGradient>
 
-                    {/* Magic Beam (Laser/Ray of light) */}
+                    {/* Magic Beam (Lavender & Starlight Light Rays) */}
                     <linearGradient id="magicBeam" x1="50%" y1="100%" x2="50%" y2="0%">
-                        <stop offset="0%" stopColor="#f9a8d4" stopOpacity="0" />
-                        <stop offset="30%" stopColor="#f472b6" stopOpacity="0.5" />
-                        <stop offset="70%" stopColor="#6ee7b7" stopOpacity="0.8" />
-                        <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
+                        <stop offset="0%" stopColor="#C4B5FD" stopOpacity="0" />
+                        <stop offset="25%" stopColor="#9D7FEA" stopOpacity="0.45" />
+                        <stop offset="70%" stopColor="#C4B5FD" stopOpacity="0.75" />
+                        <stop offset="100%" stopColor="#EDE9FE" stopOpacity="0" />
                     </linearGradient>
 
                     {/* Soft ambient background glow */}
                     <radialGradient id="ambientGlow" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="#fbcfe8" stopOpacity="0.3" />
-                        <stop offset="100%" stopColor="#fbcfe8" stopOpacity="0" />
+                        <stop offset="0%" stopColor="#EDE9FE" stopOpacity="0.6" />
+                        <stop offset="100%" stopColor="#FAF8F5" stopOpacity="0" />
                     </radialGradient>
                 </defs>
 
@@ -136,19 +137,19 @@ export default function HomeMagicBook({ className = "w-full h-full" }) {
                 />
                 <line x1="250" y1="180" x2="250" y2="285" stroke="#94a3b8" strokeWidth="1" opacity="0.5" />
 
-                {/* --- PINK BOOKMARK DOWN THE MIDDLE --- */}
+                {/* --- LAVENDER BOOKMARK DOWN THE MIDDLE --- */}
                 <path
                     d="M 250 160 C 255 220, 265 240, 260 320 L 250 310 L 240 320 C 235 240, 245 220, 250 160 Z"
-                    fill="#f472b6"
+                    fill="#9D7FEA"
                     filter="url(#bookShadow)"
                 />
                 <path
                     d="M 250 160 C 255 220, 265 240, 260 320 L 250 310 L 260 320 C 258 240, 252 220, 250 160 Z"
-                    fill="#db2777"
+                    fill="#7C3AED"
                 />
 
                 {/* --- PAGE CONTENT (ABSTRACT TEXT BLOCKS) --- */}
-                <g fill="#94a3b8" opacity="0.4">
+                <g fill="#94a3b8" opacity="0.35">
                     {/* Left Page Intro */}
                     <rect x="120" y="110" width="70" height="4" rx="2" transform="rotate(18, 120, 110)" />
                     <rect x="120" y="125" width="85" height="4" rx="2" transform="rotate(18, 120, 125)" />
@@ -170,22 +171,22 @@ export default function HomeMagicBook({ className = "w-full h-full" }) {
                     <rect x="295" y="200" width="85" height="4" rx="2" transform="rotate(-20, 295, 200)" />
                 </g>
 
-                {/* --- SUPER MAGIC EFFECTS (Breathtaking Level) --- */}
+                {/* --- SUPER MAGIC EFFECTS (Harmonized Lavanda dos Sonhos) --- */}
 
                 {/* Central Magic Glow / Aura Core */}
                 <motion.ellipse
                     cx="250" cy="150" rx="140" ry="60" fill="url(#magicGlow)"
-                    animate={{ scale: [0.9, 1.4, 0.9], opacity: [0.4, 1, 0.4] }}
+                    animate={{ scale: [0.9, 1.35, 0.9], opacity: [0.5, 0.95, 0.5] }}
                     transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
                 />
 
-                {/* Rays of Light (Colossal Beams shooting up) */}
-                <g className="origin-bottom transform-gpu" opacity="0.8">
+                {/* Rays of Light (Harmonized Lavender Beams shooting up) */}
+                <g className="origin-bottom transform-gpu" opacity="0.85">
                     {/* Main thick central beam */}
                     <motion.path
                         d="M 230 160 L 270 160 L 290 -80 L 210 -80 Z"
                         fill="url(#magicBeam)"
-                        animate={{ opacity: [0, 0.6, 0], scaleX: [0.9, 1.2, 0.9] }}
+                        animate={{ opacity: [0, 0.65, 0], scaleX: [0.9, 1.2, 0.9] }}
                         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                     />
 
@@ -201,32 +202,28 @@ export default function HomeMagicBook({ className = "w-full h-full" }) {
                     <motion.path
                         d="M 240 150 L 260 150 L 400 -100 L 360 -100 Z"
                         fill="url(#magicBeam)"
-                        animate={{ opacity: [0, 0.6, 0], scaleX: [0.8, 1.2, 0.8] }}
+                        animate={{ opacity: [0, 0.65, 0], scaleX: [0.8, 1.2, 0.8] }}
                         transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
                     />
                 </g>
 
-                {/* --- Static / Simpler Particle System --- */}
+                {/* --- Particle System (Lavender & Starlight Gold) --- */}
                 <g className="transform-gpu">
-                    {/* Reduced Particles for performance */}
-                    <motion.circle cx="210" cy="120" r="3" fill="#db2777" animate={{ y: [-10, -150], opacity: [0, 0.8, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "linear", delay: 0.1 }} />
-                    <motion.circle cx="290" cy="180" r="2.5" fill="#10b981" animate={{ y: [0, -160], opacity: [0, 0.7, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 1.2 }} />
-                    <motion.circle cx="280" cy="110" r="5" fill="#f472b6" animate={{ y: [0, -170], opacity: [0, 0.6, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "linear", delay: 0.6 }} />
-                    <motion.circle cx="220" cy="190" r="3.5" fill="#34d399" animate={{ y: [-5, -140], opacity: [0, 0.7, 0] }} transition={{ duration: 3.9, repeat: Infinity, ease: "linear", delay: 2.3 }} />
-                    <motion.circle cx="260" cy="130" r="2" fill="#fbcfe8" animate={{ y: [0, -180], opacity: [0, 0.9, 0] }} transition={{ duration: 3.3, repeat: Infinity, ease: "linear", delay: 1.8 }} />
-                    <motion.circle cx="240" cy="170" r="4" fill="#059669" animate={{ y: [-15, -155], opacity: [0, 0.6, 0] }} transition={{ duration: 4.1, repeat: Infinity, ease: "linear", delay: 0.4 }} />
+                    <motion.circle cx="210" cy="120" r="3" fill="#8B5CF6" animate={{ y: [-10, -150], opacity: [0, 0.8, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "linear", delay: 0.1 }} />
+                    <motion.circle cx="290" cy="180" r="2.5" fill="#FBBF24" animate={{ y: [0, -160], opacity: [0, 0.7, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 1.2 }} />
+                    <motion.circle cx="280" cy="110" r="5" fill="#9D7FEA" animate={{ y: [0, -170], opacity: [0, 0.6, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "linear", delay: 0.6 }} />
+                    <motion.circle cx="220" cy="190" r="3.5" fill="#C4B5FD" animate={{ y: [-5, -140], opacity: [0, 0.7, 0] }} transition={{ duration: 3.9, repeat: Infinity, ease: "linear", delay: 2.3 }} />
+                    <motion.circle cx="260" cy="130" r="2" fill="#FDE68A" animate={{ y: [0, -180], opacity: [0, 0.9, 0] }} transition={{ duration: 3.3, repeat: Infinity, ease: "linear", delay: 1.8 }} />
+                    <motion.circle cx="240" cy="170" r="4" fill="#7C3AED" animate={{ y: [-15, -155], opacity: [0, 0.6, 0] }} transition={{ duration: 4.1, repeat: Infinity, ease: "linear", delay: 0.4 }} />
                 </g>
 
-                {/* --- Chaotic Sparkles (Popping randomly, without mix-blend) --- */}
+                {/* --- Sparkles (Lavender & Golden Stars) --- */}
                 <g className="transform-gpu">
-                    <motion.path d="M 250 80 L 253 65 L 268 62 L 253 59 L 250 44 L 247 59 L 232 62 L 247 65 Z" fill="#fbcfe8" animate={{ y: [0, -100], opacity: [0, 0.8, 0], scale: [0.5, 1, 0] }} transition={{ duration: 3.2, repeat: Infinity, ease: "linear", delay: 0.3 }} />
-                    <motion.path d="M 210 110 L 212 98 L 224 96 L 212 94 L 210 82 L 208 94 L 196 96 L 208 98 Z" fill="#6ee7b7" animate={{ y: [0, -90], opacity: [0, 0.7, 0], scale: [0.5, 1, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: "linear", delay: 1.5 }} />
-                    <motion.path d="M 290 120 L 291 113 L 298 112 L 291 111 L 290 104 L 289 111 L 282 112 L 289 113 Z" fill="#f472b6" animate={{ y: [0, -80], opacity: [0, 0.9, 0], scale: [0.5, 1.2, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 0.8 }} />
-                    <motion.path d="M 230 160 L 232 150 L 242 148 L 232 146 L 230 136 L 228 146 L 218 148 L 228 150 Z" fill="#34d399" animate={{ y: [0, -120], opacity: [0, 0.7, 0], scale: [0.5, 1.2, 0] }} transition={{ duration: 4.2, repeat: Infinity, ease: "linear", delay: 2.2 }} />
+                    <motion.path d="M 250 80 L 253 65 L 268 62 L 253 59 L 250 44 L 247 59 L 232 62 L 247 65 Z" fill="#FDE68A" animate={{ y: [0, -100], opacity: [0, 0.8, 0], scale: [0.5, 1, 0] }} transition={{ duration: 3.2, repeat: Infinity, ease: "linear", delay: 0.3 }} />
+                    <motion.path d="M 210 110 L 212 98 L 224 96 L 212 94 L 210 82 L 208 94 L 196 96 L 208 98 Z" fill="#C4B5FD" animate={{ y: [0, -90], opacity: [0, 0.7, 0], scale: [0.5, 1, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: "linear", delay: 1.5 }} />
+                    <motion.path d="M 290 120 L 291 113 L 298 112 L 291 111 L 290 104 L 289 111 L 282 112 L 289 113 Z" fill="#9D7FEA" animate={{ y: [0, -80], opacity: [0, 0.9, 0], scale: [0.5, 1.2, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 0.8 }} />
+                    <motion.path d="M 230 160 L 232 150 L 242 148 L 232 146 L 230 136 L 228 146 L 218 148 L 228 150 Z" fill="#FBBF24" animate={{ y: [0, -120], opacity: [0, 0.7, 0], scale: [0.5, 1.2, 0] }} transition={{ duration: 4.2, repeat: Infinity, ease: "linear", delay: 2.2 }} />
                 </g>
-
-                {/* Decorative Accent removed as per request */}
-
             </svg>
         </motion.div>
     );
