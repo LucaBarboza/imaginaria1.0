@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, User, Sparkles, Check, Wand2 } from 'lucide-react';
 import { useStory } from '../../context/StoryContext';
@@ -6,7 +6,6 @@ import BackButton from '../ui/BackButton';
 
 export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 'selection' }) {
     const { characters, selectCharacter, deleteCharacter, selectedCharacters } = useStory();
-    const [hoveredId, setHoveredId] = useState(null);
 
     const handleCharacterSelect = (char) => {
         selectCharacter(char.id);
@@ -20,19 +19,19 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
     };
 
     return (
-        <div className="min-h-screen w-full flex flex-col items-center p-6 relative overflow-x-hidden font-body text-slate-700 bg-[var(--color-bg-primary)]">
+        <div className="min-h-screen min-h-[100dvh] w-full flex flex-col items-center p-4 sm:p-6 relative font-body text-slate-700 bg-[var(--color-bg-primary)]">
             {/* Background Blobs Animados - Consistente com Home */}
-            <div className="bg-blob bg-pink-200 w-[600px] h-[600px] -top-32 -right-32 opacity-40" />
-            <div className="bg-blob bg-emerald-100 w-[500px] h-[500px] -bottom-32 -left-32 opacity-40" style={{ animationDelay: '3s' }} />
+            <div className="bg-blob bg-pink-200 w-[600px] h-[600px] -top-32 -right-32 opacity-40 pointer-events-none" />
+            <div className="bg-blob bg-emerald-100 w-[500px] h-[500px] -bottom-32 -left-32 opacity-40 pointer-events-none" style={{ animationDelay: '3s' }} />
 
             {/* Back Button */}
             <BackButton onClick={onBack} />
 
-            <main className="z-10 w-full max-w-6xl flex flex-col items-center gap-6 mt-14 md:mt-6 pb-32">
+            <main className="z-10 w-full max-w-6xl flex flex-col items-center gap-6 mt-14 md:mt-6 pb-48 sm:pb-36">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
+                    transition={{ duration: 0.5 }}
                     className="text-center mb-2"
                 >
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-md rounded-full shadow-sm mb-4 border border-white/50">
@@ -67,15 +66,12 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                                     initial={{ opacity: 0, scale: 0.8, y: 20 }}
                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
-                                    transition={{ delay: index * 0.1 }}
-                                    whileHover={{ y: -8, scale: 1.02 }}
-                                    onHoverStart={() => setHoveredId(char.id)}
-                                    onHoverEnd={() => setHoveredId(null)}
+                                    transition={{ delay: index * 0.05 }}
                                     onClick={() => handleCharacterSelect(char)}
-                                    className={`relative w-72 aspect-[3/4] rounded-[2rem] overflow-hidden group border-4 transition-all duration-300 cursor-pointer ${
+                                    className={`relative w-72 aspect-[3/4] rounded-[2rem] overflow-hidden group border-4 transition-all duration-300 cursor-pointer touch-pan-y ${
                                         isSelected
                                             ? 'border-magic-pink shadow-[0_10px_30px_-10px_rgba(236,72,153,0.5)] scale-[1.02]'
-                                            : 'border-transparent hover:border-magic-pink/30 hover:shadow-[0_20px_40px_-12px_rgba(236,72,153,0.3)] shadow-sm'
+                                            : 'border-transparent hover:border-magic-pink/30 hover:scale-[1.02] hover:shadow-[0_20px_40px_-12px_rgba(236,72,153,0.3)] shadow-sm'
                                     }`}
                                 >
                                     {/* Badge Selecionado */}
@@ -101,7 +97,7 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                                         )}
 
                                         {/* Gradient Overlay for Text Readability */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                                     </div>
 
                                     {/* Content Info */}
@@ -111,21 +107,15 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                                         </h3>
                                     </div>
 
-                                    {/* Delete Button - Appears on Hover */}
-                                    <AnimatePresence>
-                                        {hoveredId === char.id && (
-                                            <motion.button
-                                                initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
-                                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                                exit={{ opacity: 0, scale: 0.5 }}
-                                                onClick={(e) => handleDelete(e, char.id)}
-                                                className="absolute top-4 right-4 p-2.5 bg-white/95 rounded-full text-red-400 hover:bg-red-50 hover:text-red-500 shadow-md hover:shadow-xl transition-all border border-red-100 z-30"
-                                                title="Excluir Herói"
-                                            >
-                                                <Trash2 size={16} />
-                                            </motion.button>
-                                        )}
-                                    </AnimatePresence>
+                                    {/* Delete Button - Visível no hover no desktop */}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => handleDelete(e, char.id)}
+                                        className="absolute top-4 right-4 p-2.5 bg-white/95 rounded-full text-red-400 hover:bg-red-50 hover:text-red-500 shadow-md hover:shadow-xl transition-all border border-red-100 z-30 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+                                        title="Excluir Herói"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </motion.div>
                             );
                         })}
@@ -136,19 +126,18 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                         layout
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: characters.length * 0.1 }}
-                        whileHover={{ scale: 1.02, y: -5 }}
+                        transition={{ delay: characters.length * 0.05 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={onCreateNew}
-                        className="w-72 aspect-[3/4] rounded-[2rem] border-3 border-dashed border-pink-200/70 hover:border-magic-pink hover:bg-pink-50/40 flex flex-col items-center justify-center gap-6 group cursor-pointer transition-all bg-white/20 backdrop-blur-sm"
+                        className="w-72 aspect-[3/4] rounded-[2rem] border-3 border-dashed border-pink-200/70 hover:border-magic-pink hover:bg-pink-50/40 flex flex-col items-center justify-center gap-6 group cursor-pointer transition-all bg-white/20 backdrop-blur-sm touch-pan-y"
                     >
-                        <div className="relative">
+                        <div className="relative pointer-events-none">
                             <div className="absolute inset-0 bg-magic-pink blur-xl opacity-20 group-hover:opacity-40 transition-opacity rounded-full" />
                             <div className="relative p-6 rounded-full bg-white shadow-sm border border-pink-100 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all duration-300 text-pink-300 group-hover:text-magic-pink">
                                 <Plus size={40} />
                             </div>
                         </div>
-                        <div className="text-center">
+                        <div className="text-center pointer-events-none">
                             <span className="block text-xl font-bold font-heading text-slate-400 group-hover:text-magic-pink transition-colors">
                                 Novo Herói
                             </span>
@@ -160,14 +149,14 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                 </div>
             </main>
 
-            {/* Sticky Action Footer Bar - Sempre visível lá embaixo */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-t border-slate-200/80 px-4 py-3 shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
-                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            {/* Sticky Action Footer Bar - Sempre visível lá embaixo com suporte a safe-area no iPhone */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
+                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
                     {/* Info / Counter */}
                     <div className="text-center sm:text-left">
                         {selectedCharacters.length === 0 ? (
                             <div className="flex items-center gap-2 text-slate-500 text-xs sm:text-sm font-medium">
-                                <Sparkles size={16} className="text-magic-pink shrink-0" />
+                                <Sparkles size={15} className="text-magic-pink shrink-0" />
                                 <span>Selecione até 3 heróis para viverem esta jornada juntos.</span>
                             </div>
                         ) : (
@@ -187,7 +176,7 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                         type="button"
                         onClick={onNext}
                         disabled={selectedCharacters.length === 0}
-                        className={`px-8 py-3 rounded-full font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all shadow-md ${
+                        className={`w-full sm:w-auto px-8 py-3 rounded-full font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all shadow-md ${
                             selectedCharacters.length > 0
                                 ? 'bg-gradient-to-r from-magic-pink to-magic-emerald text-white hover:scale-105 hover:shadow-pink-200 active:scale-95 cursor-pointer'
                                 : 'bg-slate-100 text-slate-400 border border-slate-200/60 cursor-not-allowed'
