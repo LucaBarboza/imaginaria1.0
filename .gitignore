@@ -10,6 +10,10 @@ build/
 .env
 .env.*
 !.env.example
+*.key.json
+*service-account*.json
+firebase-key.json
+service-account.json
 
 # Python
 __pycache__/
