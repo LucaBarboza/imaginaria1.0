@@ -1,8 +1,8 @@
 import { useState, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ChevronDown, ChevronUp, Sparkles, Shuffle, Wand2, Users, Search, X, Check,
-    BookOpen, Palette, Compass, Cog, Settings2
+    ChevronDown, Sparkles, Shuffle, Wand2, Users, Search, X, Check,
+    BookOpen, Compass, Settings2
 } from 'lucide-react';
 import {
     FaSpider, FaCube, FaFutbol, FaVolleyball, FaBasketball, FaFlagCheckered,
@@ -31,7 +31,7 @@ const UNIVERSES = [
     { id: 'marvel', label: 'Marvel', icon: FaSpider, color: 'from-red-600 to-red-900', desc: 'Super-heróis', category: 'fantasy' },
     { id: 'dc', label: 'DC Comics', icon: GiBatMask, color: 'from-slate-700 to-slate-900', desc: 'Lendas da Justiça', category: 'fantasy' },
     { id: 'disney_princess', label: 'Disney Princesas', icon: GiQueenCrown, color: 'from-pink-400 to-rose-600', desc: 'Contos de Fadas', category: 'fantasy' },
-    { id: 'cyberpunk', label: 'Cyberpunk', icon: GiCyberEye, color: 'from-yellow-400 to-amber-600', desc: 'High Tech Low Life', category: 'fantasy' },
+    { id: 'cyberpunk', label: 'Cyberpunk', icon: GiCyberEye, color: 'from-yellow-500 to-amber-600', desc: 'High Tech Low Life', category: 'fantasy' },
     { id: 'lord_rings', label: 'Senhor dos Anéis', icon: GiRing, color: 'from-green-700 to-emerald-900', desc: 'Terra Média', category: 'fantasy' },
     { id: 'pirates', label: 'Piratas', icon: GiPirateSkull, color: 'from-blue-900 to-slate-900', desc: '7 Mares', category: 'fantasy' },
     { id: 'western', label: 'Western', icon: GiWesternHat, color: 'from-orange-800 to-amber-900', desc: 'Bang Bang', category: 'fantasy' },
@@ -41,10 +41,10 @@ const UNIVERSES = [
     // --- ANIMES (6) ---
     { id: 'pokemon', label: 'Pokémon', icon: TbPokeball, color: 'from-red-500 to-slate-700', desc: 'Temos que pegar!', category: 'anime' },
     { id: 'naruto', label: 'Naruto', icon: GiNinjaStar, color: 'from-orange-500 to-orange-700', desc: 'O Caminho Ninja', category: 'anime' },
-    { id: 'dragon_ball', label: 'Dragon Ball', icon: GiDragonBalls, color: 'from-orange-600 to-yellow-400', desc: 'Nível Saiyajin', category: 'anime' },
+    { id: 'dragon_ball', label: 'Dragon Ball', icon: GiDragonBalls, color: 'from-orange-600 to-yellow-500', desc: 'Nível Saiyajin', category: 'anime' },
     { id: 'one_piece', label: 'One Piece', icon: FaHatCowboy, color: 'from-red-600 to-blue-800', desc: 'Tesouros e Piratas', category: 'anime' },
     { id: 'titan', label: 'Attack on Titan', icon: GiShatteredSword, color: 'from-stone-700 to-red-900', desc: 'Muralhas e Titãs', category: 'anime' },
-    { id: 'saint_seiya', label: 'Cavaleiros do Zodíaco', icon: FaMeteor, color: 'from-yellow-400 to-blue-900', desc: 'Pelo Cosmo!', category: 'anime' },
+    { id: 'saint_seiya', label: 'Cavaleiros do Zodíaco', icon: FaMeteor, color: 'from-yellow-500 to-blue-900', desc: 'Pelo Cosmo!', category: 'anime' },
 
     // --- GAMES & ESPORTES (9) ---
     { id: 'mario', label: 'Super Mario', icon: GiSuperMushroom, color: 'from-red-500 to-blue-500', desc: 'Reino Cogumelo', category: 'games' },
@@ -93,7 +93,7 @@ const STYLES = [
     { id: 'universe_default', label: 'Estilo do Universo', icon: Sparkles, color: 'from-[#9D7FEA] to-[#8364D8]', desc: 'Mantém a estética autêntica original.' },
     { id: 'pixar', label: 'Pixar 3D', icon: BoxSelect, color: 'from-blue-400 to-cyan-500', desc: 'Animação 3D fofa e volumétrica.' },
     { id: 'ghibli', label: 'Studio Ghibli', icon: Leaf, color: 'from-emerald-400 to-teal-600', desc: 'Traços poéticos e detalhados.' },
-    { id: 'watercolor', label: 'Aquarela Suave', icon: Palette, color: 'from-[#9D7FEA]/80 to-[#FBAE7B]', desc: 'Pintura fluida e artesanal.' },
+    { id: 'watercolor', label: 'Aquarela Suave', icon: Palette, color: 'from-[#9D7FEA] to-[#FBAE7B]', desc: 'Pintura fluida e artesanal.' },
     { id: 'disney_2d', label: 'Disney Clássico', icon: Castle, color: 'from-sky-400 to-blue-600', desc: 'Traço tradicional nostálgico.' },
     { id: 'claymation', label: 'Massinha (Clay)', icon: Shapes, color: 'from-amber-400 to-orange-500', desc: 'Estilo stop-motion tátil.' },
     { id: 'comic', label: 'Comic Book', icon: MessageSquare, color: 'from-amber-500 to-rose-500', desc: 'Estilo de HQ com cores pop.' },
@@ -204,7 +204,6 @@ export default function StoryWizard({ onNext, onBack }) {
         description: ''
     });
 
-    const [isUniverseOpen, setIsUniverseOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
@@ -234,12 +233,6 @@ export default function StoryWizard({ onNext, onBack }) {
         const pool = data.genre && GENRE_PROMPTS[data.genre] ? GENRE_PROMPTS[data.genre] : DEFAULT_PROMPTS;
         const random = pool[Math.floor(Math.random() * pool.length)];
         setData(prev => ({ ...prev, description: random }));
-    };
-
-    const scrollCarousel = (offset) => {
-        if (carouselRef.current) {
-            carouselRef.current.scrollBy({ top: offset, behavior: 'smooth' });
-        }
     };
 
     const currentUniverse = useMemo(() => {
@@ -293,310 +286,205 @@ export default function StoryWizard({ onNext, onBack }) {
             <BackButton onClick={onBack} />
 
             <main className="w-full max-w-5xl z-10 flex flex-col gap-6 mt-14 sm:mt-6">
-                {/* Header Limpo & Minimalista */}
+                {/* Header Limpo & Sólido */}
                 <div className="text-center space-y-1">
-                    <span className="text-xs uppercase tracking-wider font-bold text-[#8364D8] bg-[#9D7FEA]/10 px-3.5 py-1 rounded-full border border-[#9D7FEA]/20 inline-flex items-center gap-1.5">
+                    <span className="text-xs uppercase tracking-wider font-bold text-[#8364D8] bg-white px-3.5 py-1 rounded-full border border-[#EAE5DC] shadow-2xs inline-flex items-center gap-1.5">
                         <Sparkles size={13} className="text-[#9D7FEA]" />
                         Estúdio de Criação • Maginária
                     </span>
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-heading text-slate-800 tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-heading text-slate-900 tracking-tight">
                         Monte o Seu <span className="text-[#8364D8]">Livro Mágico</span>
                     </h1>
                     <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-                        Escolha o universo e o tema da aventura em uma tela limpa e sem distrações.
+                        Escolha o universo e o tema da aventura em dois passos simples e perfeitamente equilibrados.
                     </p>
                 </div>
 
-                {/* GRID PRINCIPAL 50/50: UNIVERSO & HISTÓRIA */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {/* BANCADA 50/50 SIMÉTRICA (EQUAL-HEIGHT WORKBENCH) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                     
-                    {/* COLUNA ESQUERDA: Universo Retrátil com Carrossel Vertical Lindo */}
-                    <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col transition-all">
-                        {/* Header do Card */}
-                        <div className="flex items-center justify-between gap-2 mb-3">
+                    {/* COLUNA ESQUERDA: Carrossel Vertical de 45 Universos (Altura Fixa & Alinhada) */}
+                    <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col h-[520px]">
+                        {/* Header da Coluna */}
+                        <div className="flex items-center justify-between pb-3.5 border-b border-[#EAE5DC] shrink-0">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-xl bg-[#9D7FEA]/15 text-[#8364D8] font-bold text-xs flex items-center justify-center shrink-0">
-                                    1
-                                </div>
+                                <span className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs transition-colors shrink-0 ${
+                                    currentUniverse
+                                        ? 'bg-[#9D7FEA] text-white shadow-xs'
+                                        : 'bg-slate-100 text-slate-700'
+                                }`}>
+                                    {currentUniverse ? '✓' : '1'}
+                                </span>
                                 <div>
                                     <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">
                                         Universo da História
                                     </h2>
                                     <p className="text-[11px] text-slate-400">
-                                        {isUniverseOpen ? 'Role a roleta ou pesquise o mundo' : 'Onde a aventura vai acontecer'}
+                                        {currentUniverse ? currentUniverse.label : 'Escolha onde a aventura vai acontecer'}
                                     </p>
                                 </div>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() => setIsUniverseOpen(!isUniverseOpen)}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                                    isUniverseOpen
-                                        ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                        : currentUniverse
-                                            ? 'bg-[#9D7FEA]/10 text-[#8364D8] hover:bg-[#9D7FEA]/20'
-                                            : 'bg-[#9D7FEA] text-white hover:bg-[#8F6EE5] shadow-xs'
-                                }`}
-                            >
-                                <span>{isUniverseOpen ? 'Recolher' : currentUniverse ? 'Trocar' : 'Escolher'}</span>
-                                <ChevronDown size={14} className={`transition-transform duration-200 ${isUniverseOpen ? 'rotate-180' : ''}`} />
-                            </button>
+                            {currentUniverse && (
+                                <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#9D7FEA] text-white shadow-2xs">
+                                    {currentUniverse.label}
+                                </span>
+                            )}
                         </div>
 
-                        {/* ESTADO FECHADO: Card Limpo e Elegante */}
-                        {!isUniverseOpen && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -4 }}
-                                transition={{ duration: 0.2 }}
-                                onClick={() => setIsUniverseOpen(true)}
-                                className={`p-4 rounded-2xl transition-all cursor-pointer flex items-center justify-between group ${
-                                    currentUniverse
-                                        ? 'bg-[#FAF8F5] border border-[#EAE5DC] hover:border-[#9D7FEA]'
-                                        : 'bg-[#FAF8F5] border-2 border-dashed border-[#EAE5DC] hover:border-[#9D7FEA]'
-                                }`}
-                            >
-                                <div className="flex items-center gap-3.5 min-w-0">
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform ${
-                                        currentUniverse
-                                            ? `bg-gradient-to-br ${currentUniverse.color} text-white`
-                                            : 'bg-white border border-[#EAE5DC] text-[#8364D8]'
-                                    }`}>
-                                        {currentUniverse ? (
-                                            <currentUniverse.icon size={24} />
-                                        ) : (
-                                            <Compass size={24} className="text-[#9D7FEA]" />
+                        {/* Busca Compacta com Visual Sólido */}
+                        <div className="relative mt-3 mb-2 shrink-0">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Buscar entre 45 universos..."
+                                className="w-full bg-[#FAF8F5] border border-[#EAE5DC] rounded-xl pl-8.5 pr-8 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#9D7FEA] focus:bg-white transition-all"
+                            />
+                            {searchTerm && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchTerm('')}
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                                >
+                                    <X size={13} />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Abas Rápidas de Categorias */}
+                        <div className="flex gap-1.5 overflow-x-auto pb-2 shrink-0 [scrollbar-width:none]">
+                            {UNIVERSE_CATEGORIES.map(cat => {
+                                const isActive = categoryFilter === cat.id;
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        type="button"
+                                        onClick={() => setCategoryFilter(cat.id)}
+                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                                            isActive
+                                                ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-2xs'
+                                                : 'bg-[#FAF8F5] hover:bg-slate-100 border-[#EAE5DC] text-slate-600'
+                                        }`}
+                                    >
+                                        {cat.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Carrossel Vertical com Encaixe Fluido (Snap) */}
+                        <div
+                            ref={carouselRef}
+                            className="flex-1 overflow-y-auto space-y-2 pr-1 mt-1 [scrollbar-width:thin] snap-y snap-mandatory"
+                        >
+                            {filteredUniverses.map((u) => {
+                                const isSelected = data.universe === u.id;
+                                return (
+                                    <div
+                                        key={u.id}
+                                        onClick={() => handleSelect('universe', u.id)}
+                                        className={`snap-center cursor-pointer p-3 rounded-2xl flex items-center gap-3.5 transition-all select-none border ${
+                                            isSelected
+                                                ? 'bg-[#F4EEFD] border-2 border-[#9D7FEA] shadow-xs'
+                                                : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC]'
+                                        }`}
+                                    >
+                                        <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${u.color} text-white flex items-center justify-center shrink-0 shadow-xs ${isSelected ? 'scale-105' : ''}`}>
+                                            <u.icon size={22} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className={`font-bold text-sm truncate ${isSelected ? 'text-[#8364D8]' : 'text-slate-800'}`}>
+                                                {u.label}
+                                            </h4>
+                                            <p className="text-[11px] text-slate-500 truncate">{u.desc}</p>
+                                        </div>
+                                        {isSelected && (
+                                            <div className="w-6 h-6 rounded-full bg-[#9D7FEA] text-white flex items-center justify-center text-xs shrink-0 font-bold shadow-xs">
+                                                ✓
+                                            </div>
                                         )}
                                     </div>
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="font-bold text-slate-800 text-sm truncate group-hover:text-[#8364D8] transition-colors">
-                                                {currentUniverse ? currentUniverse.label : 'Escolha o Universo'}
-                                            </h3>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                                                currentUniverse
-                                                    ? 'bg-[#9D7FEA]/15 text-[#8364D8]'
-                                                    : 'bg-amber-50 text-amber-700 border border-amber-200/60'
-                                            }`}>
-                                                {currentUniverse ? '✓ Ativo' : 'Obrigatório'}
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-slate-400 truncate">
-                                            {currentUniverse ? currentUniverse.desc : 'Toque para abrir a roleta de 45 mundos'}
-                                        </p>
-                                    </div>
+                                );
+                            })}
+
+                            {filteredUniverses.length === 0 && (
+                                <div className="text-center py-16 text-slate-400 text-xs">
+                                    Nenhum universo encontrado para "{searchTerm}".
                                 </div>
-
-                                <div className="text-xs font-bold text-[#8364D8] bg-white border border-[#EAE5DC] px-3 py-1.5 rounded-xl shrink-0 group-hover:border-[#9D7FEA] group-hover:bg-[#9D7FEA]/5 transition-all">
-                                    <span>{currentUniverse ? 'Trocar ▾' : 'Abrir ▾'}</span>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {/* ESTADO ABERTO: Carrossel Vertical com Busca e Categorias */}
-                        <AnimatePresence>
-                            {isUniverseOpen && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.25 }}
-                                    className="overflow-hidden flex flex-col pt-1"
-                                >
-                                    {/* Busca & Controles */}
-                                    <div className="flex items-center gap-2 mb-2.5">
-                                        <div className="relative flex-1">
-                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                            <input
-                                                type="text"
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                                placeholder="Buscar entre 45 universos..."
-                                                className="w-full bg-[#FAF8F5] border border-[#EAE5DC] rounded-xl pl-8.5 pr-7 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#9D7FEA] transition-all"
-                                            />
-                                            {searchTerm && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setSearchTerm('')}
-                                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
-                                                >
-                                                    <X size={13} />
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        {/* Botões rápidos de navegação */}
-                                        <div className="flex items-center gap-1 bg-[#FAF8F5] border border-[#EAE5DC] p-0.5 rounded-xl shrink-0">
-                                            <button
-                                                type="button"
-                                                onClick={() => scrollCarousel(-110)}
-                                                className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-all cursor-pointer"
-                                                title="Rolar para cima"
-                                            >
-                                                <ChevronUp size={14} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => scrollCarousel(110)}
-                                                className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-all cursor-pointer"
-                                                title="Rolar para baixo"
-                                            >
-                                                <ChevronDown size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Categorias (Abas) */}
-                                    <div className="flex gap-1.5 overflow-x-auto pb-2 [scrollbar-width:none]">
-                                        {UNIVERSE_CATEGORIES.map(cat => {
-                                            const isActive = categoryFilter === cat.id;
-                                            return (
-                                                <button
-                                                    key={cat.id}
-                                                    type="button"
-                                                    onClick={() => setCategoryFilter(cat.id)}
-                                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${
-                                                        isActive
-                                                            ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-2xs'
-                                                            : 'bg-[#FAF8F5] hover:bg-slate-100 border-[#EAE5DC] text-slate-600'
-                                                    }`}
-                                                >
-                                                    {cat.label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {/* Roleta / Carrossel Vertical com Snap */}
-                                    <div className="relative min-h-[300px] max-h-[350px] mt-1">
-                                        {/* Sombras suaves para efeito de profundidade de roleta */}
-                                        <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
-                                        <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent pointer-events-none z-10" />
-
-                                        <div
-                                            ref={carouselRef}
-                                            className="h-[340px] overflow-y-auto space-y-2 pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-y snap-mandatory"
-                                        >
-                                            {filteredUniverses.map((u) => {
-                                                const isSelected = data.universe === u.id;
-                                                return (
-                                                    <div
-                                                        key={u.id}
-                                                        onClick={() => {
-                                                            handleSelect('universe', u.id);
-                                                            setIsUniverseOpen(false); // Fecha o widget automaticamente após selecionar
-                                                        }}
-                                                        className={`snap-center cursor-pointer p-3 rounded-2xl flex items-center gap-3.5 transition-all select-none border ${
-                                                            isSelected
-                                                                ? 'bg-[#9D7FEA]/10 border-2 border-[#9D7FEA] shadow-xs'
-                                                                : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC]'
-                                                        }`}
-                                                    >
-                                                        <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${u.color} text-white flex items-center justify-center shrink-0 shadow-xs ${isSelected ? 'scale-105' : ''}`}>
-                                                            <u.icon size={22} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <h4 className={`font-bold text-sm truncate ${isSelected ? 'text-[#8364D8]' : 'text-slate-800'}`}>
-                                                                {u.label}
-                                                            </h4>
-                                                            <p className="text-[11px] text-slate-400 truncate">{u.desc}</p>
-                                                        </div>
-                                                        {isSelected && (
-                                                            <div className="w-5 h-5 rounded-full bg-[#9D7FEA] text-white flex items-center justify-center text-[10px] shrink-0 font-bold">
-                                                                ✓
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-
-                                            {filteredUniverses.length === 0 && (
-                                                <div className="text-center py-12 text-slate-400 text-xs">
-                                                    Nenhum universo encontrado para "{searchTerm}".
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Botão de Fechar Roleta */}
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsUniverseOpen(false)}
-                                        className="mt-2.5 w-full py-2 rounded-xl bg-[#FAF8F5] hover:bg-slate-100 border border-[#EAE5DC] text-slate-600 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                                    >
-                                        <span>{currentUniverse ? `Manter ${currentUniverse.label} e Fechar` : 'Fechar Roleta'}</span>
-                                        <Check size={13} className="text-[#9D7FEA]" />
-                                    </button>
-                                </motion.div>
                             )}
-                        </AnimatePresence>
+                        </div>
                     </div>
 
-                    {/* COLUNA DIREITA: Opções da História (Gênero & Ideia Unificados) */}
-                    <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col justify-between gap-5 min-h-[380px]">
-                        <div>
-                            {/* Header de Tema */}
-                            <div className="flex items-center justify-between mb-3">
+                    {/* COLUNA DIREITA: Gênero & Ideia da História (Exatamente a Mesma Altura Física) */}
+                    <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col justify-between h-[520px]">
+                        <div className="flex flex-col flex-1 min-h-0">
+                            {/* Header da Coluna */}
+                            <div className="flex items-center justify-between pb-3.5 border-b border-[#EAE5DC] shrink-0">
                                 <div className="flex items-center gap-2.5">
-                                    <div className="w-7 h-7 rounded-xl bg-[#FBAE7B]/25 text-[#D97736] font-bold text-xs flex items-center justify-center shrink-0">
-                                        2
-                                    </div>
+                                    <span className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs transition-colors shrink-0 ${
+                                        currentGenre
+                                            ? 'bg-[#FBAE7B] text-white shadow-xs'
+                                            : 'bg-slate-100 text-slate-700'
+                                    }`}>
+                                        {currentGenre ? '✓' : '2'}
+                                    </span>
                                     <div>
                                         <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">
                                             A Trama da História
                                         </h2>
-                                        <p className="text-[11px] text-slate-400">Escolha o gênero da narrativa</p>
+                                        <p className="text-[11px] text-slate-400">
+                                            {currentGenre ? currentGenre.label : 'Escolha o ritmo e o tema da narrativa'}
+                                        </p>
                                     </div>
                                 </div>
 
-                                {currentGenre ? (
-                                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#9D7FEA] text-white">
+                                {currentGenre && (
+                                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#FBAE7B] text-white shadow-2xs">
                                         {currentGenre.label}
-                                    </span>
-                                ) : (
-                                    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60">
-                                        Obrigatório
                                     </span>
                                 )}
                             </div>
 
-                            {/* Pills de Gênero Limpos e Organizados */}
-                            <div className="flex flex-wrap gap-2 pt-1 pb-2">
-                                {GENRES.map((g) => {
-                                    const isSelected = data.genre === g.id;
-                                    return (
-                                        <button
-                                            key={g.id}
-                                            type="button"
-                                            onClick={() => handleSelect('genre', g.id)}
-                                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                                                isSelected
-                                                    ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-xs'
-                                                    : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC] text-slate-600 hover:text-slate-800'
-                                            }`}
-                                        >
-                                            {g.label}
-                                        </button>
-                                    );
-                                })}
+                            {/* Grade de Gêneros com Rolagem Interna Suave */}
+                            <div className="flex-1 overflow-y-auto pt-3 pb-2 [scrollbar-width:thin]">
+                                <div className="grid grid-cols-2 gap-2 pr-1">
+                                    {GENRES.map((g) => {
+                                        const isSelected = data.genre === g.id;
+                                        return (
+                                            <button
+                                                key={g.id}
+                                                type="button"
+                                                onClick={() => handleSelect('genre', g.id)}
+                                                className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all border text-left flex items-center justify-between cursor-pointer ${
+                                                    isSelected
+                                                        ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-xs'
+                                                        : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC] text-slate-700'
+                                                }`}
+                                            >
+                                                <span className="truncate">{g.label}</span>
+                                                {isSelected && <span className="text-xs font-bold shrink-0">✓</span>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Ideia da História (Opcional) */}
-                        <div className="pt-3 border-t border-[#EAE5DC]/60 space-y-2">
+                        {/* Bloco de Ideia da História (Fixado na Base da Coluna) */}
+                        <div className="pt-3 border-t border-[#EAE5DC] space-y-2 shrink-0">
                             <div className="flex items-center justify-between">
-                                <label className="text-xs font-bold text-slate-600">
-                                    Ideia ou Detalhe Especial <span className="text-[11px] font-normal text-slate-400">(opcional)</span>
+                                <label className="text-xs font-bold text-slate-700">
+                                    Ideia da História <span className="text-[11px] font-normal text-slate-400">(opcional)</span>
                                 </label>
                                 <button
                                     type="button"
                                     onClick={handleRandomPrompt}
-                                    className="px-3 py-1 rounded-xl bg-[#FBAE7B]/15 hover:bg-[#FBAE7B]/25 text-[#D97736] text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
-                                    title="Sugerir ideia aleatória para o tema escolhido"
+                                    className="px-3 py-1 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#D97736] text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                                    title="Sugerir ideia criativa para o tema escolhido"
                                 >
-                                    <Shuffle size={13} />
+                                    <Shuffle size={12} />
                                     <span>Sortear Ideia</span>
                                 </button>
                             </div>
@@ -605,16 +493,17 @@ export default function StoryWizard({ onNext, onBack }) {
                                 onChange={(e) => handleSelect('description', e.target.value)}
                                 placeholder={
                                     data.genre
-                                        ? `Escreva um detalhe para esta aventura de ${currentGenre?.label || 'história'} ou clique em 'Sortear Ideia'...`
+                                        ? `Escreva um detalhe especial para esta aventura de ${currentGenre?.label || 'história'} ou clique em 'Sortear Ideia'...`
                                         : "Selecione um tema acima ou clique em 'Sortear Ideia' para sugestões..."
                                 }
-                                className="w-full h-24 bg-[#FAF8F5] border border-[#EAE5DC] rounded-2xl p-3.5 text-xs sm:text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#9D7FEA] focus:ring-1 focus:ring-[#9D7FEA]/30 resize-none transition-all"
+                                className="w-full h-20 bg-[#FAF8F5] border border-[#EAE5DC] rounded-xl p-3 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#9D7FEA] focus:bg-white resize-none transition-all"
                             />
                         </div>
                     </div>
+
                 </div>
 
-                {/* WIDGET EXPANSÍVEL: CONFIGURAÇÕES AVANÇADAS (Acordeão Retrátil) */}
+                {/* WIDGET EXPANSÍVEL: CONFIGURAÇÕES AVANÇADAS (Acordeão Retrátil Sólido) */}
                 <div className="tactile-card bg-white overflow-hidden transition-all">
                     <button
                         type="button"
@@ -622,18 +511,18 @@ export default function StoryWizard({ onNext, onBack }) {
                         className="w-full p-4 sm:p-5 flex items-center justify-between text-left hover:bg-[#FAF8F5]/80 transition-colors cursor-pointer"
                     >
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-[#9D7FEA]/15 text-[#8364D8] flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
                                 <Settings2 size={18} />
                             </div>
                             <div>
                                 <h3 className="font-heading font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
                                     Configurações Avançadas
-                                    <span className="text-[10px] font-bold bg-[#FAF8F5] border border-[#EAE5DC] text-slate-500 px-2 py-0.5 rounded-full">
-                                        Opcional
+                                    <span className="text-[11px] font-normal text-slate-400">
+                                        (opcional)
                                     </span>
                                 </h3>
-                                <p className="text-xs text-slate-400">
-                                    Estilo: <span className="font-semibold text-slate-600">{currentStyle.label}</span>
+                                <p className="text-xs text-slate-500">
+                                    Estilo de arte: <span className="font-semibold text-slate-700">{currentStyle.label}</span>
                                     {selectedCharacters.length > 0 && ` • ${selectedCharacters.length} herói(s) participante(s)`}
                                 </p>
                             </div>
@@ -655,10 +544,10 @@ export default function StoryWizard({ onNext, onBack }) {
                                     <div className="flex items-center justify-between mb-3">
                                         <div>
                                             <h4 className="font-bold text-sm text-slate-800">Estilo Visual das Ilustrações</h4>
-                                            <p className="text-xs text-slate-400">Por padrão, usamos o estilo original e autêntico do universo</p>
+                                            <p className="text-xs text-slate-400">Por padrão, usamos a estética autêntica original do universo</p>
                                         </div>
-                                        <span className="text-xs font-bold text-[#8364D8] bg-[#9D7FEA]/10 border border-[#9D7FEA]/30 px-3 py-1 rounded-full">
-                                            Ativo: {currentStyle.label}
+                                        <span className="text-xs font-bold text-[#8364D8] bg-white border border-[#EAE5DC] px-3 py-1 rounded-full shadow-2xs">
+                                            {currentStyle.label}
                                         </span>
                                     </div>
 
@@ -672,7 +561,7 @@ export default function StoryWizard({ onNext, onBack }) {
                                                     onClick={() => handleSelect('style', s.id)}
                                                     className={`p-2.5 rounded-2xl flex flex-col items-center text-center gap-1.5 transition-all border cursor-pointer ${
                                                         isStyleSelected
-                                                            ? 'bg-[#9D7FEA]/10 border-2 border-[#9D7FEA] shadow-xs'
+                                                            ? 'bg-[#F4EEFD] border-2 border-[#9D7FEA] shadow-xs'
                                                             : 'bg-white hover:bg-slate-50 border-[#EAE5DC]'
                                                     }`}
                                                 >
@@ -727,12 +616,12 @@ export default function StoryWizard({ onNext, onBack }) {
                 {/* BARRA FIXA DE SUMÁRIO & CRIAÇÃO */}
                 <div className="bg-white rounded-3xl border border-[#EAE5DC] p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-4 z-20">
                     <div className="flex items-center gap-3.5 w-full sm:w-auto">
-                        <div className={`w-12 h-12 rounded-2xl ${currentUniverse ? `bg-gradient-to-br ${currentUniverse.color} text-white` : 'bg-[#FAF8F5] text-slate-400 border border-[#EAE5DC]'} flex items-center justify-center shrink-0 shadow-xs`}>
-                            {currentUniverse ? <currentUniverse.icon size={24} /> : <BookOpen size={24} className="text-[#9D7FEA]" />}
+                        <div className={`w-12 h-12 rounded-2xl ${currentUniverse ? `bg-gradient-to-br ${currentUniverse.color} text-white` : 'bg-slate-100 text-slate-400 border border-[#EAE5DC]'} flex items-center justify-center shrink-0 shadow-xs`}>
+                            {currentUniverse ? <currentUniverse.icon size={24} /> : <BookOpen size={24} className="text-slate-500" />}
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className={`font-bold text-sm sm:text-base ${currentUniverse ? 'text-slate-800' : 'text-slate-400'}`}>
+                                <span className={`font-bold text-sm sm:text-base ${currentUniverse ? 'text-slate-900' : 'text-slate-400'}`}>
                                     {currentUniverse ? currentUniverse.label : '1. Escolha o Universo'}
                                 </span>
                                 <span className="text-slate-300">•</span>
@@ -740,8 +629,8 @@ export default function StoryWizard({ onNext, onBack }) {
                                     {currentGenre ? currentGenre.label : '2. Escolha o Gênero'}
                                 </span>
                             </div>
-                            <p className="text-xs text-slate-400">
-                                Estilo: <span className="font-semibold text-slate-600">{currentStyle.label}</span>
+                            <p className="text-xs text-slate-500">
+                                Estilo: <span className="font-semibold text-slate-700">{currentStyle.label}</span>
                                 {selectedCharacters.length > 0 && ` • ${selectedCharacters.length} herói(s)`}
                             </p>
                         </div>
