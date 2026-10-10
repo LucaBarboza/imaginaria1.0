@@ -1,8 +1,8 @@
 import { useState, useRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
     ChevronDown, Sparkles, Shuffle, Wand2, Users, Search, X, Check,
-    BookOpen, Compass, Settings2
+    BookOpen, Compass, Settings2, Palette
 } from 'lucide-react';
 import {
     FaSpider, FaCube, FaFutbol, FaVolleyball, FaBasketball, FaFlagCheckered,
