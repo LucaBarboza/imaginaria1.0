@@ -81,7 +81,7 @@ const UNIVERSES = [
 ];
 
 const UNIVERSE_CATEGORIES = [
-    { id: 'all', label: '🌟 Todos (45)' },
+    { id: 'all', label: '🌟 Todos' },
     { id: 'fantasy', label: '🏰 Fantasia' },
     { id: 'anime', label: '⚡ Animes' },
     { id: 'games', label: '🎮 Games' },
@@ -353,8 +353,8 @@ export default function StoryWizard({ onNext, onBack }) {
                             )}
                         </div>
 
-                        {/* Abas Rápidas de Categorias */}
-                        <div className="flex gap-1.5 overflow-x-auto pb-2 shrink-0 [scrollbar-width:none]">
+                        {/* Grade Sólida de Categorias (3x2 Simétrica - Sem Cortes) */}
+                        <div className="grid grid-cols-3 gap-1.5 mb-2 shrink-0">
                             {UNIVERSE_CATEGORIES.map(cat => {
                                 const isActive = categoryFilter === cat.id;
                                 return (
@@ -362,7 +362,7 @@ export default function StoryWizard({ onNext, onBack }) {
                                         key={cat.id}
                                         type="button"
                                         onClick={() => setCategoryFilter(cat.id)}
-                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                                        className={`py-1.5 px-1 rounded-xl text-[11px] font-bold text-center transition-all border cursor-pointer truncate ${
                                             isActive
                                                 ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-2xs'
                                                 : 'bg-[#FAF8F5] hover:bg-slate-100 border-[#EAE5DC] text-slate-600'
