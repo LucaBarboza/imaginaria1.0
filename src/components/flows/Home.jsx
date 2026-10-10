@@ -1,10 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, BookOpen, User, Library, Star, Plus } from 'lucide-react';
+import { Sparkles, BookOpen, User, Library, Star, Plus, Users } from 'lucide-react';
 import { useStory } from '../../context/StoryContext';
 import { useAuth } from '../../context/AuthContext';
 import HomeMagicBook from '../illustrations/HomeMagicBook';
-import { SparklesIconPremium, HeroGalleryIconPremium, LibraryIconPremium } from '../illustrations/HomeActionIcons';
 
 export default function Home({ onCreateCharacter, onStartStory, onOpenLibrary, onOpenHeroes, onLogin, onOpenShop }) {
     const { characters } = useStory();
@@ -104,7 +103,7 @@ export default function Home({ onCreateCharacter, onStartStory, onOpenLibrary, o
                             <MagicCard
                                 title="Meus Heróis"
                                 description="Sua Galeria"
-                                icon={<HeroGalleryIconPremium className="w-6 h-6 lg:w-8 lg:h-8 drop-shadow-xs text-[#9D7FEA]" />}
+                                icon={<Users className="w-6 h-6 lg:w-7 lg:h-7 text-[#7E57C2]" strokeWidth={2.4} />}
                                 onClick={currentUser ? onOpenHeroes : onLogin}
                                 delay={0.2}
                             />
@@ -162,7 +161,7 @@ export default function Home({ onCreateCharacter, onStartStory, onOpenLibrary, o
                             <MagicCard
                                 title="Biblioteca"
                                 description="Contos passados"
-                                icon={<LibraryIconPremium className="w-6 h-6 lg:w-8 lg:h-8 drop-shadow-xs text-amber-500" />}
+                                icon={<BookOpen className="w-6 h-6 lg:w-7 lg:h-7 text-[#7E57C2]" strokeWidth={2.4} />}
                                 onClick={currentUser ? onOpenLibrary : onLogin}
                                 delay={0.4}
                             />
@@ -183,16 +182,16 @@ const MagicCard = ({ title, description, icon, onClick, delay }) => {
             whileHover={{ y: -3, scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             onClick={onClick}
-            className="w-full bg-white rounded-3xl border-2 border-[#EAE5DC] hover:border-[#9D7FEA]/60 p-4 lg:p-5 flex flex-row items-center justify-between cursor-pointer shadow-xs hover:shadow-md transition-all text-left"
+            className="w-full bg-white rounded-3xl border-2 border-[#D8D0C5] border-b-4 border-b-[#CDC4B6] hover:border-[#8364D8] hover:border-b-[#6C42C7] p-4 lg:p-5 flex flex-row items-center justify-between cursor-pointer shadow-xs hover:shadow-md transition-all text-left group"
         >
             <div className="relative z-10 flex-1 pr-4">
-                <h3 className="font-bold text-slate-700 font-heading text-lg lg:text-xl mb-1 truncate">
+                <h3 className="font-extrabold text-slate-900 group-hover:text-[#6C42C7] transition-colors font-heading text-lg lg:text-xl mb-0.5 tracking-tight truncate">
                     {title}
                 </h3>
-                <p className="text-slate-400 text-xs lg:text-sm truncate">{description}</p>
+                <p className="text-slate-600 font-bold text-xs lg:text-sm truncate">{description}</p>
             </div>
 
-            <div className="relative z-10 flex flex-shrink-0 items-center justify-center rounded-2xl bg-[#F4EEFD] border border-[#EAE5DC] w-12 h-12 lg:w-14 lg:h-14">
+            <div className="relative z-10 flex flex-shrink-0 items-center justify-center rounded-2xl bg-[#EDE7F6] border-2 border-[#D1C4E9] w-12 h-12 lg:w-14 lg:h-14 transition-transform group-hover:scale-105 shadow-2xs">
                 {icon}
             </div>
         </motion.button>
