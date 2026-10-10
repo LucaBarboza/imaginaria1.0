@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronDown, Sparkles, Shuffle, Wand2, Users, Search, X, Check,
     BookOpen, Compass, Settings2, Palette
