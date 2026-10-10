@@ -20,9 +20,9 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
 
     return (
         <div className="min-h-screen min-h-[100dvh] w-full flex flex-col items-center p-4 sm:p-6 relative font-body text-slate-700 bg-[var(--color-bg-primary)]">
-            {/* Background Blobs Animados - Consistente com Home */}
-            <div className="bg-blob bg-pink-200 w-[600px] h-[600px] -top-32 -right-32 opacity-40 pointer-events-none" />
-            <div className="bg-blob bg-emerald-100 w-[500px] h-[500px] -bottom-32 -left-32 opacity-40 pointer-events-none" style={{ animationDelay: '3s' }} />
+            {/* Background Blobs Animados - Harmonizados com a Paleta Lavanda */}
+            <div className="bg-blob bg-purple-200 w-[600px] h-[600px] -top-32 -right-32 opacity-40 pointer-events-none" />
+            <div className="bg-blob bg-amber-100/70 w-[500px] h-[500px] -bottom-32 -left-32 opacity-40 pointer-events-none" style={{ animationDelay: '3s' }} />
 
             {/* Back Button */}
             <BackButton onClick={onBack} />
@@ -34,18 +34,23 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                     transition={{ duration: 0.5 }}
                     className="text-center mb-2"
                 >
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-md rounded-full shadow-sm mb-4 border border-white/50">
-                        <Sparkles size={16} className="text-magic-pink" />
-                        <span className="text-sm font-bold text-slate-600 uppercase tracking-widest font-heading">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-xs mb-4 border-2 border-[#EAE5DC]">
+                        <Sparkles size={16} className="text-[#9D7FEA]" />
+                        <span className="text-sm font-bold text-slate-700 uppercase tracking-widest font-heading">
                             {mode === 'gallery' ? 'Galeria de Heróis' : 'Seleção de Personagem'}
                         </span>
+                        {selectedCharacters.length > 0 && (
+                            <span className="ml-1 px-2.5 py-0.5 rounded-full bg-[#EDE7F6] border border-[#D1C4E9] text-[#7E57C2] text-xs font-bold">
+                                {selectedCharacters.length} de 3 selecionados
+                            </span>
+                        )}
                     </div>
 
                     <h2 className="text-4xl md:text-6xl font-bold font-heading text-slate-800 mb-3 leading-tight">
                         {mode === 'gallery' ? (
-                            <>Seus <span className="text-transparent bg-clip-text bg-gradient-to-r from-magic-pink to-magic-emerald">Protagonistas</span></>
+                            <>Seus <span className="text-[#9D7FEA]">Protagonistas</span></>
                         ) : (
-                            <>Quem viverá esta <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-magic-pink to-magic-emerald">Aventura?</span></>
+                            <>Quem viverá esta <br /><span className="text-[#9D7FEA]">Aventura?</span></>
                         )}
                     </h2>
                     <p className="text-slate-500 text-sm max-w-md mx-auto">
@@ -148,47 +153,30 @@ export default function CharacterSelector({ onNext, onBack, onCreateNew, mode = 
                 </div>
             </main>
 
-            {/* Sticky Action Footer Bar - Sempre visível lá embaixo com suporte a safe-area no iPhone */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t-2 border-[#EAE5DC] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-md">
-                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
-                    {/* Info / Counter */}
-                    <div className="text-center sm:text-left">
-                        {selectedCharacters.length === 0 ? (
-                            <div className="flex items-center gap-2 text-slate-500 text-xs sm:text-sm font-medium">
-                                <Sparkles size={15} className="text-[#9D7FEA] shrink-0" />
-                                <span>Selecione até 3 heróis para viverem esta jornada juntos.</span>
-                            </div>
-                        ) : (
-                            <div className="text-xs sm:text-sm">
-                                <span className="font-bold text-slate-700">
-                                    {selectedCharacters.length} herói{selectedCharacters.length > 1 ? 's' : ''} selecionado{selectedCharacters.length > 1 ? 's' : ''}:
-                                </span>{' '}
-                                <span className="text-[#9D7FEA] font-semibold">
-                                    {selectedCharacters.map(c => c.name || c.nickname).join(', ')}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* CTA Button */}
-                    <button
-                        type="button"
-                        onClick={onNext}
-                        disabled={selectedCharacters.length === 0}
-                        className={`w-full sm:w-auto px-8 py-3 rounded-full font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                            selectedCharacters.length > 0
-                                ? 'btn-tactile-primary shadow-md'
-                                : 'bg-slate-100 text-slate-400 border border-slate-200/60 cursor-not-allowed'
-                        }`}
-                    >
-                        <span>
-                            {selectedCharacters.length > 0
-                                ? `Gerar História (${selectedCharacters.length})`
-                                : 'Selecione um herói para continuar'}
+            {/* Sticky Action Footer Bar - Centralizado, Limpo e Sólido */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t-2 border-[#EAE5DC] px-4 py-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom,0px))] shadow-md flex justify-center items-center">
+                <button
+                    type="button"
+                    onClick={onNext}
+                    disabled={selectedCharacters.length === 0}
+                    className={`px-10 py-3.5 rounded-full font-bold text-base flex items-center justify-center gap-3 transition-all cursor-pointer shadow-md ${
+                        selectedCharacters.length > 0
+                            ? 'btn-tactile-primary'
+                            : 'bg-slate-100 text-slate-400 border-2 border-slate-200 cursor-not-allowed opacity-75'
+                    }`}
+                >
+                    <Wand2 size={20} />
+                    <span>
+                        {selectedCharacters.length > 0
+                            ? 'Gerar História'
+                            : 'Selecione um herói para continuar'}
+                    </span>
+                    {selectedCharacters.length > 0 && (
+                        <span className="w-6 h-6 rounded-full bg-white/30 text-white text-xs flex items-center justify-center font-bold">
+                            {selectedCharacters.length}
                         </span>
-                        <Wand2 size={18} />
-                    </button>
-                </div>
+                    )}
+                </button>
             </div>
         </div>
     );
