@@ -1,24 +1,45 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Scroll, Loader2, Search, PenTool, Image as ImageIcon, Save, Sparkles, AlertCircle, X, ArrowLeft } from 'lucide-react';
+import { Users, PenTool, Palette, BookOpen, Sparkles, AlertCircle, X, ArrowLeft, Check, Compass } from 'lucide-react';
 import { useStory } from '../../context/StoryContext';
+import HomeMagicBook from '../illustrations/HomeMagicBook';
 
-const LOADING_TIPS = [
-    "Cada história ganha ilustrações exclusivas geradas por inteligência artificial! 🎨",
-    "Use o botão de dado 🎲 para ter ideias de histórias surpreendentes!",
-    "Você pode criar vários heróis e escolher quem participará da aventura. 🦸‍♂️",
-    "Experimente o estilo 'Pixel Art' para uma pegada retrô incrível! 🎮",
-    "Na Biblioteca, você pode reler todas as suas histórias épicas! 📚",
-    "Você pode escolher até 3 heróis para viverem a aventura juntos! ✨",
-    "Dê um papel e personalidade para cada herói na Etapa 3 da criação! 🎭",
-    "Explore universos como Star Wars ou Harry Potter para cenários únicos! 🏰",
-    "O estilo 'Studio Ghibli' deixa suas ilustrações com um ar poético. 🍃",
-    "Mude o universo para ver como seu herói ficaria em outros mundos! 🌌",
-    "Você pode personalizar o apelido de cada herói para a história atual! ✏️",
-    "Gêneros como 'Terror' ou 'Mistério' criam tramas cheias de suspense. 🔦",
-    "Clique nos cards do Universo para ver uma prévia do que te espera! 🗺️",
-    "O progresso da forja mostra exatamente em que pé está seu livro. ⏳",
-    "Sua criatividade é o limite! Sinta-se livre para inventar qualquer trama. 🌈"
+const STORY_CURIOSITIES = [
+    "Cada ilustração é pintada do zero pela inteligência artificial para o seu livro.",
+    "Suas histórias ficam guardadas na Biblioteca para você ler sempre que quiser.",
+    "Heróis com papéis personalizados transformam cada reviravolta em uma surpresa.",
+    "A inteligência artificial adapta o estilo visual para harmonizar com o universo escolhido.",
+    "Crianças que leem histórias onde são protagonistas desenvolvem mais criatividade e afeto.",
+    "Dizem que as melhores fábulas começam quando a imaginação ganha asas...",
+    "Pintando cores vivas, luzes e detalhes encantados exclusivamente para esta aventura.",
+    "As páginas mágicas do seu livro estão quase prontas para serem abertas!",
+];
+
+const STEPS = [
+    {
+        id: 'heroes',
+        title: 'Conhecendo os Heróis',
+        desc: 'Reunindo os personagens e preparando o portal',
+        icon: Users,
+    },
+    {
+        id: 'plot',
+        title: 'Escrevendo o Enredo',
+        desc: 'Criando diálogos, reviravoltas e lições mágicas',
+        icon: PenTool,
+    },
+    {
+        id: 'art',
+        title: 'Ilustrando as Cenas',
+        desc: 'Pintando a capa e cada página com IA generativa',
+        icon: Palette,
+    },
+    {
+        id: 'book',
+        title: 'Encadernando o Livro',
+        desc: 'Organizando páginas e finalizando seu novo livro',
+        icon: BookOpen,
+    },
 ];
 
 export default function LoadingAgent({ onCancel }) {
@@ -26,10 +47,10 @@ export default function LoadingAgent({ onCancel }) {
     const { step, stepProgress, error } = generationState;
     const [currentTip, setCurrentTip] = useState(0);
 
-    // Troca a dica periodicamente
+    // Troca a curiosidade a cada 4.5 segundos
     useEffect(() => {
         const interval = setInterval(() => {
-            setCurrentTip(prev => (prev + 1) % LOADING_TIPS.length);
+            setCurrentTip(prev => (prev + 1) % STORY_CURIOSITIES.length);
         }, 4500);
         return () => clearInterval(interval);
     }, []);
@@ -39,23 +60,23 @@ export default function LoadingAgent({ onCancel }) {
         if (onCancel) onCancel();
     };
 
-    // Tela de Erro Amigável
+    // Tela de Erro Amigável e Tátil
     if (error) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center relative overflow-hidden bg-[#faf9fe]">
-                <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl border border-red-100 flex flex-col items-center text-center relative z-10 animate-fade-in">
-                    <div className="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-5">
+            <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center relative overflow-hidden bg-[var(--color-bg-primary)] font-body">
+                <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-md border-2 border-[#EAE5DC] border-b-4 border-b-[#CDC4B6] flex flex-col items-center text-center relative z-10">
+                    <div className="w-16 h-16 rounded-2xl bg-red-50 text-red-500 border border-red-200 flex items-center justify-center mb-4">
                         <AlertCircle size={36} />
                     </div>
                     <h3 className="text-2xl font-bold font-heading text-slate-800 mb-2">
                         A Magia Encontrou um Desafio
                     </h3>
-                    <p className="text-slate-600 text-sm mb-6 leading-relaxed bg-red-50/50 p-4 rounded-xl border border-red-100">
+                    <p className="text-slate-600 text-sm mb-6 leading-relaxed bg-[#FAF8F5] p-4 rounded-2xl border border-[#EAE5DC]">
                         {error}
                     </p>
                     <button
                         onClick={handleCancel}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-100 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                        className="btn-tactile-primary w-full py-3.5 px-6 rounded-full text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer"
                     >
                         <ArrowLeft size={18} />
                         <span>Voltar ao Menu Principal</span>
@@ -65,166 +86,157 @@ export default function LoadingAgent({ onCancel }) {
         );
     }
 
-    const steps = [
-        { name: "Analisando Vislumbres", icon: Search, color: "text-emerald-500" },
-        { name: "Tecendo o Enredo", icon: PenTool, color: "text-blue-500" },
-        { name: "Pintando Sonhos", icon: ImageIcon, color: "text-purple-500" },
-        { name: "Selando o Pergaminho", icon: Save, color: "text-pink-500" }
-    ];
-
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center relative overflow-hidden bg-[#faf9fe]">
-            {/* Botão de Cancelar Geração */}
+        <div className="min-h-screen min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden font-body text-slate-700 bg-[var(--color-bg-primary)] select-none">
+            {/* Botão Sutil de Cancelar no Topo Direito */}
             <button
                 onClick={handleCancel}
-                className="fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 hover:bg-white text-slate-500 hover:text-red-600 border border-slate-200/80 shadow-sm transition-all text-xs font-bold hover:scale-105 active:scale-95 cursor-pointer"
+                className="fixed top-5 right-5 z-50 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-slate-500 hover:text-red-500 border-2 border-[#EAE5DC] hover:border-red-200 shadow-2xs transition-all text-xs font-bold cursor-pointer hover:scale-105 active:scale-95"
                 title="Cancelar geração e voltar"
             >
-                <X size={16} />
+                <X size={15} />
                 <span>Cancelar</span>
             </button>
-            {/* Background Mágico Dinâmico */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <motion.div 
-                    animate={{ 
-                        scale: [1, 1.2, 1],
-                        rotate: [0, 90, 0],
-                        opacity: [0.1, 0.2, 0.1]
-                    }}
-                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                    className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] bg-gradient-to-br from-purple-200/40 to-transparent rounded-full blur-[100px]"
-                />
-                <motion.div 
-                    animate={{ 
-                        scale: [1.2, 1, 1.2],
-                        rotate: [0, -90, 0],
-                        opacity: [0.1, 0.2, 0.1]
-                    }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                    className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] bg-gradient-to-tr from-indigo-200/40 to-transparent rounded-full blur-[100px]"
-                />
-            </div>
 
+            {/* Background Blobs Animados - Lavanda & Dourado */}
+            <div className="bg-blob bg-purple-200 w-[600px] h-[600px] -top-32 -right-32 opacity-35 pointer-events-none" />
+            <div className="bg-blob bg-amber-100/70 w-[500px] h-[500px] -bottom-32 -left-32 opacity-35 pointer-events-none" style={{ animationDelay: '3s' }} />
+
+            {/* Ilustração Central do Livro Mágico Encantado */}
             <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
+                initial={{ scale: 0.85, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.8 }}
-                className="relative z-10 mb-10"
+                transition={{ duration: 0.7 }}
+                className="w-36 h-36 sm:w-44 sm:h-44 relative mb-2 flex items-center justify-center shrink-0"
             >
-                <div className="relative group">
-                    {/* Anéis Ornamentais */}
-                    <div className="absolute inset-[-20px] rounded-full border border-indigo-100/50 animate-[spin_10s_linear_infinite]" />
-                    <div className="absolute inset-[-10px] rounded-full border border-purple-100/50 animate-[spin_15s_linear_infinite_reverse]" />
-                    
-                    <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-full animate-pulse" />
-                    
-                    <div className="relative z-10 bg-white p-6 rounded-full shadow-2xl shadow-indigo-100 border border-indigo-50 flex items-center justify-center overflow-hidden">
-                        <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                            className="absolute inset-0 border-4 border-dashed border-indigo-100/50 rounded-full"
-                        />
-                        <div className="relative">
-                            <BookOpen size={48} className="text-indigo-600 animate-pulse" />
-                            <motion.div 
-                                className="absolute -top-1 -right-1 text-yellow-400"
-                                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                                transition={{ repeat: Infinity, duration: 2 }}
-                            >
-                                <Sparkles size={18} fill="currentColor" />
-                            </motion.div>
-                        </div>
-                    </div>
-                </div>
+                <HomeMagicBook />
             </motion.div>
 
-            <div className="relative z-10 space-y-2 mb-10">
-                <h2 className="text-3xl font-heading font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                    Criando sua Obra-Prima
-                </h2>
-                
-                {/* Sistema de Dicas (Minecraft Style) */}
-                <div className="h-6 overflow-hidden">
+            {/* Título e Curiosidades Rotativas */}
+            <div className="text-center max-w-lg mb-5 z-10">
+                <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 tracking-tight mb-1.5">
+                    Criando seu Livro Mágico
+                </h1>
+                <div className="h-6 overflow-hidden flex items-center justify-center px-4">
                     <AnimatePresence mode="wait">
                         <motion.p
                             key={currentTip}
-                            initial={{ y: 20, opacity: 0 }}
+                            initial={{ y: 15, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: -20, opacity: 0 }}
-                            className="text-indigo-500 font-medium italic text-sm tracking-wide"
+                            exit={{ y: -15, opacity: 0 }}
+                            transition={{ duration: 0.35 }}
+                            className="text-xs sm:text-sm text-[#7E57C2] font-semibold flex items-center justify-center gap-1.5 text-center truncate"
                         >
-                            {LOADING_TIPS[currentTip]}
+                            <Sparkles size={13} className="shrink-0 text-[#9D7FEA]" />
+                            <span className="truncate">{STORY_CURIOSITIES[currentTip]}</span>
                         </motion.p>
                     </AnimatePresence>
                 </div>
             </div>
 
-            {/* Cartão de Progresso Premium */}
+            {/* Card Sólido e Tátil: Etapas da Criação (Linha do Tempo Vertical) */}
             <motion.div
-                initial={{ y: 30, opacity: 0 }}
+                initial={{ y: 25, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="w-full max-w-xl bg-white/70 backdrop-blur-md rounded-3xl p-8 shadow-[0_20px_50px_rgba(79,70,229,0.08)] border border-white relative z-10"
+                transition={{ delay: 0.2, duration: 0.6 }}
+                className="w-full max-w-lg bg-white rounded-3xl border-2 border-[#EAE5DC] border-b-4 border-b-[#CDC4B6] p-5 sm:p-6 shadow-md relative z-10 flex flex-col gap-3.5"
             >
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-indigo-50/50">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-50 rounded-lg text-indigo-500">
-                            <Scroll size={20} />
+                {/* Cabeçalho do Card */}
+                <div className="flex items-center justify-between pb-3 border-b-2 border-[#FAF8F5]">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-[#EDE7F6] border border-[#D1C4E9] flex items-center justify-center text-[#7E57C2]">
+                            <Compass size={17} />
                         </div>
-                        <span className="text-xs uppercase tracking-[0.2em] font-black text-slate-400">Progresso da Forja</span>
+                        <span className="font-extrabold text-xs uppercase tracking-wider text-slate-700 font-heading">
+                            Etapas da Criação
+                        </span>
                     </div>
-                    <div className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
-                        {step + 1} de {steps.length}
-                    </div>
+                    <span className="px-3 py-1 rounded-full bg-[#EDE7F6] border border-[#D1C4E9] text-[#7E57C2] text-xs font-bold">
+                        Etapa {Math.min(step + 1, STEPS.length)} de {STEPS.length}
+                    </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {steps.map((stepData, index) => {
+                {/* Lista Vertical de Etapas (Sem Cortes de Texto) */}
+                <div className="flex flex-col gap-2.5">
+                    {STEPS.map((stepData, index) => {
                         const isCompleted = step > index;
                         const isCurrent = step === index;
-                        const isPending = step < index;
                         const Icon = stepData.icon;
                         const currentProgress = isCompleted ? 100 : (isCurrent ? stepProgress : 0);
 
                         return (
-                            <div 
-                                key={index} 
-                                className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-500 border
-                                    ${isCurrent ? 'bg-indigo-50/50 border-indigo-100 shadow-sm' : 'bg-transparent border-transparent'}`}
+                            <div
+                                key={stepData.id}
+                                className={`p-3 sm:p-3.5 rounded-2xl transition-all border flex items-center gap-3.5 ${
+                                    isCurrent
+                                        ? 'bg-[#F4EEFD] border-2 border-[#9D7FEA] shadow-2xs'
+                                        : isCompleted
+                                        ? 'bg-[#FAF8F5] border-[#EAE5DC]'
+                                        : 'bg-white border-[#F0ECE1] opacity-60'
+                                }`}
                             >
-                                <div className="relative shrink-0">
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500
-                                        ${isCompleted ? 'bg-emerald-100 text-emerald-600 shadow-lg shadow-emerald-100/50' : 
-                                          isCurrent ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 
-                                          'bg-slate-100 text-slate-400 opacity-50'}`}
-                                    >
-                                        <Icon size={22} className={isCurrent ? 'animate-bounce' : ''} />
-                                    </div>
-                                    {isCurrent && (
-                                        <div className="absolute -inset-1 rounded-xl bg-indigo-400/20 animate-ping pointer-events-none" style={{ animationDuration: '3s' }} />
+                                {/* Emblema do Passo */}
+                                <div className={`w-11 h-11 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
+                                    isCompleted
+                                        ? 'bg-emerald-500 text-white border-emerald-600 shadow-2xs'
+                                        : isCurrent
+                                        ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-xs'
+                                        : 'bg-[#FAF8F5] text-slate-400 border-[#EAE5DC]'
+                                }`}>
+                                    {isCompleted ? (
+                                        <Check size={20} strokeWidth={3} />
+                                    ) : (
+                                        <Icon size={20} className={isCurrent ? 'animate-pulse' : ''} />
                                     )}
                                 </div>
 
-                                <div className="flex flex-col text-left overflow-hidden">
-                                    <span className={`text-sm font-bold transition-colors duration-500 truncate
-                                        ${isCompleted ? 'text-slate-700' : isCurrent ? 'text-indigo-900' : 'text-slate-400'}`}
-                                    >
-                                        {stepData.name}
-                                    </span>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <div className="h-1.5 w-full max-w-[80px] bg-slate-100 rounded-full overflow-hidden">
-                                            <motion.div 
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${currentProgress}%` }}
-                                                className={`h-full rounded-full ${isCompleted ? 'bg-emerald-400' : 'bg-indigo-500'}`}
-                                            />
-                                        </div>
+                                {/* Conteúdo Textual da Etapa */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                                        <h4 className={`text-sm font-bold truncate ${
+                                            isCurrent
+                                                ? 'text-slate-900 font-extrabold'
+                                                : isCompleted
+                                                ? 'text-slate-800'
+                                                : 'text-slate-400'
+                                        }`}>
+                                            {stepData.title}
+                                        </h4>
+
+                                        {/* Status ou Porcentagem */}
                                         {isCurrent && (
-                                            <span className="text-[10px] font-black text-indigo-500/80 uppercase tabular-nums">
+                                            <span className="text-xs font-extrabold text-[#7E57C2] tabular-nums shrink-0">
                                                 {stepProgress}%
                                             </span>
                                         )}
+                                        {isCompleted && (
+                                            <span className="text-[11px] font-bold text-emerald-600 shrink-0">
+                                                Pronto
+                                            </span>
+                                        )}
                                     </div>
+
+                                    <p className={`text-xs truncate ${
+                                        isCurrent
+                                            ? 'text-slate-600 font-medium'
+                                            : isCompleted
+                                            ? 'text-slate-500'
+                                            : 'text-slate-400'
+                                    }`}>
+                                        {stepData.desc}
+                                    </p>
+
+                                    {/* Barra de Progresso em Tempo Real (Apenas para o passo ativo) */}
+                                    {isCurrent && (
+                                        <div className="w-full h-1.5 bg-[#EAE5DC] rounded-full overflow-hidden mt-2">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${currentProgress}%` }}
+                                                transition={{ duration: 0.4 }}
+                                                className="h-full bg-gradient-to-r from-[#9D7FEA] to-[#8364D8] rounded-full"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -234,5 +246,3 @@ export default function LoadingAgent({ onCancel }) {
         </div>
     );
 }
-
-
