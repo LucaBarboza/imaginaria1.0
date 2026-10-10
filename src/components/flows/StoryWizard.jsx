@@ -363,14 +363,14 @@ export default function StoryWizard({ onNext, onBack }) {
     const carouselRef = useRef(null);
 
     const [data, setData] = useState({
-        universe: UNIVERSES[0]?.id || 'fantasy_medieval',
+        universe: null,
         style: 'universe_default',
         genre: null,
         description: ''
     });
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [isUniverseOpen, setIsUniverseOpen] = useState(true);
+    const [isUniverseOpen, setIsUniverseOpen] = useState(false);
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
     const [showCharacterModal, setShowCharacterModal] = useState(false);
 
@@ -409,7 +409,7 @@ export default function StoryWizard({ onNext, onBack }) {
     }, [searchTerm]);
 
     const currentUniverse = useMemo(() => {
-        return UNIVERSES.find(u => u.id === data.universe) || UNIVERSES[0];
+        return UNIVERSES.find(u => u.id === data.universe) || null;
     }, [data.universe]);
 
     const currentGenre = useMemo(() => {
@@ -493,13 +493,21 @@ export default function StoryWizard({ onNext, onBack }) {
                                     <div className="flex items-center gap-2">
                                         <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">Universo</h2>
                                         {!isUniverseOpen && (
-                                            <span className="text-[11px] font-bold text-magic-pink bg-pink-50 border border-pink-200/60 px-2 py-0.5 rounded-full">
-                                                {currentUniverse.label}
+                                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                                                currentUniverse 
+                                                    ? 'text-magic-pink bg-pink-50 border-pink-200/60' 
+                                                    : 'text-amber-600 bg-amber-50 border-amber-200/60'
+                                            }`}>
+                                                {currentUniverse ? currentUniverse.label : 'Não escolhido'}
                                             </span>
                                         )}
                                     </div>
                                     <p className="text-[11px] text-slate-400">
-                                        {isUniverseOpen ? 'Gire a roleta ou clique para escolher' : 'Toque para trocar o universo'}
+                                        {isUniverseOpen 
+                                            ? 'Gire a roleta ou clique para escolher' 
+                                            : currentUniverse 
+                                                ? 'Toque para trocar o universo' 
+                                                : 'Toque para abrir a lista'}
                                     </p>
                                 </div>
                             </div>
@@ -532,13 +540,13 @@ export default function StoryWizard({ onNext, onBack }) {
                                     className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                                     title={isUniverseOpen ? "Recolher roleta" : "Abrir roleta"}
                                 >
-                                    <span>{isUniverseOpen ? 'Fechar' : 'Trocar'}</span>
+                                    <span>{isUniverseOpen ? 'Fechar' : currentUniverse ? 'Trocar' : 'Escolher'}</span>
                                     <ChevronDown size={14} className={`transition-transform duration-200 ${isUniverseOpen ? 'rotate-180' : ''}`} />
                                 </button>
                             </div>
                         </div>
 
-                        {/* ESTADO FECHADO: Resumo compacto elegante com botão de trocar */}
+                        {/* ESTADO FECHADO: Resumo compacto ou convite para selecionar */}
                         {!isUniverseOpen && (
                             <motion.div
                                 initial={{ opacity: 0, y: -6 }}
@@ -546,24 +554,48 @@ export default function StoryWizard({ onNext, onBack }) {
                                 exit={{ opacity: 0, y: -6 }}
                                 transition={{ duration: 0.2 }}
                                 onClick={() => setIsUniverseOpen(true)}
-                                className="mt-3 p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-pink-50/70 to-slate-50 border border-pink-200/80 hover:border-magic-pink transition-all cursor-pointer flex items-center justify-between group shadow-xs"
+                                className={`mt-3 p-3 sm:p-3.5 rounded-2xl transition-all cursor-pointer flex items-center justify-between group shadow-xs ${
+                                    currentUniverse
+                                        ? 'bg-gradient-to-r from-pink-50/70 to-slate-50 border border-pink-200/80 hover:border-magic-pink'
+                                        : 'bg-gradient-to-r from-pink-50/40 via-purple-50/30 to-indigo-50/30 border-2 border-dashed border-pink-300/80 hover:border-magic-pink hover:bg-pink-50/60'
+                                }`}
                             >
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${currentUniverse.color} flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform`}>
-                                        <currentUniverse.icon size={22} className="drop-shadow-sm" />
+                                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform ${
+                                        currentUniverse
+                                            ? `bg-gradient-to-br ${currentUniverse.color} text-white`
+                                            : 'bg-pink-100 text-magic-pink'
+                                    }`}>
+                                        {currentUniverse ? (
+                                            <currentUniverse.icon size={22} className="drop-shadow-sm" />
+                                        ) : (
+                                            <Sparkles size={22} />
+                                        )}
                                     </div>
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2">
-                                            <h3 className="font-bold text-slate-800 text-sm truncate">{currentUniverse.label}</h3>
-                                            <span className="text-[10px] font-bold text-magic-pink bg-pink-100 px-2 py-0.5 rounded-full shrink-0">
-                                                Ativo
+                                            <h3 className="font-bold text-slate-800 text-sm truncate">
+                                                {currentUniverse ? currentUniverse.label : 'Escolher Universo'}
+                                            </h3>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                                                currentUniverse 
+                                                    ? 'text-magic-pink bg-pink-100' 
+                                                    : 'text-amber-600 bg-amber-50 border border-amber-200/60'
+                                            }`}>
+                                                {currentUniverse ? 'Ativo' : 'Pendente'}
                                             </span>
                                         </div>
-                                        <p className="text-[11px] text-slate-500 truncate">{currentUniverse.desc}</p>
+                                        <p className="text-[11px] text-slate-400 truncate">
+                                            {currentUniverse ? currentUniverse.desc : 'Toque para abrir a roleta de 45 universos'}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 text-xs font-bold text-magic-pink bg-white px-2.5 py-1 rounded-xl border border-pink-200/80 shadow-xs shrink-0 group-hover:bg-pink-50 transition-colors">
-                                    <span>Trocar</span>
+                                <div className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-xl shadow-xs shrink-0 transition-colors ${
+                                    currentUniverse
+                                        ? 'text-magic-pink bg-white border border-pink-200/80 group-hover:bg-pink-50'
+                                        : 'text-white bg-gradient-to-r from-magic-pink to-rose-500 hover:opacity-90'
+                                }`}>
+                                    <span>{currentUniverse ? 'Trocar' : 'Escolher'}</span>
                                     <ChevronRight size={13} />
                                 </div>
                             </motion.div>
@@ -656,7 +688,7 @@ export default function StoryWizard({ onNext, onBack }) {
                                         onClick={() => setIsUniverseOpen(false)}
                                         className="mt-3 w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                                     >
-                                        <span>Confirmar {currentUniverse.label}</span>
+                                        <span>{currentUniverse ? `Confirmar ${currentUniverse.label}` : 'Fechar Roleta'}</span>
                                         <Check size={14} className="text-magic-pink" />
                                     </button>
                                 </motion.div>
@@ -844,12 +876,14 @@ export default function StoryWizard({ onNext, onBack }) {
                 {/* BARRA FIXA / CARD DE AÇÃO */}
                 <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-4 z-20">
                     <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${currentUniverse.color} text-white flex items-center justify-center shrink-0 shadow-md`}>
-                            <currentUniverse.icon size={24} />
+                        <div className={`w-12 h-12 rounded-2xl ${currentUniverse ? `bg-gradient-to-br ${currentUniverse.color} text-white` : 'bg-slate-100 text-slate-400 border border-slate-200'} flex items-center justify-center shrink-0 shadow-md`}>
+                            {currentUniverse ? <currentUniverse.icon size={24} /> : <Sparkles size={24} className="text-magic-pink" />}
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800 text-sm sm:text-base">{currentUniverse.label}</span>
+                                <span className={`font-bold text-sm sm:text-base ${currentUniverse ? 'text-slate-800' : 'text-slate-400'}`}>
+                                    {currentUniverse ? currentUniverse.label : 'Selecione um universo'}
+                                </span>
                                 <span className="text-slate-300">•</span>
                                 <span className="font-bold text-magic-pink text-xs sm:text-sm">
                                     {currentGenre ? currentGenre.label : 'Selecione um tema'}
