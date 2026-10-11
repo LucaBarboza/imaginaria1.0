@@ -161,8 +161,8 @@ async def generate_story_endpoint(
             # It's possible to generate without images, but usually we want them
             print("Warning: No images provided for story generation")
 
-        # Generate story with OpenAI (GPT-4o-mini com Structured Outputs)
-        print(f"INFO: Generating story text with OpenAI (GPT-4o-mini) for style '{estilo}'...")
+        # Generate story with OpenAI (GPT-6.1 Sol com reasoning_effort="low")
+        print(f"INFO: Generating story text with OpenAI (GPT-6.1 Sol) for style '{estilo}'...")
         story_data = await generate_story_with_openai(
             nome=nome,
             estilo=estilo,

@@ -276,16 +276,16 @@ PADRÃO ESTRUTURAL EXIGIDO DE UMA PÁGINA (EXATAMENTE 2 PARÁGRAFOS — ~115 PAL
                         "image_url": {"url": f"data:image/jpeg;base64,{b64}", "detail": "high"}
                     })
 
-            story_model = os.getenv("OPENAI_STORY_MODEL", "gpt-6.1-sol")
+            model = os.getenv("OPENAI_STORY_MODEL", "gpt-6.1-sol")
             parse_kwargs = {
-                "model": story_model,
+                "model": model,
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_content}
                 ],
                 "response_format": Story,
             }
-            if "sol" in story_model.lower() or "luna" in story_model.lower():
+            if "sol" in model.lower() or "gpt-6" in model.lower() or "o1" in model.lower() or "o3" in model.lower():
                 parse_kwargs["reasoning_effort"] = "low"
             else:
                 parse_kwargs["temperature"] = 0.8

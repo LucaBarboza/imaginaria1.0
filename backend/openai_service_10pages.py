@@ -255,13 +255,13 @@ PADRÃO ESTRUTURAL EXIGIDO DE UMA PÁGINA (EXATAMENTE 2 PARÁGRAFOS — ~115 PAL
         {"role": "user", "content": user_content}
     ]
 
-    story_model = os.getenv("OPENAI_STORY_MODEL", "gpt-6.1-sol")
+    model = os.getenv("OPENAI_STORY_MODEL", "gpt-6.1-sol")
     parse_kwargs = {
-        "model": story_model,
+        "model": model,
         "messages": messages,
         "response_format": Story,
     }
-    if "sol" in story_model.lower() or "luna" in story_model.lower():
+    if "sol" in model.lower() or "gpt-6" in model.lower() or "o1" in model.lower() or "o3" in model.lower():
         parse_kwargs["reasoning_effort"] = "low"
     else:
         parse_kwargs["temperature"] = 0.8
