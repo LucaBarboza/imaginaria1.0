@@ -833,8 +833,8 @@ export function StoryProvider({ children }) {
 
             const promptTokens = tokenUsage.prompt_token_count || 0;
             const outputTokens = tokenUsage.candidates_token_count || 0;
-            // Tabela OpenAI GPT-4o-mini: Input $0.15/1M, Output $0.60/1M
-            const textTokenCost = (promptTokens * (0.15 / 1000000)) + (outputTokens * (0.60 / 1000000));
+            // Tabela OpenAI GPT-6.1 Sol: Input $2.00/1M, Output $10.00/1M
+            const textTokenCost = (promptTokens * (2.00 / 1000000)) + (outputTokens * (10.00 / 1000000));
             // Tabela OpenAI GPT-Image-2.5 Flare (low quality): $0.005 por imagem
             const imgCostUS = imageGenerationLogs.length * 0.005;
             const totalCostUS = textTokenCost + imgCostUS;

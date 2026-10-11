@@ -270,15 +270,21 @@ PADRÃO ESTRUTURAL EXIGIDO DE UMA PÁGINA (EXATAMENTE 2 PARÁGRAFOS — ~115 PAL
                         "image_url": {"url": f"data:image/jpeg;base64,{b64}", "detail": "high"}
                     })
 
-            completion = client.beta.chat.completions.parse(
-                model="gpt-4o-mini",
-                messages=[
+            story_model = os.getenv("OPENAI_STORY_MODEL", "gpt-6.1-sol")
+            parse_kwargs = {
+                "model": story_model,
+                "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_content}
                 ],
-                response_format=Story,
-                temperature=0.8
-            )
+                "response_format": Story,
+            }
+            if "sol" in story_model.lower() or "luna" in story_model.lower():
+                parse_kwargs["reasoning_effort"] = "low"
+            else:
+                parse_kwargs["temperature"] = 0.8
+
+            completion = client.beta.chat.completions.parse(**parse_kwargs)
 
             story_obj = completion.choices[0].message.parsed
             if not story_obj:
