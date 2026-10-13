@@ -206,6 +206,8 @@ export default function StoryWizard({ onNext, onBack }) {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
+    const [isUniverseOpen, setIsUniverseOpen] = useState(false);
+    const [isGenreOpen, setIsGenreOpen] = useState(false);
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
     const [showCharacterModal, setShowCharacterModal] = useState(false);
 
@@ -221,6 +223,16 @@ export default function StoryWizard({ onNext, onBack }) {
 
     const handleSelect = (key, value) => {
         setData(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleSelectUniverse = (universeId) => {
+        handleSelect('universe', universeId);
+        setIsUniverseOpen(false);
+    };
+
+    const handleSelectGenre = (genreId) => {
+        handleSelect('genre', genreId);
+        setIsGenreOpen(false);
     };
 
     const handleCharacterDetailChange = (charId, field, value) => {
@@ -300,14 +312,18 @@ export default function StoryWizard({ onNext, onBack }) {
                     </p>
                 </div>
 
-                {/* BANCADA 50/50 SIMÉTRICA (EQUAL-HEIGHT WORKBENCH) */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+                {/* BANCADA 50/50 SIMÉTRICA (SANFONADOS RETRÁTEIS) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                     
-                    {/* COLUNA ESQUERDA: Carrossel Vertical de 45 Universos (Altura Fixa & Alinhada) */}
-                    <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col h-[520px]">
-                        {/* Header da Coluna */}
-                        <div className="flex items-center justify-between pb-3.5 border-b border-[#EAE5DC] shrink-0">
-                            <div className="flex items-center gap-2.5">
+                    {/* COLUNA ESQUERDA: Universo da História (Acordeão Retrátil) */}
+                    <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col transition-all">
+                        {/* Header Clicável do Acordeão */}
+                        <button
+                            type="button"
+                            onClick={() => setIsUniverseOpen(!isUniverseOpen)}
+                            className="w-full flex items-center justify-between text-left cursor-pointer group"
+                        >
+                            <div className="flex items-center gap-2.5 min-w-0">
                                 <span className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs transition-colors shrink-0 ${
                                     currentUniverse
                                         ? 'bg-[#9D7FEA] text-white shadow-xs'
@@ -315,114 +331,192 @@ export default function StoryWizard({ onNext, onBack }) {
                                 }`}>
                                     {currentUniverse ? '✓' : '1'}
                                 </span>
-                                <div>
-                                    <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">
+                                <div className="min-w-0">
+                                    <h2 className="font-heading font-bold text-slate-800 text-base leading-tight group-hover:text-[#8364D8] transition-colors">
                                         Universo da História
                                     </h2>
-                                    <p className="text-[11px] text-slate-400">
-                                        {currentUniverse ? currentUniverse.label : 'Escolha onde a aventura vai acontecer'}
+                                    <p className="text-[11px] text-slate-400 truncate">
+                                        {currentUniverse
+                                            ? currentUniverse.desc
+                                            : 'Escolha onde a aventura vai acontecer'}
                                     </p>
                                 </div>
                             </div>
 
-                            {currentUniverse && (
-                                <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#9D7FEA] text-white shadow-2xs">
-                                    {currentUniverse.label}
-                                </span>
-                            )}
-                        </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                {currentUniverse && (
+                                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#9D7FEA] text-white shadow-2xs hidden sm:inline-block">
+                                        {currentUniverse.label}
+                                    </span>
+                                )}
+                                <div className="w-7 h-7 rounded-lg bg-slate-50 group-hover:bg-[#F4EEFD] flex items-center justify-center text-slate-400 group-hover:text-[#8364D8] transition-colors">
+                                    <ChevronDown
+                                        size={18}
+                                        className={`transition-transform duration-300 ${isUniverseOpen ? 'rotate-180' : ''}`}
+                                    />
+                                </div>
+                            </div>
+                        </button>
 
-                        {/* Busca Compacta com Visual Sólido */}
-                        <div className="relative mt-3 mb-2 shrink-0">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Buscar entre 45 universos..."
-                                className="w-full bg-[#FAF8F5] border border-[#EAE5DC] rounded-xl pl-8.5 pr-8 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#9D7FEA] focus:bg-white transition-all"
-                            />
-                            {searchTerm && (
-                                <button
-                                    type="button"
-                                    onClick={() => setSearchTerm('')}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
-                                >
-                                    <X size={13} />
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Grade Sólida de Categorias (3x2 Simétrica - Sem Cortes) */}
-                        <div className="grid grid-cols-3 gap-1.5 mb-2 shrink-0">
-                            {UNIVERSE_CATEGORIES.map(cat => {
-                                const isActive = categoryFilter === cat.id;
-                                return (
-                                    <button
-                                        key={cat.id}
-                                        type="button"
-                                        onClick={() => setCategoryFilter(cat.id)}
-                                        className={`py-1.5 px-1 rounded-xl text-[11px] font-bold text-center transition-all border cursor-pointer truncate ${
-                                            isActive
-                                                ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-2xs'
-                                                : 'bg-[#FAF8F5] hover:bg-slate-100 border-[#EAE5DC] text-slate-600'
-                                        }`}
-                                    >
-                                        {cat.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* Carrossel Vertical com Encaixe Fluido (Snap) */}
-                        <div
-                            ref={carouselRef}
-                            className="flex-1 overflow-y-auto space-y-2 pr-1 mt-1 [scrollbar-width:thin] snap-y snap-mandatory"
-                        >
-                            {filteredUniverses.map((u) => {
-                                const isSelected = data.universe === u.id;
-                                return (
+                        {/* ESTADO FECHADO (Resumo Selecionado ou Estado Padrão Vazio) */}
+                        {!isUniverseOpen && (
+                            <div className="mt-3.5">
+                                {currentUniverse ? (
                                     <div
-                                        key={u.id}
-                                        onClick={() => handleSelect('universe', u.id)}
-                                        className={`snap-center cursor-pointer p-3 rounded-2xl flex items-center gap-3.5 transition-all select-none border ${
-                                            isSelected
-                                                ? 'bg-[#F4EEFD] border-2 border-[#9D7FEA] shadow-xs'
-                                                : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC]'
-                                        }`}
+                                        onClick={() => setIsUniverseOpen(true)}
+                                        className="p-3.5 rounded-2xl bg-[#F4EEFD] border-2 border-[#9D7FEA] flex items-center justify-between gap-3.5 cursor-pointer hover:bg-[#EDE5FA] transition-all group"
+                                        title="Clique para trocar de universo"
                                     >
-                                        <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${u.color} text-white flex items-center justify-center shrink-0 shadow-xs ${isSelected ? 'scale-105' : ''}`}>
-                                            <u.icon size={22} />
+                                        <div className="flex items-center gap-3.5 min-w-0">
+                                            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${currentUniverse.color} text-white flex items-center justify-center shrink-0 shadow-xs`}>
+                                                <currentUniverse.icon size={22} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="font-bold text-sm text-[#8364D8] truncate">
+                                                    {currentUniverse.label}
+                                                </h4>
+                                                <p className="text-[11px] text-slate-500 truncate">{currentUniverse.desc}</p>
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className={`font-bold text-sm truncate ${isSelected ? 'text-[#8364D8]' : 'text-slate-800'}`}>
-                                                {u.label}
-                                            </h4>
-                                            <p className="text-[11px] text-slate-500 truncate">{u.desc}</p>
+                                        <span className="text-xs font-bold text-[#8364D8] group-hover:underline shrink-0">
+                                            Trocar
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div
+                                        onClick={() => setIsUniverseOpen(true)}
+                                        className="p-4 rounded-2xl bg-[#FAF8F5] border-2 border-dashed border-[#EAE5DC] hover:border-[#9D7FEA] hover:bg-[#FDFBFE] flex items-center justify-between gap-3 cursor-pointer transition-all group"
+                                        title="Clique para escolher um universo"
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-[#F4EEFD] text-slate-400 group-hover:text-[#8364D8] flex items-center justify-center transition-colors shrink-0">
+                                                <Compass size={20} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-slate-700 group-hover:text-[#8364D8] truncate">
+                                                    Nenhum universo selecionado
+                                                </p>
+                                                <p className="text-[11px] text-slate-400 truncate">
+                                                    Toque para explorar 45 universos
+                                                </p>
+                                            </div>
                                         </div>
-                                        {isSelected && (
-                                            <div className="w-6 h-6 rounded-full bg-[#9D7FEA] text-white flex items-center justify-center text-xs shrink-0 font-bold shadow-xs">
-                                                ✓
+                                        <span className="text-xs font-bold text-[#8364D8] px-3 py-1 rounded-full bg-white border border-[#EAE5DC] group-hover:border-[#9D7FEA] shadow-2xs shrink-0">
+                                            Escolher
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* CONTEÚDO SANFONADO (Aberto para Seleção) */}
+                        <AnimatePresence>
+                            {isUniverseOpen && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.25 }}
+                                    className="overflow-hidden pt-3.5 border-t border-[#EAE5DC] mt-3.5"
+                                >
+                                    {/* Busca Compacta com Visual Sólido */}
+                                    <div className="relative mb-2 shrink-0">
+                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            placeholder="Buscar entre 45 universos..."
+                                            className="w-full bg-[#FAF8F5] border border-[#EAE5DC] rounded-xl pl-8.5 pr-8 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#9D7FEA] focus:bg-white transition-all"
+                                        />
+                                        {searchTerm && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSearchTerm('')}
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                                            >
+                                                <X size={13} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Grade Sólida de Categorias (3x2 Simétrica) */}
+                                    <div className="grid grid-cols-3 gap-1.5 mb-2 shrink-0">
+                                        {UNIVERSE_CATEGORIES.map(cat => {
+                                            const isActive = categoryFilter === cat.id;
+                                            return (
+                                                <button
+                                                    key={cat.id}
+                                                    type="button"
+                                                    onClick={() => setCategoryFilter(cat.id)}
+                                                    className={`py-1.5 px-1 rounded-xl text-[11px] font-bold text-center transition-all border cursor-pointer truncate ${
+                                                        isActive
+                                                            ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-2xs'
+                                                            : 'bg-[#FAF8F5] hover:bg-slate-100 border-[#EAE5DC] text-slate-600'
+                                                    }`}
+                                                >
+                                                    {cat.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Carrossel Vertical com Encaixe Fluido (Snap) */}
+                                    <div
+                                        ref={carouselRef}
+                                        className="max-h-[340px] overflow-y-auto space-y-2 pr-1 mt-1 [scrollbar-width:thin] snap-y snap-mandatory"
+                                    >
+                                        {filteredUniverses.map((u) => {
+                                            const isSelected = data.universe === u.id;
+                                            return (
+                                                <div
+                                                    key={u.id}
+                                                    onClick={() => handleSelectUniverse(u.id)}
+                                                    className={`snap-center cursor-pointer p-3 rounded-2xl flex items-center gap-3.5 transition-all select-none border ${
+                                                        isSelected
+                                                            ? 'bg-[#F4EEFD] border-2 border-[#9D7FEA] shadow-xs'
+                                                            : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC]'
+                                                    }`}
+                                                >
+                                                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${u.color} text-white flex items-center justify-center shrink-0 shadow-xs ${isSelected ? 'scale-105' : ''}`}>
+                                                        <u.icon size={22} />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className={`font-bold text-sm truncate ${isSelected ? 'text-[#8364D8]' : 'text-slate-800'}`}>
+                                                            {u.label}
+                                                        </h4>
+                                                        <p className="text-[11px] text-slate-500 truncate">{u.desc}</p>
+                                                    </div>
+                                                    {isSelected && (
+                                                        <div className="w-6 h-6 rounded-full bg-[#9D7FEA] text-white flex items-center justify-center text-xs shrink-0 font-bold shadow-xs">
+                                                            ✓
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+
+                                        {filteredUniverses.length === 0 && (
+                                            <div className="text-center py-16 text-slate-400 text-xs">
+                                                Nenhum universo encontrado para "{searchTerm}".
                                             </div>
                                         )}
                                     </div>
-                                );
-                            })}
-
-                            {filteredUniverses.length === 0 && (
-                                <div className="text-center py-16 text-slate-400 text-xs">
-                                    Nenhum universo encontrado para "{searchTerm}".
-                                </div>
+                                </motion.div>
                             )}
-                        </div>
+                        </AnimatePresence>
                     </div>
 
-                    {/* COLUNA DIREITA: Gênero & Ideia da História (Exatamente a Mesma Altura Física) */}
-                    <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col justify-between h-[520px]">
+                    {/* COLUNA DIREITA: Gênero (Acordeão Retrátil) & Ideia da História (Sempre Acessível) */}
+                    <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col justify-between transition-all">
                         <div className="flex flex-col flex-1 min-h-0">
-                            {/* Header da Coluna */}
-                            <div className="flex items-center justify-between pb-3.5 border-b border-[#EAE5DC] shrink-0">
-                                <div className="flex items-center gap-2.5">
+                            {/* Header Clicável do Acordeão */}
+                            <button
+                                type="button"
+                                onClick={() => setIsGenreOpen(!isGenreOpen)}
+                                className="w-full flex items-center justify-between text-left cursor-pointer group"
+                            >
+                                <div className="flex items-center gap-2.5 min-w-0">
                                     <span className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs transition-colors shrink-0 ${
                                         currentGenre
                                             ? 'bg-[#FBAE7B] text-white shadow-xs'
@@ -430,50 +524,123 @@ export default function StoryWizard({ onNext, onBack }) {
                                     }`}>
                                         {currentGenre ? '✓' : '2'}
                                     </span>
-                                    <div>
-                                        <h2 className="font-heading font-bold text-slate-800 text-base leading-tight">
+                                    <div className="min-w-0">
+                                        <h2 className="font-heading font-bold text-slate-800 text-base leading-tight group-hover:text-[#D97736] transition-colors">
                                             A Trama da História
                                         </h2>
-                                        <p className="text-[11px] text-slate-400">
-                                            {currentGenre ? currentGenre.label : 'Escolha o ritmo e o tema da narrativa'}
+                                        <p className="text-[11px] text-slate-400 truncate">
+                                            {currentGenre
+                                                ? `Tema: ${currentGenre.label}`
+                                                : 'Escolha o ritmo e o tema da narrativa'}
                                         </p>
                                     </div>
                                 </div>
 
-                                {currentGenre && (
-                                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#FBAE7B] text-white shadow-2xs">
-                                        {currentGenre.label}
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Grade de Gêneros com Rolagem Interna Suave */}
-                            <div className="flex-1 overflow-y-auto pt-3 pb-2 [scrollbar-width:thin]">
-                                <div className="grid grid-cols-2 gap-2 pr-1">
-                                    {GENRES.map((g) => {
-                                        const isSelected = data.genre === g.id;
-                                        return (
-                                            <button
-                                                key={g.id}
-                                                type="button"
-                                                onClick={() => handleSelect('genre', g.id)}
-                                                className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all border text-left flex items-center justify-between cursor-pointer ${
-                                                    isSelected
-                                                        ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-xs'
-                                                        : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC] text-slate-700'
-                                                }`}
-                                            >
-                                                <span className="truncate">{g.label}</span>
-                                                {isSelected && <span className="text-xs font-bold shrink-0">✓</span>}
-                                            </button>
-                                        );
-                                    })}
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {currentGenre && (
+                                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#FBAE7B] text-white shadow-2xs hidden sm:inline-block">
+                                            {currentGenre.label}
+                                        </span>
+                                    )}
+                                    <div className="w-7 h-7 rounded-lg bg-slate-50 group-hover:bg-orange-50 flex items-center justify-center text-slate-400 group-hover:text-[#D97736] transition-colors">
+                                        <ChevronDown
+                                            size={18}
+                                            className={`transition-transform duration-300 ${isGenreOpen ? 'rotate-180' : ''}`}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            </button>
+
+                            {/* ESTADO FECHADO (Resumo Selecionado ou Estado Padrão Vazio) */}
+                            {!isGenreOpen && (
+                                <div className="mt-3.5">
+                                    {currentGenre ? (
+                                        <div
+                                            onClick={() => setIsGenreOpen(true)}
+                                            className="p-3.5 rounded-2xl bg-[#FFF5EE] border-2 border-[#FBAE7B] flex items-center justify-between gap-3 cursor-pointer hover:bg-[#FFEDE0] transition-all group"
+                                            title="Clique para trocar de tema"
+                                        >
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#D97736] flex items-center justify-center font-bold text-base shrink-0">
+                                                    ✓
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h4 className="font-bold text-sm text-[#D97736] truncate">
+                                                        {currentGenre.label}
+                                                    </h4>
+                                                    <p className="text-[11px] text-slate-500 truncate">Tema e ritmo principal da história</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-bold text-[#D97736] group-hover:underline shrink-0">
+                                                Trocar
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            onClick={() => setIsGenreOpen(true)}
+                                            className="p-4 rounded-2xl bg-[#FAF8F5] border-2 border-dashed border-[#EAE5DC] hover:border-[#FBAE7B] hover:bg-[#FFFAF7] flex items-center justify-between gap-3 cursor-pointer transition-all group"
+                                            title="Clique para escolher o ritmo da história"
+                                        >
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-orange-50 text-slate-400 group-hover:text-[#D97736] flex items-center justify-center transition-colors shrink-0">
+                                                    <BookOpen size={20} />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-bold text-slate-700 group-hover:text-[#D97736] truncate">
+                                                        Nenhum tema selecionado
+                                                    </p>
+                                                    <p className="text-[11px] text-slate-400 truncate">
+                                                        Toque para escolher entre 16 gêneros
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-bold text-[#D97736] px-3 py-1 rounded-full bg-white border border-[#EAE5DC] group-hover:border-[#FBAE7B] shadow-2xs shrink-0">
+                                                Escolher
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* CONTEÚDO SANFONADO (Aberto para Seleção de Gênero) */}
+                            <AnimatePresence>
+                                {isGenreOpen && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.25 }}
+                                        className="overflow-hidden pt-3.5 border-t border-[#EAE5DC] mt-3.5"
+                                    >
+                                        <div className="max-h-[300px] overflow-y-auto pt-1 pb-2 [scrollbar-width:thin]">
+                                            <div className="grid grid-cols-2 gap-2 pr-1">
+                                                {GENRES.map((g) => {
+                                                    const isSelected = data.genre === g.id;
+                                                    return (
+                                                        <button
+                                                            key={g.id}
+                                                            type="button"
+                                                            onClick={() => handleSelectGenre(g.id)}
+                                                            className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all border text-left flex items-center justify-between cursor-pointer ${
+                                                                isSelected
+                                                                    ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-xs'
+                                                                    : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC] text-slate-700'
+                                                            }`}
+                                                        >
+                                                            <span className="truncate">{g.label}</span>
+                                                            {isSelected && <span className="text-xs font-bold shrink-0">✓</span>}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
-                        {/* Bloco de Ideia da História (Fixado na Base da Coluna) */}
-                        <div className="pt-3 border-t border-[#EAE5DC] space-y-2 shrink-0">
+                        {/* Bloco de Ideia da História (Sempre Presente e Acessível na Base da Coluna) */}
+                        <div className="pt-4 border-t border-[#EAE5DC] space-y-2 mt-4 shrink-0">
                             <div className="flex items-center justify-between">
                                 <label className="text-xs font-bold text-slate-700">
                                     Ideia da História <span className="text-[11px] font-normal text-slate-400">(opcional)</span>
