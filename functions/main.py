@@ -3,11 +3,14 @@ import io
 import json
 import base64
 import uuid
+import urllib.parse
+from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict, Any, Optional
 from PIL import Image
 from dotenv import load_dotenv
 from firebase_functions import https_fn, options
-from firebase_admin import initialize_app, firestore
+from firebase_admin import initialize_app, firestore, storage
 from pydantic import BaseModel, Field
 
 try:
@@ -34,6 +37,158 @@ def prepare_image_buffer(img_bytes: bytes, filename: str = "ref.png") -> io.Byte
         buf.name = filename
         buf.seek(0)
         return buf
+
+def compress_to_webp(img_bytes: bytes, max_size: int = 1024, quality: int = 85) -> bytes:
+    """Converte e comprime bytes de imagem para formato WebP."""
+    try:
+        pil_img = Image.open(io.BytesIO(img_bytes))
+        if pil_img.mode not in ("RGB", "RGBA"):
+            pil_img = pil_img.convert("RGB")
+        pil_img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+        out = io.BytesIO()
+        pil_img.save(out, format="WEBP", quality=quality)
+        return out.getvalue()
+    except Exception as e:
+        print("Aviso ao converter imagem para WebP:", e)
+        return img_bytes
+
+def upload_bytes_to_storage(bucket, data_bytes: bytes, storage_path: str, content_type: str = "image/webp") -> str:
+    """Faz upload de bytes diretamente ao Firebase Storage e retorna a URL permanente."""
+    blob = bucket.blob(storage_path)
+    blob.upload_from_string(data_bytes, content_type=content_type)
+    encoded = urllib.parse.quote(blob.name, safe="")
+    return f"https://firebasestorage.googleapis.com/v0/b/{bucket.name}/o/{encoded}?alt=media"
+
+def generate_single_image_bytes(
+    client,
+    prompt: str,
+    person_name: str,
+    universe_context: str,
+    style: str,
+    is_cover: bool,
+    clothing_bible: str = "",
+    character_appearance_bible: str = "",
+    char_buffers: List[io.BytesIO] = None,
+    style_buffers: List[io.BytesIO] = None,
+    character_details: List[dict] = None
+) -> bytes:
+    """Gera uma imagem via OpenAI (GPT-Image-2.5 Flare) com tratamento de moderação e retorna os bytes brutos."""
+    import requests
+    char_buffers = char_buffers or []
+    style_buffers = style_buffers or []
+    selected_style = style_buffers[:1]
+    has_style_ref = len(selected_style) > 0
+    max_chars = 2 if has_style_ref else 3
+    selected_chars = char_buffers[:max_chars]
+    char_ref_count = len(selected_chars)
+    image_buffers = selected_chars + selected_style
+
+    target_size = "1536x1024" if is_cover else "1024x1536"
+    instruction = format_gpt_image_prompt(
+        base_prompt=prompt,
+        style_id=style,
+        universe_id=universe_context,
+        person_name=person_name,
+        clothing_bible=clothing_bible,
+        character_appearance_bible=character_appearance_bible,
+        is_cover=is_cover,
+        has_photo_ref=char_ref_count > 0,
+        char_ref_count=char_ref_count,
+        has_style_ref=has_style_ref,
+        character_details=character_details
+    )
+
+    img_model = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-2.5-flare")
+    img_quality = os.getenv("OPENAI_IMAGE_QUALITY", "low")
+
+    def run_gen(current_prompt: str):
+        if image_buffers:
+            for b in image_buffers:
+                b.seek(0)
+            img_arg = image_buffers if len(image_buffers) > 1 else image_buffers[0]
+            return client.images.edit(
+                model=img_model,
+                image=img_arg,
+                prompt=current_prompt,
+                size=target_size,
+                quality=img_quality
+            )
+        else:
+            return client.images.generate(
+                model=img_model,
+                prompt=current_prompt,
+                size=target_size,
+                quality=img_quality
+            )
+
+    img_res = None
+    try:
+        img_res = run_gen(instruction)
+    except Exception as gen_err:
+        err_text = str(gen_err).lower()
+        if "moderation_blocked" in err_text or "safety" in err_text or "policy" in err_text:
+            print(f"WARN: Moderation triggered on image gen. Retrying with safe prompt...")
+            safe_prompt = f"A heroic, action-packed cinematic adventure scene in {universe_context} with {person_name} standing bravely and powerfully, cinematic highlights, vibrant colors, in {style} style."
+            safe_inst = format_gpt_image_prompt(
+                base_prompt=safe_prompt,
+                style_id=style,
+                universe_id=universe_context,
+                person_name=person_name,
+                clothing_bible=clothing_bible,
+                character_appearance_bible=character_appearance_bible,
+                is_cover=is_cover,
+                has_photo_ref=char_ref_count > 0,
+                char_ref_count=char_ref_count,
+                has_style_ref=False,
+                character_details=character_details
+            )
+            try:
+                if char_buffers:
+                    for b in char_buffers:
+                        b.seek(0)
+                    img_arg = char_buffers if len(char_buffers) > 1 else char_buffers[0]
+                    img_res = client.images.edit(
+                        model=img_model,
+                        image=img_arg,
+                        prompt=safe_inst,
+                        size=target_size,
+                        quality=img_quality
+                    )
+                else:
+                    img_res = client.images.generate(
+                        model=img_model,
+                        prompt=safe_inst,
+                        size=target_size,
+                        quality=img_quality
+                    )
+            except Exception as mod_err2:
+                print(f"WARN: Second moderation trigger ({mod_err2}). Final fallback to safe text-to-image...")
+                wholesome_inst = format_gpt_image_prompt(
+                    base_prompt=f"An inspiring epic adventure portrait of {person_name} in {universe_context}, colorful and vibrant in {style} style.",
+                    style_id=style,
+                    universe_id=universe_context,
+                    person_name=person_name,
+                    is_cover=is_cover,
+                    has_photo_ref=False,
+                    character_details=character_details
+                )
+                img_res = client.images.generate(
+                    model=img_model,
+                    prompt=wholesome_inst,
+                    size=target_size,
+                    quality=img_quality
+                )
+        else:
+            raise gen_err
+
+    first_data = img_res.data[0]
+    if hasattr(first_data, "b64_json") and first_data.b64_json:
+        return base64.b64decode(first_data.b64_json)
+    elif hasattr(first_data, "url") and first_data.url:
+        r_img = requests.get(first_data.url, timeout=20)
+        return r_img.content
+    else:
+        raise ValueError("Nenhum dado de imagem retornado pela OpenAI.")
 
 # Aumenta limite de memória por campo de formulário do Werkzeug de 500KB para 15MB
 try:
@@ -522,6 +677,311 @@ PADRÃO ESTRUTURAL EXIGIDO DE UMA PÁGINA (EXATAMENTE 2 PARÁGRAFOS — ~115 PAL
                 "story_id": new_id
             }), mimetype="application/json")
 
+        # -------------------------------------------------------------
+        # 4. ROTA: GENERATE-STORY-PIPELINE (Execução Completa em Background)
+        # -------------------------------------------------------------
+        elif path == "/generate-story-pipeline":
+            job_id = req.form.get("job_id") or str(uuid.uuid4())
+            user_id = req.form.get("user_id")
+            nome = req.form.get("nome", "Herói")
+            estilo = req.form.get("estilo", "universe_default")
+            universo = req.form.get("universo", "medieval")
+            genero = req.form.get("genero", "aventura")
+            descricao = req.form.get("descricao")
+
+            db_client = firestore.client()
+            job_ref = None
+            if user_id and job_id:
+                job_ref = db_client.collection("users").document(user_id).collection("story_jobs").document(job_id)
+
+            def update_job(step=None, step_progress=None, status=None, message=None, extra=None):
+                if not job_ref:
+                    return
+                try:
+                    payload = {"updatedAt": firestore.SERVER_TIMESTAMP}
+                    if step is not None:
+                        payload["step"] = step
+                    if step_progress is not None:
+                        payload["stepProgress"] = step_progress
+                    if status is not None:
+                        payload["status"] = status
+                    if message is not None:
+                        payload["message"] = message
+                    if extra:
+                        payload.update(extra)
+                    job_ref.set(payload, merge=True)
+                except Exception as update_err:
+                    print(f"Aviso ao atualizar job {job_id}:", update_err)
+
+            update_job(
+                step=1,
+                step_progress=10,
+                status="writing",
+                message="Invocando o autor mágico (GPT-6.1 Sol)...",
+                extra={"id": job_id, "userId": user_id, "title": None, "createdAt": firestore.SERVER_TIMESTAMP}
+            )
+
+            # 1. Processar detalhes do elenco e montar system prompt
+            character_details = []
+            details_json = req.form.get("character_details_json")
+            if details_json:
+                try:
+                    character_details = json.loads(details_json)
+                except Exception:
+                    character_details = []
+
+            character_details_str = ""
+            if character_details and isinstance(character_details, list):
+                char_lines = []
+                for c in character_details:
+                    c_name = c.get("nickname_in_story") or c.get("original_name", "Herói")
+                    c_type = c.get("character_type", "person")
+                    c_breed = c.get("species_breed")
+                    if c_type == "pet":
+                        breed_info = f" ({c_breed})" if c_breed else " (Animal/Pet de 4 patas)"
+                        char_lines.append(f"- {c_name}: ANIMAL DE ESTIMAÇÃO / PET{breed_info}. Quadrúpede companheiro leal! NUNCA transforme em humano!")
+                    else:
+                        char_lines.append(f"- {c_name}: SER HUMANO (Protagonista). Papel: {c.get('role', 'Aventureiro')}, Personalidade: {c.get('personality', 'Corajoso')}")
+                character_details_str = "\nELENCO DETALHADO (HUMANO vs PET):\n" + "\n".join(char_lines) + "\n"
+
+            tema = f"TEMA ESPECÍFICO: {descricao}" if descricao else "TEMA: Uma grande jornada mágica e surpreendente."
+            style_directive = get_llm_style_instructions(estilo, universo)
+
+            system_prompt = f"""Você é um renomado autor brasileiro de literatura infantil e Diretor de Fotografia Cinematográfica.
+Sua missão é criar uma história completa dividida em EXATAMENTE 4 PÁGINAS, ESCRITA INTEGRALMENTE EM PORTUGUÊS DO BRASIL (PT-BR), com ilustrações dinâmicas, cinematográficas e ultra-detalhadas.
+
+================================================================================
+REGRA ZERO E FUNDAMENTAL DE IDIOMA (PORTUGUÊS DO BRASIL OBRIGATÓRIO):
+- O título (`title`) e o texto completo das 4 páginas (`text`) DEVEM SER 100% EM PORTUGUÊS DO BRASIL (PT-BR)!
+- É TERMINANTEMENTE PROIBIDO gerar o texto da história em inglês, espanhol ou qualquer outro idioma! NUNCA ESCREVA A HISTÓRIA EM INGLÊS!
+- O leitor é uma criança brasileira, toda a narrativa, descrições e falas são EXCLUSIVAMENTE em português perfeito e fluente.
+- Apenas os prompts técnicos de imagem (`illustration_prompt`, `cover_prompt`, `clothing_bible`) são redigidos em inglês para a IA geradora de imagens.
+================================================================================
+
+REGRA ABSOLUTA: IMAGENS PURAMENTE VISUAIS (SEM BALÕES DE FALA E SEM NENHUM TEXTO):
+- As ilustrações NÃO PODEM CONTER NENHUM TIPO DE TEXTO: sem balões de fala (no speech bubbles), sem balões de diálogo, sem banners, sem títulos gravados na arte, sem palavras escritas.
+- O livro é ilustrado e diagramado: o texto da história já aparece na página do leitor. A arte deve ser 100% LIMPA E PURAMENTE VISUAL!
+- Em todos os `illustration_prompt` e no `cover_prompt`, SEMPRE inclua a instrução explícita: "wordless picture book illustration, strictly no speech bubbles, no dialogue, no text, no lettering".
+================================================================================
+
+PARÂMETROS DE ENTRADA:
+- Protagonistas: {nome} (Eles formam um grupo unido e inseparável).
+- Universo: {universo}
+- Gênero: {genero}
+- Estilo Artístico Alvo: {estilo}
+- {tema}
+{character_details_str}
+
+================================================================================
+MAPEAMENTO DO ELENCO PRINCIPAL BASEADO NAS FOTOS [1 A 3]:
+- Os heróis protagonistas da história são exclusivamente os indivíduos apresentados nas fotos de referência ({nome}).
+- Cada protagonista herda sua identidade visual e física diretamente de sua respectiva foto [1 a 3]:
+  * Protagonista Humano: preserva fisionomia real, gênero (masculino/feminino), idade aparente, cabelo e óculos da sua foto.
+  * Pet/Companheiro: preserva a anatomia autêntica da espécie e raça da sua foto (animal quadrúpede leal).
+- Figurantes de ambientação (guardas, aldeões, mercadores, transeuntes) podem existir normalmente no plano de fundo quando o cenário pedir, enquanto os protagonistas conduzem o primeiro plano.
+================================================================================
+
+DIRETRIZ CRÍTICA DE ESTILO VISUAL:
+{style_directive}
+
+ARCO NARRATIVO DINÂMICO DAS 4 PÁGINAS (ESTRUTURA EM 4 ATOS):
+- PÁGINA 1 (Apresentação & O Chamado): Apresentação dos protagonistas ({nome}) em seu cotidiano no universo '{universo}', a atmosfera inicial e o surgimento repentino do mistério, pista ou desafio que dá início à jornada.
+- PÁGINA 2 (A Jornada & O Grande Obstáculo): A travessia pelo coração desse mundo, exploração ativa de cenários fascinantes e o confronto direto com o obstáculo, enigma ou perigo principal da aventura.
+- PÁGINA 3 (O Clímax da Aventura): O ápice emocionante da história, onde os protagonistas unem coragem, inteligência e cooperação em uma ação decisiva para vencer o desafio.
+- PÁGINA 4 (A Vitória & Celebração): O desfecho luminoso e recompensador, comemorando a conquista e o laço inquebrável de amizade entre os heróis em uma cena calorosa e memorável.
+
+================================================================================
+REGRAS TÉCNICAS E ESTRUTURAIS:
+- Gere EXATAMENTE 4 páginas (`pages`).
+- Cada página deve ter entre 100 e 130 palavras em 2 parágrafos substanciais e envolventes separados por quebra dupla (\\n\\n).
+- Retorne rigorosamente o JSON estruturado."""
+
+            story_start_time = datetime.now(timezone.utc)
+            completion = client.beta.chat.completions.parse(
+                model="gpt-6.1-sol",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Crie agora o livro infantil ilustrado de 4 páginas com protagonistas {nome} no universo '{universo}' e gênero '{genero}'."}
+                ],
+                response_format=Story,
+                reasoning_effort="low"
+            )
+            story_end_time = datetime.now(timezone.utc)
+            story_obj = completion.choices[0].message.parsed
+            story_title = story_obj.title
+            usage = completion.usage
+
+            update_job(
+                step=2,
+                step_progress=25,
+                status="illustrating",
+                message=f"História escrita! Pintando ilustrações para '{story_title}'...",
+                extra={"title": story_title}
+            )
+
+            # 2. Carregar referências visuais dos heróis
+            char_buffers = []
+            urls_json = req.form.get("image_urls_json")
+            if urls_json:
+                try:
+                    urls = json.loads(urls_json)
+                    if isinstance(urls, list):
+                        for idx, item in enumerate(urls[:3]):
+                            u = item.get("url") if isinstance(item, dict) else item
+                            if u and str(u).startswith("http"):
+                                try:
+                                    r = requests.get(u, timeout=10)
+                                    if r.status_code == 200:
+                                        char_buffers.append(prepare_image_buffer(r.content, f"char_url_{idx}.png"))
+                                except Exception as dl_err:
+                                    print(f"Erro baixando ref {u}: {dl_err}")
+                except Exception:
+                    pass
+
+            # 3. Gerar as 5 ilustrações simultaneamente em paralelo (1 capa + 4 páginas)
+            image_jobs = [
+                {"idx": -1, "is_cover": True, "prompt": story_obj.cover_prompt, "name": "Capa"},
+                {"idx": 0, "is_cover": False, "prompt": story_obj.pages[0].illustration_prompt, "name": "Página 1"},
+                {"idx": 1, "is_cover": False, "prompt": story_obj.pages[1].illustration_prompt, "name": "Página 2"},
+                {"idx": 2, "is_cover": False, "prompt": story_obj.pages[2].illustration_prompt, "name": "Página 3"},
+                {"idx": 3, "is_cover": False, "prompt": story_obj.pages[3].illustration_prompt, "name": "Página 4"}
+            ]
+
+            results_map = {}
+            completed_images = 0
+
+            def worker_task(job):
+                img_raw = generate_single_image_bytes(
+                    client=client,
+                    prompt=job["prompt"],
+                    person_name=nome,
+                    universe_context=universo,
+                    style=estilo,
+                    is_cover=job["is_cover"],
+                    clothing_bible=story_obj.clothing_bible,
+                    character_appearance_bible=story_obj.character_appearance_bible,
+                    char_buffers=char_buffers,
+                    character_details=character_details
+                )
+                return job["idx"], img_raw
+
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                futures = {executor.submit(worker_task, j): j for j in image_jobs}
+                for f in as_completed(futures):
+                    job = futures[f]
+                    try:
+                        idx, raw_bytes = f.result()
+                        results_map[idx] = raw_bytes
+                        completed_images += 1
+                        progress_val = 25 + int((completed_images / 5.0) * 60)
+                        update_job(
+                            step=2,
+                            step_progress=progress_val,
+                            message=f"Pintada ilustração {completed_images} de 5 ({job['name']})..."
+                        )
+                    except Exception as img_err:
+                        print(f"Erro ao gerar {job['name']}: {img_err}")
+
+            update_job(
+                step=3,
+                step_progress=88,
+                status="saving",
+                message="Encadernando o livro e salvando na Biblioteca..."
+            )
+
+            # 4. Upload para o Firebase Storage
+            bucket_name = os.getenv("VITE_FIREBASE_STORAGE_BUCKET") or "imaginaria-5312a.firebasestorage.app"
+            bucket = storage.bucket(bucket_name)
+
+            story_id = str(uuid.uuid4())
+            base_storage = f"users/{user_id}/stories/{story_id}" if user_id else f"stories/{story_id}"
+
+            fallback_bytes = results_map.get(-1) or (next(iter(results_map.values())) if results_map else None)
+            if not fallback_bytes:
+                raise ValueError("Não foi possível gerar ilustrações para a história.")
+
+            cover_bytes = results_map.get(-1) or fallback_bytes
+            cover_webp = compress_to_webp(cover_bytes)
+            cover_url = upload_bytes_to_storage(bucket, cover_webp, f"{base_storage}/cover/cover.webp")
+
+            chapters = []
+            for p_idx, page in enumerate(story_obj.pages):
+                page_raw = results_map.get(p_idx) or fallback_bytes
+                page_webp = compress_to_webp(page_raw)
+                page_url = upload_bytes_to_storage(bucket, page_webp, f"{base_storage}/chapters/page_{p_idx + 1}.webp")
+                chapters.append({
+                    "text": page.text,
+                    "image_url": page_url,
+                    "prompt": page.illustration_prompt
+                })
+
+            # 5. Custos e Metadados
+            prompt_tokens = usage.prompt_tokens if usage else 0
+            completion_tokens = usage.completion_tokens if usage else 0
+            text_cost_usd = (prompt_tokens * (2.00 / 1_000_000)) + (completion_tokens * (10.00 / 1_000_000))
+            img_cost_usd = 5 * 0.005
+            total_usd = text_cost_usd + img_cost_usd
+            total_brl = total_usd * 5.80
+
+            now_iso = datetime.now(timezone.utc).isoformat()
+            story_payload = {
+                "id": story_id,
+                "title": story_title,
+                "cover_image_url": cover_url,
+                "cover_prompt": story_obj.cover_prompt,
+                "pages": [p.model_dump() for p in story_obj.pages],
+                "chapters": chapters,
+                "universe": universo,
+                "style": estilo,
+                "character_names": nome,
+                "clothing_bible": story_obj.clothing_bible,
+                "character_appearance_bible": story_obj.character_appearance_bible,
+                "character_details": character_details or [],
+                "createdAt": now_iso,
+                "cost_data": {
+                    "usd_images": img_cost_usd,
+                    "usd_text": text_cost_usd,
+                    "usd_total": total_usd,
+                    "brl_total": total_brl
+                },
+                "metadata": {
+                    "story_id": story_id,
+                    "job_id": job_id,
+                    "completedAt": now_iso,
+                    "token_usage": {
+                        "prompt_tokens": prompt_tokens,
+                        "completion_tokens": completion_tokens,
+                        "total_tokens": prompt_tokens + completion_tokens
+                    }
+                }
+            }
+
+            # 6. Gravar história no Firestore
+            if user_id:
+                story_ref = db_client.collection("users").document(user_id).collection("stories").document(story_id)
+                story_ref.set(story_payload)
+
+            # 7. Atualizar Job para "completed"
+            update_job(
+                step=3,
+                step_progress=100,
+                status="completed",
+                message="Livro mágico concluído com sucesso!",
+                extra={
+                    "storyId": story_id,
+                    "title": story_title,
+                    "coverImageUrl": cover_url,
+                    "completedAt": firestore.SERVER_TIMESTAMP
+                }
+            )
+
+            return https_fn.Response(json.dumps({
+                "status": "sucesso",
+                "story_id": story_id,
+                "job_id": job_id,
+                "data": story_payload
+            }), mimetype="application/json")
+
         elif path == "/test-firestore":
             try:
                 db_client = firestore.client()
@@ -542,12 +1002,27 @@ PADRÃO ESTRUTURAL EXIGIDO DE UMA PÁGINA (EXATAMENTE 2 PARÁGRAFOS — ~115 PAL
         else:
             return https_fn.Response(json.dumps({
                 "error": f"Rota '{path}' não encontrada.",
-                "available_routes": ["/generate-story", "/generate-image", "/save-story", "/test-firestore"]
+                "available_routes": ["/generate-story", "/generate-image", "/save-story", "/generate-story-pipeline", "/test-firestore"]
             }), status=404, mimetype="application/json")
 
     except Exception as e:
         import traceback
         traceback.print_exc()
+        try:
+            # Se for uma requisição de job e falhou, marca no Firestore
+            req_job_id = req.form.get("job_id") if hasattr(req, "form") else None
+            req_user_id = req.form.get("user_id") if hasattr(req, "form") else None
+            if req_job_id and req_user_id:
+                db_client = firestore.client()
+                db_client.collection("users").document(req_user_id).collection("story_jobs").document(req_job_id).set({
+                    "status": "failed",
+                    "error": str(e),
+                    "message": f"Erro na criação mágica: {str(e)}",
+                    "updatedAt": firestore.SERVER_TIMESTAMP
+                }, merge=True)
+        except Exception:
+            pass
+
         return https_fn.Response(json.dumps({
             "error": str(e),
             "detail": f"Erro interno na Cloud Function: {str(e)}"

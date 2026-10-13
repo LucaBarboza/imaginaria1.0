@@ -53,6 +53,95 @@ export function StoryProvider({ children }) {
         stepProgress: 0,
     });
 
+    const [activeJob, setActiveJob] = useState(null);
+    const [completedNotification, setCompletedNotification] = useState(null);
+
+    // Escuta em tempo real o job ativo no Firestore
+    useEffect(() => {
+        const activeJobId = localStorage.getItem('imaginaria_active_job_id');
+        if (!currentUser || !activeJobId) return;
+
+        const jobDocRef = doc(db, "users", currentUser.uid, "story_jobs", activeJobId);
+        const unsubscribe = onSnapshot(jobDocRef, async (snapshot) => {
+            if (!snapshot.exists()) return;
+            const jobData = snapshot.data();
+
+            setActiveJob(prev => ({
+                ...(prev || {}),
+                id: snapshot.id,
+                ...jobData
+            }));
+
+            if (jobData.status === 'writing') {
+                setGenerationState(prev => ({
+                    ...prev,
+                    isLoading: true,
+                    step: 1,
+                    stepProgress: jobData.stepProgress || 15,
+                    logs: jobData.message ? [...(prev.logs || []).filter(l => l !== jobData.message), jobData.message] : prev.logs
+                }));
+            } else if (jobData.status === 'illustrating') {
+                setGenerationState(prev => ({
+                    ...prev,
+                    isLoading: true,
+                    step: 2,
+                    stepProgress: jobData.stepProgress || 30,
+                    logs: jobData.message ? [...(prev.logs || []).filter(l => l !== jobData.message), jobData.message] : prev.logs
+                }));
+            } else if (jobData.status === 'saving') {
+                setGenerationState(prev => ({
+                    ...prev,
+                    isLoading: true,
+                    step: 3,
+                    stepProgress: jobData.stepProgress || 90,
+                    logs: jobData.message ? [...(prev.logs || []).filter(l => l !== jobData.message), jobData.message] : prev.logs
+                }));
+            } else if (jobData.status === 'completed') {
+                localStorage.removeItem('imaginaria_active_job_id');
+                setActiveJob(null);
+
+                let loadedStory = null;
+                if (jobData.storyId) {
+                    try {
+                        const storySnap = await getDoc(doc(db, "users", currentUser.uid, "stories", jobData.storyId));
+                        if (storySnap.exists()) {
+                            loadedStory = { id: storySnap.id, storyId: storySnap.id, ...storySnap.data() };
+                        }
+                    } catch (e) {
+                        console.warn("Aviso ao carregar história concluída:", e);
+                    }
+                }
+
+                setGenerationState(prev => ({
+                    ...prev,
+                    isLoading: false,
+                    step: 3,
+                    stepProgress: 100,
+                    result: loadedStory || prev.result
+                }));
+
+                setCompletedNotification({
+                    title: jobData.title || loadedStory?.title || "Livro Mágico",
+                    storyId: jobData.storyId,
+                    coverUrl: jobData.coverImageUrl || loadedStory?.cover_image_url
+                });
+
+            } else if (jobData.status === 'failed') {
+                localStorage.removeItem('imaginaria_active_job_id');
+                setActiveJob(null);
+                setGenerationState(prev => ({
+                    ...prev,
+                    isLoading: false,
+                    error: jobData.message || jobData.error || "Falha na criação mágica."
+                }));
+            }
+        }, (err) => {
+            console.error("Erro no listener de story_job:", err);
+        });
+
+        return () => unsubscribe();
+    }, [currentUser]);
+
     // Persist characters to localStorage only if not logged in (fallback)
     useEffect(() => {
         if (!currentUser) {
@@ -388,23 +477,22 @@ export function StoryProvider({ children }) {
     }, [currentUser]);
 
     const startGeneration = useCallback(async (storyData) => {
-        // Validation: Must have at least one character
+        // Validação: Pelo menos um personagem deve ser selecionado
         if (!storyData || !storyData.characters || storyData.characters.length === 0) {
-            console.error("startGeneration called without characters", storyData);
+            console.error("startGeneration chamado sem heróis:", storyData);
             setGenerationState(prev => ({
                 ...prev,
                 isLoading: false,
-                error: "Selecione pelo menos um viajante!"
+                error: "Selecione pelo menos um herói para a jornada!"
             }));
             return;
         }
 
-        // Limite de 3 histórias por dia (contas como luca.barboza@gmail.com e ricardo8610@gmail.com são ilimitadas)
+        // Limite de 3 histórias por dia
         const adminEmails = ["luca.barboza@gmail.com", "ricardo8610@gmail.com"];
         const isUnlimited = currentUser && adminEmails.includes((currentUser.email || "").toLowerCase().trim());
 
         if (!isUnlimited) {
-            // Checagem no Firestore para usuários autenticados
             if (currentUser) {
                 try {
                     const startOfDay = new Date();
@@ -424,11 +512,10 @@ export function StoryProvider({ children }) {
                         return;
                     }
                 } catch (quotaErr) {
-                    console.warn("Aviso ao verificar cota diária no Firestore:", quotaErr);
+                    console.warn("Aviso ao verificar cota no Firestore:", quotaErr);
                 }
             }
 
-            // Checagem local (localStorage) adicional
             try {
                 const todayKey = `daily_stories_${new Date().toISOString().slice(0, 10)}`;
                 const localCount = parseInt(localStorage.getItem(todayKey) || "0", 10);
@@ -445,46 +532,59 @@ export function StoryProvider({ children }) {
             }
         }
 
-        // Initialize Metadata Tracking
-        const startTime = new Date();
-        const localLogs = ["Iniciando motor criativo...", "Conectando ao núcleo de imaginação..."];
+        // Criar identificador único do Job de background
+        const jobId = crypto.randomUUID();
+        const characterNames = storyData.characters.map(c => c.customNickname || c.nickname).join(", ");
 
-        // Helper to update state and local logs
-        const addLog = (msg, newStep = null, newProgress = null) => {
-            localLogs.push(msg);
-            setGenerationState(prev => ({
-                ...prev,
-                logs: [...prev.logs, msg],
-                ...(newStep !== null && { step: newStep }),
-                ...(newProgress !== null && { stepProgress: newProgress })
-            }));
+        const initialJobData = {
+            id: jobId,
+            userId: currentUser?.uid || null,
+            status: "queued",
+            step: 0,
+            stepProgress: 5,
+            message: "Conectando ao núcleo de imaginação...",
+            title: null,
+            universe: storyData.universe,
+            style: storyData.style || 'universe_default',
+            createdAt: new Date().toISOString()
         };
 
-        setGenerationState(prev => ({
-            ...prev,
+        setActiveJob(initialJobData);
+        if (currentUser) {
+            localStorage.setItem('imaginaria_active_job_id', jobId);
+            try {
+                const jobRef = doc(db, "users", currentUser.uid, "story_jobs", jobId);
+                await setDoc(jobRef, initialJobData);
+            } catch (jobErr) {
+                console.warn("Aviso ao criar registro inicial do job no Firestore:", jobErr);
+            }
+        }
+
+        const initialLogs = ["Iniciando motor criativo...", "Conectando ao núcleo de imaginação..."];
+        setGenerationState({
             isLoading: true,
+            result: null,
             error: null,
-            logs: localLogs,
+            logs: initialLogs,
             step: 0,
-            stepProgress: 0,
-        }));
+            stepProgress: 5,
+        });
 
         try {
-            // 1. Prepare Data
             const formData = new FormData();
-
-            // Collect names from ALL selected characters
-            const characterNames = storyData.characters.map(c => c.customNickname || c.nickname).join(", ");
             formData.append('nome', characterNames);
-
-            formData.append('estilo', storyData.style);
+            formData.append('estilo', storyData.style || 'universe_default');
             formData.append('universo', storyData.universe);
             formData.append('genero', storyData.genre);
             if (storyData.description) {
                 formData.append('descricao', storyData.description);
             }
+            formData.append('job_id', jobId);
+            if (currentUser) {
+                formData.append('user_id', currentUser.uid);
+            }
 
-            // Extract character details for the prompt
+            // Detalhes dos heróis para consistência de prompt (Humano vs Pet)
             const charactersDetails = storyData.characters.map(c => ({
                 original_name: c.nickname,
                 nickname_in_story: c.customNickname,
@@ -495,9 +595,7 @@ export function StoryProvider({ children }) {
             }));
             formData.append('character_details_json', JSON.stringify(charactersDetails));
 
-            addLog("Processando perfil dos heróis...", 0, 20);
-
-            // Collect photos with metadata
+            // Fotos de referência dos heróis
             const allPhotos = [];
             for (const char of storyData.characters) {
                 if (char.photos && char.photos.length > 0) {
@@ -511,481 +609,187 @@ export function StoryProvider({ children }) {
                     });
                 }
             }
-
-            // Convert blob URLs back to Blobs only if strictly necessary (local blobs)
-            // For Firebase URLs, we send them as strings to the backend to avoid CORS.
-            const urlPhotos = [];
-
             if (allPhotos.length > 0) {
-                for (const item of allPhotos) {
-                    if (item.url.startsWith('http')) {
-                        // It's a remote URL (Firebase or other), let backend fetch it
-                        urlPhotos.push({
-                            url: item.url,
-                            name: item.name,
-                            character_type: item.character_type,
-                            species_breed: item.species_breed
-                        });
-                    } else {
-                        // It's likely a local blob/data URL, we must convert and compress to avoid 502 payload limit
-                        try {
-                            let blob;
-                            try {
-                                blob = await compressImage(item.url);
-                            } catch (compErr) {
-                                const response = await fetch(item.url);
-                                blob = await response.blob();
-                            }
-                            // Sanitize name for filename
-                            const safeName = item.name.replace(/[^a-zA-Z0-9]/g, '_');
-                            formData.append('imagens', blob, `character_${safeName}_ref.webp`);
-                        } catch (e) {
-                            console.error("Error converting local blob", e);
-                        }
-                    }
-                }
+                formData.append('image_urls_json', JSON.stringify(allPhotos));
             }
 
-            // Append URLs payload
-            if (urlPhotos.length > 0) {
-                formData.append('image_urls_json', JSON.stringify(urlPhotos));
-            }
-
-            addLog("Enviando dados para a Inteligência Artificial (OpenAI GPT)...", 0, 80);
-
-            // Step 2: Generating Text (Wait for API)
-            addLog("Iniciando escrita da história...", 1, 0);
-
-            // Simulação de progresso da API (aumenta até 90%)
-            let textProgress = 0;
-            const progressInterval = setInterval(() => {
-                textProgress += (90 - textProgress) * 0.1; // Se aproxima do 90 mais lentamente
-                if (textProgress > 90) textProgress = 90;
-                setGenerationState(prev => ({ ...prev, stepProgress: Math.round(textProgress) }));
-            }, 800);
-
-            // 2. Call Story Generation API
-            const storyStart = new Date();
-            const response = await fetch('/api/generate-story', {
-                method: 'POST',
-                body: formData,
-            });
-
-            const responseText = await response.text();
-            clearInterval(progressInterval); // Para a animação
-            addLog("História recebida.", 1, 100);
-            console.log("Raw Response:", response.status, responseText);
-
-            if (!response.ok) {
-                let errorDetail = 'Falha ao gerar história';
-                try {
-                    if (!responseText || responseText.trim() === "") {
-                        errorDetail += ` (O servidor retornou um erro 500 sem detalhes. Isso geralmente significa que a Inteligência Artificial está sobrecarregada ou a imagem/texto foi muito grande para ser processada.)`;
-                    } else {
-                        const errorData = JSON.parse(responseText);
-                        errorDetail = errorData.detail || errorDetail;
-                    }
-                } catch (e) {
-                    const snippet = responseText ? responseText.substring(0, 100) : "Sem resposta do servidor";
-                    errorDetail += ` (Status ${response.status}: ${snippet})`;
-                }
-                throw new Error(errorDetail);
-            }
-
-            let result;
+            // Disparar execução em background no servidor
+            let finalStory = null;
+            let response = null;
             try {
-                result = JSON.parse(responseText);
-            } catch (e) {
-                console.error("JSON Parse Error:", e, "Response Text:", responseText);
-                if (responseText && (responseText.includes("<!doctype") || responseText.includes("<html"))) {
-                    throw new Error("O servidor de geração (backend) não está conectado ao site online. Para gerar histórias, o servidor precisa estar rodando.");
+                response = await fetch('/api/generate-story-pipeline', {
+                    method: 'POST',
+                    body: formData,
+                });
+            } catch (netErr) {
+                console.warn("Falha na chamada direta do pipeline:", netErr);
+            }
+
+            if (response && response.ok) {
+                const resultJson = await response.json();
+                finalStory = resultJson.data;
+            } else if (response && response.status === 404) {
+                // Fallback para ambientes onde o endpoint de pipeline ainda não foi publicado na nuvem
+                console.log("ℹ️ Executando pipeline em background via orquestrador inteligente...");
+                if (currentUser) {
+                    await setDoc(doc(db, "users", currentUser.uid, "story_jobs", jobId), {
+                        status: "writing",
+                        step: 1,
+                        stepProgress: 15,
+                        message: "Invocando o autor mágico (GPT-6.1 Sol)...",
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
                 }
-                throw new Error("Erro ao processar resposta do servidor (JSON inválido).");
-            }
 
-            // Handle new response structure { story, raw_prompt, usage }
-            // Fallback for older version if needed, though we just updated backend
-            const generatedStory = result.data.story || result.data;
-            const rawPrompt = result.data.raw_prompt || "";
-            const tokenUsage = result.data.usage || {};
+                // 1. Gera o texto literário com GPT-6.1 Sol
+                const storyRes = await fetch('/api/generate-story', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!storyRes.ok) {
+                    const errText = await storyRes.text();
+                    throw new Error(`Falha ao gerar história: ${errText}`);
+                }
+                const storyDataRes = await storyRes.json();
+                const generatedStory = storyDataRes.data?.story || storyDataRes.data;
+                const storyTitle = generatedStory.title || "Aventura Mágica";
 
-            if (!generatedStory || !Array.isArray(generatedStory.pages)) {
-                console.error("Formato de história inválido ou páginas ausentes:", result);
-                let debugStr = "";
-                try { debugStr = JSON.stringify(result).substring(0, 150); } catch (e) { }
-                throw new Error(`A inteligência artificial retornou um formato incompleto e faltam as páginas. Tente novamente! Detalhes: ${debugStr}`);
-            }
+                if (currentUser) {
+                    await setDoc(doc(db, "users", currentUser.uid, "story_jobs", jobId), {
+                        status: "illustrating",
+                        step: 2,
+                        stepProgress: 30,
+                        title: storyTitle,
+                        message: `História escrita! Pintando ilustrações para '${storyTitle}'...`,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                }
 
-            const storyEnd = new Date();
+                // 2. Gera as 5 ilustrações simultaneamente em paralelo (1 capa + 4 páginas)
+                const imageJobs = [
+                    { prompt: generatedStory.cover_prompt, isCover: true, index: -1, name: "Capa" },
+                    ...generatedStory.pages.map((p, i) => ({ prompt: p.illustration_prompt, isCover: false, index: i, name: `Página ${i + 1}` }))
+                ];
 
-            // 3. Image Generation
-            addLog("História escrita com sucesso!", 1, 100);
-            addLog("Iniciando geração das ilustrações...", 2, 0);
+                let completedImgs = 0;
+                const imgResults = await Promise.all(imageJobs.map(async (job) => {
+                    const imgForm = new FormData();
+                    imgForm.append('prompt', job.prompt);
+                    imgForm.append('person_name', characterNames);
+                    imgForm.append('universe_context', storyData.universe);
+                    imgForm.append('style', storyData.style || 'universe_default');
+                    imgForm.append('is_cover', job.isCover ? 'true' : 'false');
+                    imgForm.append('clothing_bible', generatedStory.clothing_bible || '');
+                    imgForm.append('character_appearance_bible', generatedStory.character_appearance_bible || '');
+                    if (allPhotos.length > 0) imgForm.append('reference_image_urls_json', JSON.stringify(allPhotos));
+                    if (charactersDetails.length > 0) imgForm.append('character_details_json', JSON.stringify(charactersDetails));
 
-            let totalImagesToGenerate = 0;
-            let imagesGeneratedCount = 0;
+                    const imgRes = await fetch('/api/generate-image', { method: 'POST', body: imgForm });
+                    if (!imgRes.ok) throw new Error(`Falha ao gerar ilustração (${job.name})`);
+                    const imgData = await imgRes.json();
 
-            // Fetch reference image blobs once to reuse
-            const referenceBlobs = [];
-            // We basically only need this for STYLE REFERENCES generated later (Scene 1)
-            // Character refs are now passed as URLs mostly.
-
-            // Helper to generate a single image with Retry Logic
-            const generateSingleImage = async (prompt, descriptor, extraReferences = [], styleRefUrl = null, isCover = false) => {
-                // --- SKIP GENERATION MODE ---
-                // Retorna placeholder direto para economizar tempo/custo
-                // console.log(`[SKIP] Ignorando geração real para: ${descriptor}`);
-                // return "https://placehold.co/1024x1024/202020/666666/png?text=Imagem+Ignorada+(Dev)";
-
-                const maxRetries = 5;
-                let attempt = 1;
-
-                while (attempt <= maxRetries) {
-                    try {
-                        addLog(`Pintando (Tentativa ${attempt}/${maxRetries}): ${descriptor}...`);
-
-                        const imgFormData = new FormData();
-                        imgFormData.append('prompt', prompt);
-
-                        // Pass combined names, universe and style
-                        imgFormData.append('person_name', characterNames);
-                        imgFormData.append('universe_context', storyData.universe);
-                        imgFormData.append('style', storyData.style || 'universe_default');
-                        imgFormData.append('is_cover', isCover ? 'true' : 'false');
-                        imgFormData.append('clothing_bible', generatedStory?.clothing_bible || '');
-                        imgFormData.append('character_appearance_bible', generatedStory?.character_appearance_bible || '');
-
-                        // Append Character Reference URLs
-                        if (urlPhotos.length > 0) {
-                            imgFormData.append('reference_image_urls_json', JSON.stringify(urlPhotos));
-                        }
-
-                        if (charactersDetails && charactersDetails.length > 0) {
-                            imgFormData.append('character_details_json', JSON.stringify(charactersDetails));
-                        }
-
-                        // Add extra references (e.g. style reference from scene 1)
-                        if (extraReferences && extraReferences.length > 0) {
-                            extraReferences.forEach((blob, idx) => {
-                                imgFormData.append('reference_images', blob, `style_ref_${idx}.png`);
-                            });
-                        }
-
-                        if (styleRefUrl) {
-                            if (styleRefUrl.startsWith('data:')) {
-                                try {
-                                    const fetchRes = await fetch(styleRefUrl);
-                                    const blob = await fetchRes.blob();
-                                    imgFormData.append('reference_images', blob, 'anchor_style.png');
-                                } catch (convertErr) {
-                                    console.warn("Falha ao converter data URL para blob:", convertErr);
-                                    imgFormData.append('style_reference_url', styleRefUrl);
-                                }
-                            } else {
-                                imgFormData.append('style_reference_url', styleRefUrl);
-                            }
-                        }
-
-                        const requestStart = new Date();
-                        const res = await fetch('/api/generate-image', {
-                            method: 'POST',
-                            body: imgFormData
-                        });
-
-                        if (!res.ok) {
-                            const errText = await res.text();
-                            throw new Error(`Falha API: ${res.status} - ${errText}`);
-                        }
-
-                        const data = await res.json();
-                        const requestEnd = new Date();
-
-                        imagesGeneratedCount++;
-                        if (totalImagesToGenerate > 0) {
-                            const pct = Math.round((imagesGeneratedCount / totalImagesToGenerate) * 100);
-                            setGenerationState(prev => ({ ...prev, stepProgress: pct }));
-                        }
-
-                        // Return structural info + logs
-                        return {
-                            success: true,
-                            image_url: data.image_url,
-                            descriptor: descriptor,
-                            prompt: prompt,
-                            attempts: attempt,
-                            timings: {
-                                start: requestStart.toISOString(),
-                                end: requestEnd.toISOString(),
-                                duration_ms: requestEnd - requestStart
-                            },
-                            log: data.generation_log || {}
-                        };
-
-                    } catch (e) {
-                        console.error(`Erro ao gerar imagem (${descriptor}) - Tentativa ${attempt}:`, e);
-
-                        if (attempt === maxRetries) {
-                            // Retornar imagem de erro na última tentativa
-                            const errorMsg = e.message || "Erro desconhecido";
-                            // Encode error message safely for URL
-                            const safeError = encodeURIComponent(errorMsg.substring(0, 100));
-                            return {
-                                success: false,
-                                image_url: `https://placehold.co/600x400/330000/ff0000?text=Erro:+${safeError}`,
-                                descriptor: descriptor,
-                                prompt: prompt,
-                                attempts: attempt,
-                                error: errorMsg,
-                                log: {}
-                            };
-                        }
-
-                        // Backoff: 1s, 2s, 3s, 4s, 5s
-                        const delay = attempt * 1000;
-                        addLog(`Erro em ${descriptor}. Retentando em ${attempt}s...`);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        attempt++;
+                    completedImgs++;
+                    if (currentUser) {
+                        setDoc(doc(db, "users", currentUser.uid, "story_jobs", jobId), {
+                            stepProgress: 30 + Math.round((completedImgs / 5.0) * 55),
+                            message: `Pintada ilustração ${completedImgs} de 5 (${job.name})...`,
+                            updatedAt: new Date().toISOString()
+                        }, { merge: true }).catch(() => {});
                     }
+
+                    return { index: job.index, url: imgData.image_url };
+                }));
+
+                // 3. Salva a história no Firebase
+                if (currentUser) {
+                    await setDoc(doc(db, "users", currentUser.uid, "story_jobs", jobId), {
+                        status: "saving",
+                        step: 3,
+                        stepProgress: 90,
+                        message: "Encadernando o livro e salvando na Biblioteca...",
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
                 }
-            };
 
-            // --- Generation Flow Control ---
+                const coverObj = imgResults.find(r => r.index === -1);
+                const pageImgs = imgResults.filter(r => r.index !== -1).sort((a, b) => a.index - b.index);
+                const fallbackUrl = coverObj?.url || pageImgs[0]?.url;
 
-            // To collect full logs
-            const imageGenerationLogs = [];
-
-            const imagesStart = new Date();
-
-            // 1. Identify which pages have illustration prompts
-            const pagesWithImages = generatedStory.pages.map((page, index) => ({ page, index })).filter(p => p.page.illustration_prompt);
-
-            const allImageJobs = [
-                {
-                    prompt: generatedStory.cover_prompt,
-                    descriptor: "Capa do Livro",
-                    index: -1, // special index for cover
-                    isCover: true
-                },
-                ...pagesWithImages.map(item => ({
-                    prompt: item.page.illustration_prompt,
-                    descriptor: `Cena da Página ${item.page.page_number}`,
-                    index: item.index,
-                    isCover: false
-                }))
-            ];
-
-            totalImagesToGenerate = allImageJobs.length;
-
-            addLog(`🎨 Gerando todas as ${totalImagesToGenerate} ilustrações (Capa e Páginas) simultaneamente em paralelo...`);
-
-            const batchStart = new Date();
-
-            // Process all images simultaneously in parallel via Promise.all (1 cover + 4 pages = 5 images)
-            // Cloud Run with concurrency=1 spins up instances concurrently
-            // OpenAI Tier 4/5 account easily handles high concurrent requests
-            const allResults = await Promise.all(
-                allImageJobs.map(async (job) => {
-                    const res = await generateSingleImage(job.prompt, job.descriptor, [], null, job.isCover);
-                    return {
-                        result: res,
-                        index: job.index
-                    };
-                })
-            );
-
-            // Separate cover from the rest
-            const coverData = allResults.find(r => r.index === -1)?.result || { success: false };
-            const pageResults = allResults.filter(r => r.index !== -1);
-
-            imageGenerationLogs.push(coverData);
-            pageResults.forEach(r => imageGenerationLogs.push(r.result));
-
-            // Identificar imagem de fallback entre as imagens que foram geradas com sucesso
-            const fallbackImage = (coverData.success && coverData.image_url)
-                || (pageResults.find(r => r.result.success)?.result.image_url);
-
-            const failedPages = pageResults.filter(r => !r.result.success);
-            if (failedPages.length > 0 || !coverData.success) {
-                console.warn(`Aviso de lote: ${failedPages.length} página(s) e status de capa (sucesso=${coverData.success}). Usando ilustrações do livro como fallback seguro.`);
-                addLog(`✨ Livro ilustrado com sucesso! Algumas cenas adaptadas harmoniosamente.`);
-            }
-
-            if (!fallbackImage) {
-                throw new Error("Não foi possível gerar nenhuma ilustração válida para o livro. Tente novamente.");
-            }
-
-            // Reconstruct chapters array (4 elements)
-            const allChapterImagesMap = {};
-            pageResults.forEach(r => {
-                allChapterImagesMap[r.index] = r.result.success
-                    ? r.result.image_url
-                    : fallbackImage;
-            });
-
-            const allChapters = generatedStory.pages.map((page, index) => ({
-                image_url: allChapterImagesMap[index] || fallbackImage
-            }));
-
-            const finalCoverUrl = coverData.success ? coverData.image_url : fallbackImage;
-
-            const imagesEnd = new Date();
-            const endTime = new Date();
-
-            const promptTokens = tokenUsage.prompt_token_count || 0;
-            const outputTokens = tokenUsage.candidates_token_count || 0;
-            // Tabela OpenAI GPT-6.1 Sol: Input $2.00/1M, Output $10.00/1M
-            const textTokenCost = (promptTokens * (2.00 / 1000000)) + (outputTokens * (10.00 / 1000000));
-            // Tabela OpenAI GPT-Image-2.5 Flare (low quality): $0.005 por imagem
-            const imgCostUS = imageGenerationLogs.length * 0.005;
-            const totalCostUS = textTokenCost + imgCostUS;
-            const totalCostBRL = totalCostUS * 5.80;
-
-            const costData = {
-                usd_images: imgCostUS,
-                usd_text: textTokenCost,
-                usd_total: totalCostUS,
-                brl_total: totalCostBRL
-            };
-
-            const finalResult = {
-                title: generatedStory.title,
-                cover_image: finalCoverUrl,
-                cover_prompt: generatedStory.cover_prompt,
-                pages: generatedStory.pages, // Keep standard 'pages' object
-                chapters: allChapters,
-                cost_data: costData,
-                universe: storyData.universe,
-                style: storyData.style || 'universe_default',
-                character_names: characterNames,
-                character_details: charactersDetails,
-                clothing_bible: generatedStory?.clothing_bible || '',
-                character_appearance_bible: generatedStory?.character_appearance_bible || '',
-                url_photos: urlPhotos,
-            };
-
-            // Prepare Metadata
-
-            const formatTime = (ms) => {
-                if (!ms || isNaN(ms)) return "0 minutos e 0 segundos";
-                const totalSeconds = Math.floor(ms / 1000);
-                const minutes = Math.floor(totalSeconds / 60);
-                const seconds = totalSeconds % 60;
-                return `${minutes} minutos e ${seconds} segundos`;
-            };
-
-            let logText = `================ HISTÓRIA LOG =================
-Título: ${generatedStory.title}
-Data: ${endTime.toISOString()}
-
-[Input do Usuário]
-Universo: ${storyData.universe}
-Gênero: ${storyData.genre}
-Estilo: ${storyData.style}
-Descrição: ${storyData.description || 'N/A'}
-Personagens: ${characterNames}
-
-[Prompts Gerais]
-Prompt Original da IA (Texto): 
-${rawPrompt}
-
-[Tempos Gerais]
-Tempo para gerar a história inteira (LLM): ${formatTime(storyEnd - storyStart)}
-Tempo total de geração de todas as imagens: ${formatTime(imagesEnd - imagesStart)}
-Tempo total de ponta a ponta: ${formatTime(endTime - startTime)}
-
-[Custos Estimados]
-Imagens Geradas: ${imageGenerationLogs.length} (Custo: US$ ${imgCostUS.toFixed(4)})
-Tokens de Texto: ${tokenUsage.totalTokenCount || tokenUsage.total_token_count || 0} (Custo: US$ ${textTokenCost.toFixed(5)})
-Custo Total em Dólar: US$ ${totalCostUS.toFixed(4)}
-Custo Total em Reais (R$ 5,80): R$ ${totalCostBRL.toFixed(4)}
-
-[Desempenho por Imagem]
-`;
-            imageGenerationLogs.forEach(logObj => {
-                logText += `\n--- ${logObj.descriptor} ---\n` +
-                    `Status: ${logObj.success ? 'Sucesso' : 'Falha'}\n` +
-                    `Tentativas Necessárias: ${logObj.attempts || 1}\n` +
-                    `Tempo de Geração: ${logObj.timings ? formatTime(logObj.timings.duration_ms) : 'N/A'}\n` +
-                    `Prompt da Imagem:\n${logObj.prompt || 'N/A'}\n`;
-            });
-
-            const executionMetadata = {
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
-                durationSeconds: (endTime - startTime) / 1000,
-                inputs: {
-                    names: characterNames,
-                    style: storyData.style,
+                const storyToSave = {
+                    title: storyTitle,
+                    cover_image: coverObj?.url || fallbackUrl,
+                    cover_prompt: generatedStory.cover_prompt,
+                    pages: generatedStory.pages,
+                    chapters: generatedStory.pages.map((p, i) => ({
+                        text: p.text,
+                        image_url: pageImgs[i]?.url || fallbackUrl,
+                        prompt: p.illustration_prompt
+                    })),
                     universe: storyData.universe,
-                    genre: storyData.genre,
-                    description: storyData.description
-                },
-                cover_prompt: generatedStory.cover_prompt,
-                clothing_bible: generatedStory?.clothing_bible || '',
-                character_appearance_bible: generatedStory?.character_appearance_bible || '',
-                character_details: charactersDetails,
-                url_photos: urlPhotos,
-                api_responses: {
-                    // Stringify to avoid "Nested arrays not supported" error in Firestore (because 'parts' is Array<Array>)
-                    story_generation: JSON.stringify(result)
-                },
-                llm_details: {
-                    prompt_used: rawPrompt,
-                    token_usage: tokenUsage
-                },
-                image_generations: imageGenerationLogs.map(item => ({
-                    descriptor: item.descriptor,
-                    prompt: item.prompt,
-                    attempts: item.attempts,
-                    timings: item.timings,
-                    success: item.success,
-                    log: item.log || {}
-                })),
-                timings: {
-                    story_generation_ms: storyEnd - storyStart,
-                    image_generation_ms: imagesEnd - imagesStart
-                },
-                costs: {
-                    usd_images: imgCostUS,
-                    usd_text: textTokenCost,
-                    usd_total: totalCostUS,
-                    brl_total: totalCostBRL
-                },
-                txtLog: logText
-            };
+                    style: storyData.style || 'universe_default',
+                    character_names: characterNames,
+                    clothing_bible: generatedStory.clothing_bible || '',
+                    character_appearance_bible: generatedStory.character_appearance_bible || '',
+                    character_details: charactersDetails
+                };
 
-            // Auto-save the story with metadata
-            addLog("Salvando no grimório...", 3, 50);
-            const saveRes = await saveStory(finalResult, localLogs, executionMetadata);
+                const saveRes = await saveStory(storyToSave);
+                finalStory = {
+                    ...storyToSave,
+                    id: saveRes?.storyId || crypto.randomUUID(),
+                    storyId: saveRes?.storyId
+                };
 
-            if (saveRes?.storyId) {
-                finalResult.id = saveRes.storyId;
-                finalResult.storyId = saveRes.storyId;
-                finalResult.userId = saveRes.userId || currentUser?.uid;
-                if (saveRes.cover_image_url) finalResult.cover_image = saveRes.cover_image_url;
-                if (saveRes.chapters) {
-                    finalResult.chapters = saveRes.chapters.map(c => ({ image_url: c.image_url }));
+                if (currentUser) {
+                    await setDoc(doc(db, "users", currentUser.uid, "story_jobs", jobId), {
+                        status: "completed",
+                        step: 3,
+                        stepProgress: 100,
+                        storyId: finalStory.id,
+                        title: storyTitle,
+                        message: "Livro mágico concluído com sucesso!",
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
                 }
+            } else {
+                const errText = response ? await response.text() : "Falha na comunicação com o servidor";
+                throw new Error(`Falha no pipeline: ${errText}`);
             }
 
-            addLog("Livro finalizado com ilustrações!", 3, 100);
+            if (finalStory) {
+                // Registro de cota diária local
+                try {
+                    const todayKey = `daily_stories_${new Date().toISOString().slice(0, 10)}`;
+                    const currentCount = parseInt(localStorage.getItem(todayKey) || "0", 10);
+                    localStorage.setItem(todayKey, (currentCount + 1).toString());
+                } catch (countErr) {
+                    console.warn("Aviso ao registrar contador diário:", countErr);
+                }
 
-            setGenerationState(prev => ({
-                ...prev,
-                isLoading: false,
-                result: finalResult
-            }));
+                setGenerationState(prev => ({
+                    ...prev,
+                    isLoading: false,
+                    step: 3,
+                    stepProgress: 100,
+                    result: finalStory
+                }));
+
+                localStorage.removeItem('imaginaria_active_job_id');
+                setActiveJob(null);
+            }
 
         } catch (error) {
-            console.error("Generation Error:", error);
+            console.error("Erro na criação da história:", error);
             setGenerationState(prev => ({
                 ...prev,
                 isLoading: false,
                 error: error.message,
-                logs: [...prev.logs, `Erro: ${error.message}`]
+                logs: [...(prev.logs || []), `Erro: ${error.message}`]
             }));
+            setActiveJob(null);
+            localStorage.removeItem('imaginaria_active_job_id');
         }
-    }, [saveStory, currentUser]);
+    }, [currentUser]);
 
     const regeneratePageImage = useCallback(async (chapterIndex, currentStory) => {
         const storyToUse = currentStory || generationState.result;
@@ -1130,6 +934,15 @@ Custo Total em Reais (R$ 5,80): R$ ${totalCostBRL.toFixed(4)}
         });
     }, []);
 
+    const clearCompletedNotification = useCallback(() => {
+        setCompletedNotification(null);
+    }, []);
+
+    const dismissActiveJob = useCallback(() => {
+        setActiveJob(null);
+        localStorage.removeItem('imaginaria_active_job_id');
+    }, []);
+
     const value = {
         characters,
         selectedCharacters,
@@ -1143,7 +956,11 @@ Custo Total em Reais (R$ 5,80): R$ ${totalCostBRL.toFixed(4)}
         startGeneration,
         resetGeneration,
         regeneratePageImage,
-        saveStory
+        saveStory,
+        activeJob,
+        completedNotification,
+        clearCompletedNotification,
+        dismissActiveJob
     };
 
     return (

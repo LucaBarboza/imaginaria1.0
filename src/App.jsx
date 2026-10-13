@@ -13,6 +13,8 @@ import Home from './components/flows/Home';
 import CharacterSetup from './components/flows/CharacterSetup';
 import StoryLibrary from './components/flows/StoryLibrary';
 import Shop from './components/flows/Shop';
+import FloatingProgressDock from './components/ui/FloatingProgressDock';
+import StoryCompletionToast from './components/ui/StoryCompletionToast';
 import { useAuth } from './context/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
@@ -20,7 +22,14 @@ import { db } from './firebase';
 
 function AppContent() {
     const { currentUser } = useAuth();
-    const { startGeneration, generationState, resetGeneration } = useStory();
+    const {
+        startGeneration,
+        generationState,
+        resetGeneration,
+        activeJob,
+        completedNotification,
+        clearCompletedNotification
+    } = useStory();
     const [view, setView] = useState('HOME');
     const [sharedStory, setSharedStory] = useState(null);
     const [loadingShared, setLoadingShared] = useState(false);
@@ -84,12 +93,12 @@ function AppContent() {
         }
     }, []);
 
-    // Watch for generation completion
+    // Watch for generation completion: transiciona para o leitor se o usuário estiver na tela de loading
     useEffect(() => {
-        if (generationState.result) {
+        if (generationState.result && view === 'LOADING') {
             setView('RESULT');
         }
-    }, [generationState.result]);
+    }, [generationState.result, view]);
 
     // Go to HOME after successful login if we were in LOGIN view
     useEffect(() => {
@@ -143,7 +152,10 @@ function AppContent() {
         }
 
         if (view === 'LOGIN') return <Login onBack={() => setView('HOME')} />;
-        if (view === 'LOADING') return <LoadingAgent onCancel={() => { if (resetGeneration) resetGeneration(); setView('HOME'); }} />;
+        if (view === 'LOADING') return <LoadingAgent
+            onCancel={() => { if (resetGeneration) resetGeneration(); setView('HOME'); }}
+            onMinimize={() => setView('HOME')}
+        />;
         if (view === 'RESULT') return <BookResult story={sharedStory} onClose={handleCloseResult} />;
 
         switch (view) {
@@ -187,7 +199,7 @@ function AppContent() {
     };
 
     return (
-        <div className="text-slate-700 min-h-screen">
+        <div className="text-slate-700 min-h-screen relative">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={view}
@@ -200,6 +212,33 @@ function AppContent() {
                     {currentView()}
                 </motion.div>
             </AnimatePresence>
+
+            {/* Dock Flutuante de Progresso (exibido quando o usuário navega pelo site durante a geração) */}
+            {activeJob && view !== 'LOADING' && (
+                <FloatingProgressDock
+                    activeJob={activeJob}
+                    onOpen={() => setView('LOADING')}
+                />
+            )}
+
+            {/* Toast Celebratório quando a história é concluída em segundo plano */}
+            {completedNotification && view !== 'LOADING' && view !== 'RESULT' && (
+                <StoryCompletionToast
+                    notification={completedNotification}
+                    onReadNow={() => {
+                        if (generationState.result) {
+                            setSharedStory(generationState.result);
+                        }
+                        setView('RESULT');
+                        clearCompletedNotification();
+                    }}
+                    onOpenLibrary={() => {
+                        setView('LIBRARY');
+                        clearCompletedNotification();
+                    }}
+                    onClose={clearCompletedNotification}
+                />
+            )}
         </div>
     );
 }

@@ -42,7 +42,7 @@ const STEPS = [
     },
 ];
 
-export default function LoadingAgent({ onCancel }) {
+export default function LoadingAgent({ onCancel, onMinimize }) {
     const { generationState, resetGeneration } = useStory();
     const { step, stepProgress, error } = generationState;
     const [currentTip, setCurrentTip] = useState(0);
@@ -88,15 +88,31 @@ export default function LoadingAgent({ onCancel }) {
 
     return (
         <div className="min-h-screen min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden font-body text-slate-700 bg-[var(--color-bg-primary)] select-none">
-            {/* Botão Sutil de Cancelar no Topo Direito */}
-            <button
-                onClick={handleCancel}
-                className="fixed top-5 right-5 z-50 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-slate-500 hover:text-red-500 border-2 border-[#EAE5DC] hover:border-red-200 shadow-2xs transition-all text-xs font-bold cursor-pointer hover:scale-105 active:scale-95"
-                title="Cancelar geração e voltar"
-            >
-                <X size={15} />
-                <span>Cancelar</span>
-            </button>
+            {/* Barra de Ações do Topo */}
+            <div className="fixed top-5 inset-x-5 z-50 flex items-center justify-between pointer-events-none">
+                {onMinimize ? (
+                    <button
+                        type="button"
+                        onClick={onMinimize}
+                        className="pointer-events-auto flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-slate-700 hover:text-[#7E57C2] border-2 border-[#EAE5DC] hover:border-[#9D7FEA] shadow-2xs transition-all text-xs font-bold cursor-pointer hover:scale-105 active:scale-95"
+                        title="Navegar pelo site enquanto a história é gerada em segundo plano"
+                    >
+                        <Compass size={14} className="text-[#9D7FEA]" />
+                        <span>Navegar pelo site</span>
+                    </button>
+                ) : <div />}
+
+                {/* Botão Sutil de Cancelar no Topo Direito */}
+                <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="pointer-events-auto flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-slate-500 hover:text-red-500 border-2 border-[#EAE5DC] hover:border-red-200 shadow-2xs transition-all text-xs font-bold cursor-pointer hover:scale-105 active:scale-95"
+                    title="Cancelar geração e voltar"
+                >
+                    <X size={15} />
+                    <span>Cancelar</span>
+                </button>
+            </div>
 
             {/* Background Blobs Animados - Lavanda & Dourado */}
             <div className="bg-blob bg-purple-200 w-[600px] h-[600px] -top-32 -right-32 opacity-35 pointer-events-none" />
@@ -243,6 +259,22 @@ export default function LoadingAgent({ onCancel }) {
                     })}
                 </div>
             </motion.div>
+
+            {/* Botão de Destaque: Navegar pelo site enquanto a IA cria */}
+            {onMinimize && (
+                <motion.button
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35, duration: 0.5 }}
+                    type="button"
+                    onClick={onMinimize}
+                    className="mt-4 z-10 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white hover:bg-[#FAF8F5] text-slate-700 hover:text-[#7E57C2] border-2 border-[#EAE5DC] hover:border-[#9D7FEA] font-bold text-xs sm:text-sm shadow-xs hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                >
+                    <Compass size={17} className="text-[#9D7FEA]" />
+                    <span>Navegar pelo site enquanto criamos</span>
+                    <span className="text-[11px] text-slate-400 font-normal hidden sm:inline">• Vamos avisar quando terminar</span>
+                </motion.button>
+            )}
         </div>
     );
 }

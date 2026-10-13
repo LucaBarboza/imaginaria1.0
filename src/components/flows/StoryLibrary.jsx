@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Book, Trash2, Calendar, Sparkles, Share2, Check } from 'lucide-react';
-import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, deleteDoc, doc, orderBy } from 'firebase/firestore';
 import { ref, listAll, deleteObject } from 'firebase/storage';
 import { db, storage } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -16,44 +16,38 @@ export default function StoryLibrary({ onBack }) {
     const [errorMsg, setErrorMsg] = useState(null);
     const [copiedStoryId, setCopiedStoryId] = useState(null);
 
+    // Escuta em tempo real a coleção de histórias do usuário
     useEffect(() => {
-        async function fetchStories() {
-            setLoading(true);
-            setErrorMsg(null);
-            const loadedStories = [];
+        setLoading(true);
+        setErrorMsg(null);
 
-            // 1. Fetch Local Stories (Skipped - Firebase Only Request)
-            // Local fetching removed to restrict view to cloud stories only
-
-            // 2. Fetch Firebase Stories (If Logged In)
-            if (currentUser) {
-                try {
-                    const q = query(
-                        collection(db, "users", currentUser.uid, "stories"),
-                        orderBy("createdAt", "desc")
-                    );
-
-                    const querySnapshot = await getDocs(q);
-                    const firebaseStories = querySnapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data(),
-                        isLocal: false
-                    }));
-
-                    loadedStories.push(...firebaseStories);
-                } catch (error) {
-                    console.error("Error fetching firebase stories:", error);
-                    setErrorMsg("Houve um problema ao carregar as histórias: " + error.message + (error.message.includes('index') ? " (Parece faltar um índice no Firebase, abra o console para pegar o link!)" : ""));
-                }
-            }
-
-            // Deduplicate by ID (prefer Firebase if both exist, or handle collision)
-            // Simple approach: just show all, relying on unique IDs
-            setStories(loadedStories.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+        if (!currentUser) {
+            setStories([]);
             setLoading(false);
+            return;
         }
 
-        fetchStories();
+        const q = query(
+            collection(db, "users", currentUser.uid, "stories"),
+            orderBy("createdAt", "desc")
+        );
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const firebaseStories = querySnapshot.docs.map(docSnap => ({
+                id: docSnap.id,
+                ...docSnap.data(),
+                isLocal: false
+            }));
+
+            setStories(firebaseStories.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+            setLoading(false);
+        }, (error) => {
+            console.error("Erro ao escutar histórias em tempo real:", error);
+            setErrorMsg("Houve um problema ao carregar as histórias: " + error.message);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [currentUser]);
 
     const deleteFolderRecursively = async (folderRef) => {

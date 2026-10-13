@@ -682,5 +682,216 @@ async def delete_story(story_id: str):
         print(f"Error deleting story: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/generate-story-pipeline")
+async def generate_story_pipeline_backend(
+    nome: str = Form(...),
+    estilo: str = Form("universe_default"),
+    universo: str = Form("medieval"),
+    genero: str = Form("aventura"),
+    descricao: Optional[str] = Form(None),
+    job_id: Optional[str] = Form(None),
+    user_id: Optional[str] = Form(None),
+    character_details_json: Optional[str] = Form(None),
+    image_urls_json: Optional[str] = Form(None)
+):
+    """Pipeline unificado executado no backend com Firestore e Storage."""
+    try:
+        import firebase_admin
+        from firebase_admin import firestore, storage
+        if not firebase_admin._apps:
+            key_path = "firebase-service-account.json"
+            if os.path.exists(key_path):
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.abspath(key_path)
+            firebase_admin.initialize_app()
+    except Exception as fb_err:
+        print("Aviso ao inicializar firebase_admin:", fb_err)
+
+    actual_job_id = job_id or str(uuid.uuid4())
+    job_ref = None
+    db_client = None
+    try:
+        db_client = firestore.client()
+        if user_id and actual_job_id:
+            job_ref = db_client.collection("users").document(user_id).collection("story_jobs").document(actual_job_id)
+    except Exception:
+        pass
+
+    def update_job(step=None, step_progress=None, status=None, message=None, extra=None):
+        if not job_ref:
+            return
+        try:
+            payload = {"updatedAt": firestore.SERVER_TIMESTAMP}
+            if step is not None: payload["step"] = step
+            if step_progress is not None: payload["stepProgress"] = step_progress
+            if status is not None: payload["status"] = status
+            if message is not None: payload["message"] = message
+            if extra: payload.update(extra)
+            job_ref.set(payload, merge=True)
+        except Exception as err:
+            print(f"Aviso ao atualizar job {actual_job_id}:", err)
+
+    try:
+        update_job(
+            step=1,
+            step_progress=10,
+            status="writing",
+            message="Invocando o autor mágico (GPT-6.1 Sol)...",
+            extra={"id": actual_job_id, "userId": user_id, "createdAt": firestore.SERVER_TIMESTAMP}
+        )
+
+        character_details = []
+        if character_details_json:
+            try:
+                character_details = json.loads(character_details_json)
+            except Exception:
+                pass
+
+        # 1. Gerar história via OpenAI (GPT-6.1 Sol)
+        raw_story_res = await generate_story_with_openai(
+            nome=nome,
+            estilo=estilo,
+            universo=universo,
+            genero=genero,
+            descricao=descricao,
+            character_details=character_details
+        )
+
+        story_obj = raw_story_res["story"]
+        story_title = story_obj["title"]
+
+        update_job(
+            step=2,
+            step_progress=25,
+            status="illustrating",
+            message=f"História escrita! Pintando ilustrações para '{story_title}'...",
+            extra={"title": story_title}
+        )
+
+        # 2. Carregar referências de imagens das fotos
+        urls_list = []
+        if image_urls_json:
+            try:
+                urls_list = json.loads(image_urls_json)
+            except Exception:
+                pass
+
+        ref_buffers = []
+        for idx, item in enumerate(urls_list[:3]):
+            u = item.get("url") if isinstance(item, dict) else item
+            if u and str(u).startswith("http"):
+                try:
+                    r = requests.get(u, timeout=10)
+                    if r.status_code == 200:
+                        ref_buffers.append(io.BytesIO(r.content))
+                except Exception as dl_err:
+                    print(f"Erro baixando ref {u}: {dl_err}")
+
+        # 3. Gerar 5 ilustrações em paralelo
+        image_tasks = [
+            {"idx": -1, "prompt": story_obj.get("cover_prompt", ""), "is_cover": True, "name": "Capa"},
+            {"idx": 0, "prompt": story_obj["pages"][0]["illustration_prompt"], "is_cover": False, "name": "Página 1"},
+            {"idx": 1, "prompt": story_obj["pages"][1]["illustration_prompt"], "is_cover": False, "name": "Página 2"},
+            {"idx": 2, "prompt": story_obj["pages"][2]["illustration_prompt"], "is_cover": False, "name": "Página 3"},
+            {"idx": 3, "prompt": story_obj["pages"][3]["illustration_prompt"], "is_cover": False, "name": "Página 4"}
+        ]
+
+        results_map = {}
+        completed_count = 0
+
+        async def generate_task(task):
+            res = await generate_image_with_openai(
+                prompt=task["prompt"],
+                person_name=nome,
+                universe_context=universo,
+                style=estilo,
+                is_cover=task["is_cover"],
+                clothing_bible=story_obj.get("clothing_bible", ""),
+                character_appearance_bible=story_obj.get("character_appearance_bible", ""),
+                character_details=character_details,
+                reference_images=ref_buffers
+            )
+            return task["idx"], res.get("image_url")
+
+        for task in image_tasks:
+            try:
+                idx, url = await generate_task(task)
+                results_map[idx] = url
+                completed_count += 1
+                update_job(
+                    step=2,
+                    step_progress=25 + int((completed_count / 5.0) * 60),
+                    message=f"Pintada ilustração {completed_count} de 5 ({task['name']})..."
+                )
+            except Exception as task_err:
+                print(f"Erro gerando imagem {task['name']}:", task_err)
+
+        update_job(
+            step=3,
+            step_progress=88,
+            status="saving",
+            message="Encadernando o livro e salvando na Biblioteca..."
+        )
+
+        fallback_url = results_map.get(-1) or next(iter(results_map.values()), "https://placehold.co/1024x1024")
+        cover_url = results_map.get(-1) or fallback_url
+
+        chapters = []
+        for p_idx, page in enumerate(story_obj["pages"]):
+            chapters.append({
+                "text": page["text"],
+                "image_url": results_map.get(p_idx) or fallback_url,
+                "prompt": page.get("illustration_prompt", "")
+            })
+
+        story_id = str(uuid.uuid4())
+        story_payload = {
+            "id": story_id,
+            "title": story_title,
+            "cover_image_url": cover_url,
+            "cover_prompt": story_obj.get("cover_prompt", ""),
+            "pages": story_obj["pages"],
+            "chapters": chapters,
+            "universe": universo,
+            "style": estilo,
+            "character_names": nome,
+            "clothing_bible": story_obj.get("clothing_bible", ""),
+            "character_appearance_bible": story_obj.get("character_appearance_bible", ""),
+            "character_details": character_details,
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "cost_data": {
+                "usd_images": 5 * 0.005,
+                "usd_text": 0.002,
+                "usd_total": 0.027,
+                "brl_total": 0.027 * 5.80
+            }
+        }
+
+        if user_id and db_client:
+            db_client.collection("users").document(user_id).collection("stories").document(story_id).set(story_payload)
+
+        update_job(
+            step=3,
+            step_progress=100,
+            status="completed",
+            message="Livro mágico concluído com sucesso!",
+            extra={"storyId": story_id, "title": story_title, "coverImageUrl": cover_url}
+        )
+
+        return {
+            "status": "sucesso",
+            "story_id": story_id,
+            "job_id": actual_job_id,
+            "data": story_payload
+        }
+
+    except Exception as exc:
+        traceback.print_exc()
+        update_job(
+            status="failed",
+            message=f"Erro na criação mágica: {str(exc)}",
+            extra={"error": str(exc)}
+        )
+        raise HTTPException(status_code=500, detail=str(exc))
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
