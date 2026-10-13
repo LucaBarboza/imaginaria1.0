@@ -56,87 +56,68 @@ export function StoryProvider({ children }) {
     const [activeJob, setActiveJob] = useState(null);
     const [completedNotification, setCompletedNotification] = useState(null);
 
-    // Escuta em tempo real o job ativo no Firestore
+    // Sincronização defensiva com o perfil do usuário no Firestore (campo: active_story_job)
+    const safeSyncJob = useCallback(async (jobData) => {
+        if (!currentUser) return;
+        try {
+            await setDoc(doc(db, "users", currentUser.uid), {
+                active_story_job: jobData
+            }, { merge: true });
+        } catch (err) {
+            console.warn("safeSyncJob aviso:", err);
+        }
+    }, [currentUser]);
+
+    const clearSyncedJob = useCallback(async () => {
+        if (!currentUser) return;
+        try {
+            await updateDoc(doc(db, "users", currentUser.uid), {
+                active_story_job: null
+            });
+        } catch (err) {
+            console.warn("clearSyncedJob aviso:", err);
+        }
+    }, [currentUser]);
+
+    // Restaura job ativo persistido localmente ao inicializar
     useEffect(() => {
-        const activeJobId = localStorage.getItem('imaginaria_active_job_id');
-        if (!currentUser || !activeJobId) return;
-
-        const jobDocRef = doc(db, "users", currentUser.uid, "story_jobs", activeJobId);
-        const unsubscribe = onSnapshot(jobDocRef, async (snapshot) => {
-            if (!snapshot.exists()) return;
-            const jobData = snapshot.data();
-
-            setActiveJob(prev => ({
-                ...(prev || {}),
-                id: snapshot.id,
-                ...jobData
-            }));
-
-            if (jobData.status === 'writing') {
-                setGenerationState(prev => ({
-                    ...prev,
-                    isLoading: true,
-                    step: 1,
-                    stepProgress: jobData.stepProgress || 15,
-                    logs: jobData.message ? [...(prev.logs || []).filter(l => l !== jobData.message), jobData.message] : prev.logs
-                }));
-            } else if (jobData.status === 'illustrating') {
-                setGenerationState(prev => ({
-                    ...prev,
-                    isLoading: true,
-                    step: 2,
-                    stepProgress: jobData.stepProgress || 30,
-                    logs: jobData.message ? [...(prev.logs || []).filter(l => l !== jobData.message), jobData.message] : prev.logs
-                }));
-            } else if (jobData.status === 'saving') {
-                setGenerationState(prev => ({
-                    ...prev,
-                    isLoading: true,
-                    step: 3,
-                    stepProgress: jobData.stepProgress || 90,
-                    logs: jobData.message ? [...(prev.logs || []).filter(l => l !== jobData.message), jobData.message] : prev.logs
-                }));
-            } else if (jobData.status === 'completed') {
-                localStorage.removeItem('imaginaria_active_job_id');
-                setActiveJob(null);
-
-                let loadedStory = null;
-                if (jobData.storyId) {
-                    try {
-                        const storySnap = await getDoc(doc(db, "users", currentUser.uid, "stories", jobData.storyId));
-                        if (storySnap.exists()) {
-                            loadedStory = { id: storySnap.id, storyId: storySnap.id, ...storySnap.data() };
-                        }
-                    } catch (e) {
-                        console.warn("Aviso ao carregar história concluída:", e);
+        try {
+            const savedJobStr = localStorage.getItem('imaginaria_active_job');
+            if (savedJobStr) {
+                const parsed = JSON.parse(savedJobStr);
+                if (parsed) {
+                    if (parsed.status === 'writing' || parsed.status === 'illustrating' || parsed.status === 'saving') {
+                        parsed.status = 'failed';
+                        parsed.error = 'A página foi recarregada durante o processo de geração.';
+                        parsed.message = 'Geração interrompida. Você pode tentar novamente!';
                     }
+                    setActiveJob(parsed);
                 }
+            }
+        } catch (e) {
+            console.warn("Aviso ao recuperar active_job do localStorage:", e);
+        }
+    }, []);
 
-                setGenerationState(prev => ({
-                    ...prev,
-                    isLoading: false,
-                    step: 3,
-                    stepProgress: 100,
-                    result: loadedStory || prev.result
-                }));
-
-                setCompletedNotification({
-                    title: jobData.title || loadedStory?.title || "Livro Mágico",
-                    storyId: jobData.storyId,
-                    coverUrl: jobData.coverImageUrl || loadedStory?.cover_image_url
-                });
-
-            } else if (jobData.status === 'failed') {
-                localStorage.removeItem('imaginaria_active_job_id');
-                setActiveJob(null);
-                setGenerationState(prev => ({
-                    ...prev,
-                    isLoading: false,
-                    error: jobData.message || jobData.error || "Falha na criação mágica."
-                }));
+    // Escuta em tempo real o perfil do usuário para notificações de conclusão de jobs remotos
+    useEffect(() => {
+        if (!currentUser) return;
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const unsubscribe = onSnapshot(userDocRef, (snapshot) => {
+            if (!snapshot.exists()) return;
+            const data = snapshot.data();
+            if (data?.active_story_job) {
+                const remoteJob = data.active_story_job;
+                if (remoteJob.status === 'completed' && remoteJob.storyId) {
+                    setCompletedNotification({
+                        title: remoteJob.title || "Livro Mágico",
+                        storyId: remoteJob.storyId,
+                        coverUrl: remoteJob.coverImageUrl
+                    });
+                }
             }
         }, (err) => {
-            console.error("Erro no listener de story_job:", err);
+            console.warn("Aviso no listener de perfil do usuário:", err);
         });
 
         return () => unsubscribe();
@@ -539,10 +520,10 @@ export function StoryProvider({ children }) {
         const initialJobData = {
             id: jobId,
             userId: currentUser?.uid || null,
-            status: "queued",
-            step: 0,
-            stepProgress: 5,
-            message: "Conectando ao núcleo de imaginação...",
+            status: "writing",
+            step: 1,
+            stepProgress: 15,
+            message: "Invocando o autor mágico (GPT-6.1 Sol)...",
             title: null,
             universe: storyData.universe,
             style: storyData.style || 'universe_default',
@@ -550,24 +531,17 @@ export function StoryProvider({ children }) {
         };
 
         setActiveJob(initialJobData);
-        if (currentUser) {
-            localStorage.setItem('imaginaria_active_job_id', jobId);
-            try {
-                const jobRef = doc(db, "users", currentUser.uid, "story_jobs", jobId);
-                await setDoc(jobRef, initialJobData);
-            } catch (jobErr) {
-                console.warn("Aviso ao criar registro inicial do job no Firestore:", jobErr);
-            }
-        }
+        localStorage.setItem('imaginaria_active_job', JSON.stringify(initialJobData));
+        safeSyncJob(initialJobData);
 
-        const initialLogs = ["Iniciando motor criativo...", "Conectando ao núcleo de imaginação..."];
+        const initialLogs = ["Iniciando motor criativo...", "Invocando o autor mágico (GPT-6.1 Sol)..."];
         setGenerationState({
             isLoading: true,
             result: null,
             error: null,
             logs: initialLogs,
-            step: 0,
-            stepProgress: 5,
+            step: 1,
+            stepProgress: 15,
         });
 
         try {
@@ -613,183 +587,188 @@ export function StoryProvider({ children }) {
                 formData.append('image_urls_json', JSON.stringify(allPhotos));
             }
 
-            // Disparar execução em background no servidor
-            let finalStory = null;
-            let response = null;
-            try {
-                response = await fetch('/api/generate-story-pipeline', {
-                    method: 'POST',
-                    body: formData,
-                });
-            } catch (netErr) {
-                console.warn("Falha na chamada direta do pipeline:", netErr);
+            // 1. Gera o texto literário com GPT-6.1 Sol
+            const storyRes = await fetch('/api/generate-story', {
+                method: 'POST',
+                body: formData
+            });
+            if (!storyRes.ok) {
+                const errText = await storyRes.text();
+                throw new Error(`Falha ao gerar história: ${errText}`);
             }
-
-            if (response && response.ok) {
-                const resultJson = await response.json();
-                finalStory = resultJson.data;
-            } else if (response && response.status === 404) {
-                // Fallback para ambientes onde o endpoint de pipeline ainda não foi publicado na nuvem
-                console.log("ℹ️ Executando pipeline em background via orquestrador inteligente...");
-                if (currentUser) {
-                    await setDoc(doc(db, "users", currentUser.uid, "story_jobs", jobId), {
-                        status: "writing",
-                        step: 1,
-                        stepProgress: 15,
-                        message: "Invocando o autor mágico (GPT-6.1 Sol)...",
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
-                }
-
-                // 1. Gera o texto literário com GPT-6.1 Sol
-                const storyRes = await fetch('/api/generate-story', {
-                    method: 'POST',
-                    body: formData
-                });
-                if (!storyRes.ok) {
-                    const errText = await storyRes.text();
-                    throw new Error(`Falha ao gerar história: ${errText}`);
-                }
-                const storyDataRes = await storyRes.json();
-                const generatedStory = storyDataRes.data?.story || storyDataRes.data;
-                const storyTitle = generatedStory.title || "Aventura Mágica";
-
-                if (currentUser) {
-                    await setDoc(doc(db, "users", currentUser.uid, "story_jobs", jobId), {
-                        status: "illustrating",
-                        step: 2,
-                        stepProgress: 30,
-                        title: storyTitle,
-                        message: `História escrita! Pintando ilustrações para '${storyTitle}'...`,
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
-                }
-
-                // 2. Gera as 5 ilustrações simultaneamente em paralelo (1 capa + 4 páginas)
-                const imageJobs = [
-                    { prompt: generatedStory.cover_prompt, isCover: true, index: -1, name: "Capa" },
-                    ...generatedStory.pages.map((p, i) => ({ prompt: p.illustration_prompt, isCover: false, index: i, name: `Página ${i + 1}` }))
-                ];
-
-                let completedImgs = 0;
-                const imgResults = await Promise.all(imageJobs.map(async (job) => {
-                    const imgForm = new FormData();
-                    imgForm.append('prompt', job.prompt);
-                    imgForm.append('person_name', characterNames);
-                    imgForm.append('universe_context', storyData.universe);
-                    imgForm.append('style', storyData.style || 'universe_default');
-                    imgForm.append('is_cover', job.isCover ? 'true' : 'false');
-                    imgForm.append('clothing_bible', generatedStory.clothing_bible || '');
-                    imgForm.append('character_appearance_bible', generatedStory.character_appearance_bible || '');
-                    if (allPhotos.length > 0) imgForm.append('reference_image_urls_json', JSON.stringify(allPhotos));
-                    if (charactersDetails.length > 0) imgForm.append('character_details_json', JSON.stringify(charactersDetails));
-
-                    const imgRes = await fetch('/api/generate-image', { method: 'POST', body: imgForm });
-                    if (!imgRes.ok) throw new Error(`Falha ao gerar ilustração (${job.name})`);
-                    const imgData = await imgRes.json();
-
-                    completedImgs++;
-                    if (currentUser) {
-                        setDoc(doc(db, "users", currentUser.uid, "story_jobs", jobId), {
-                            stepProgress: 30 + Math.round((completedImgs / 5.0) * 55),
-                            message: `Pintada ilustração ${completedImgs} de 5 (${job.name})...`,
-                            updatedAt: new Date().toISOString()
-                        }, { merge: true }).catch(() => {});
-                    }
-
-                    return { index: job.index, url: imgData.image_url };
-                }));
-
-                // 3. Salva a história no Firebase
-                if (currentUser) {
-                    await setDoc(doc(db, "users", currentUser.uid, "story_jobs", jobId), {
-                        status: "saving",
-                        step: 3,
-                        stepProgress: 90,
-                        message: "Encadernando o livro e salvando na Biblioteca...",
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
-                }
-
-                const coverObj = imgResults.find(r => r.index === -1);
-                const pageImgs = imgResults.filter(r => r.index !== -1).sort((a, b) => a.index - b.index);
-                const fallbackUrl = coverObj?.url || pageImgs[0]?.url;
-
-                const storyToSave = {
-                    title: storyTitle,
-                    cover_image: coverObj?.url || fallbackUrl,
-                    cover_prompt: generatedStory.cover_prompt,
-                    pages: generatedStory.pages,
-                    chapters: generatedStory.pages.map((p, i) => ({
-                        text: p.text,
-                        image_url: pageImgs[i]?.url || fallbackUrl,
-                        prompt: p.illustration_prompt
-                    })),
-                    universe: storyData.universe,
-                    style: storyData.style || 'universe_default',
-                    character_names: characterNames,
-                    clothing_bible: generatedStory.clothing_bible || '',
-                    character_appearance_bible: generatedStory.character_appearance_bible || '',
-                    character_details: charactersDetails
-                };
-
-                const saveRes = await saveStory(storyToSave);
-                finalStory = {
-                    ...storyToSave,
-                    id: saveRes?.storyId || crypto.randomUUID(),
-                    storyId: saveRes?.storyId
-                };
-
-                if (currentUser) {
-                    await setDoc(doc(db, "users", currentUser.uid, "story_jobs", jobId), {
-                        status: "completed",
-                        step: 3,
-                        stepProgress: 100,
-                        storyId: finalStory.id,
-                        title: storyTitle,
-                        message: "Livro mágico concluído com sucesso!",
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
-                }
-            } else {
-                const errText = response ? await response.text() : "Falha na comunicação com o servidor";
-                throw new Error(`Falha no pipeline: ${errText}`);
+            const storyDataRes = await storyRes.json();
+            const generatedStory = storyDataRes.data?.story || storyDataRes.data;
+            if (!generatedStory || !generatedStory.pages) {
+                throw new Error("Resposta inválida da história gerada pelo modelo.");
             }
+            const storyTitle = generatedStory.title || "Aventura Mágica";
 
-            if (finalStory) {
-                // Registro de cota diária local
-                try {
-                    const todayKey = `daily_stories_${new Date().toISOString().slice(0, 10)}`;
-                    const currentCount = parseInt(localStorage.getItem(todayKey) || "0", 10);
-                    localStorage.setItem(todayKey, (currentCount + 1).toString());
-                } catch (countErr) {
-                    console.warn("Aviso ao registrar contador diário:", countErr);
+            // 2. Atualiza estado para ilustrações
+            const illustratingJob = {
+                ...initialJobData,
+                status: "illustrating",
+                step: 2,
+                stepProgress: 30,
+                title: storyTitle,
+                message: `História escrita! Pintando ilustrações para '${storyTitle}'...`,
+                updatedAt: new Date().toISOString()
+            };
+            setActiveJob(illustratingJob);
+            localStorage.setItem('imaginaria_active_job', JSON.stringify(illustratingJob));
+            safeSyncJob(illustratingJob);
+
+            setGenerationState(prev => ({
+                ...prev,
+                step: 2,
+                stepProgress: 30,
+                logs: [...(prev.logs || []), `História escrita: ${storyTitle}`, "Pintando as 5 ilustrações simultâneas com IA..."]
+            }));
+
+            // 3. Gera as 5 ilustrações simultaneamente em paralelo (1 capa + 4 páginas)
+            const imageJobs = [
+                { prompt: generatedStory.cover_prompt, isCover: true, index: -1, name: "Capa" },
+                ...generatedStory.pages.map((p, i) => ({ prompt: p.illustration_prompt, isCover: false, index: i, name: `Página ${i + 1}` }))
+            ];
+
+            let completedImgs = 0;
+            const imgResults = await Promise.all(imageJobs.map(async (job) => {
+                const imgForm = new FormData();
+                imgForm.append('prompt', job.prompt);
+                imgForm.append('person_name', characterNames);
+                imgForm.append('universe_context', storyData.universe);
+                imgForm.append('style', storyData.style || 'universe_default');
+                imgForm.append('is_cover', job.isCover ? 'true' : 'false');
+                imgForm.append('clothing_bible', generatedStory.clothing_bible || '');
+                imgForm.append('character_appearance_bible', generatedStory.character_appearance_bible || '');
+                if (allPhotos.length > 0) imgForm.append('reference_image_urls_json', JSON.stringify(allPhotos));
+                if (charactersDetails.length > 0) imgForm.append('character_details_json', JSON.stringify(charactersDetails));
+
+                const imgRes = await fetch('/api/generate-image', { method: 'POST', body: imgForm });
+                if (!imgRes.ok) {
+                    const errImg = await imgRes.text();
+                    throw new Error(`Falha ao gerar ilustração (${job.name}): ${errImg}`);
                 }
+                const imgData = await imgRes.json();
+
+                completedImgs++;
+                const newProgress = 30 + Math.round((completedImgs / 5.0) * 55);
+                const progressMsg = `Pintada ilustração ${completedImgs} de 5 (${job.name})...`;
+
+                setActiveJob(prev => prev ? ({
+                    ...prev,
+                    stepProgress: newProgress,
+                    message: progressMsg
+                }) : null);
 
                 setGenerationState(prev => ({
                     ...prev,
-                    isLoading: false,
-                    step: 3,
-                    stepProgress: 100,
-                    result: finalStory
+                    stepProgress: newProgress,
+                    logs: [...(prev.logs || []), progressMsg]
                 }));
 
-                localStorage.removeItem('imaginaria_active_job_id');
-                setActiveJob(null);
+                safeSyncJob({ stepProgress: newProgress, message: progressMsg });
+
+                return { index: job.index, url: imgData.image_url };
+            }));
+
+            // 4. Salva a história no Firebase Storage e Firestore
+            const savingJob = {
+                ...illustratingJob,
+                status: "saving",
+                step: 3,
+                stepProgress: 90,
+                message: "Encadernando o livro e salvando na Biblioteca...",
+                updatedAt: new Date().toISOString()
+            };
+            setActiveJob(savingJob);
+            localStorage.setItem('imaginaria_active_job', JSON.stringify(savingJob));
+            safeSyncJob(savingJob);
+
+            setGenerationState(prev => ({
+                ...prev,
+                step: 3,
+                stepProgress: 90,
+                logs: [...(prev.logs || []), "Encadernando o livro e salvando na Biblioteca..."]
+            }));
+
+            const coverObj = imgResults.find(r => r.index === -1);
+            const pageImgs = imgResults.filter(r => r.index !== -1).sort((a, b) => a.index - b.index);
+            const fallbackUrl = coverObj?.url || pageImgs[0]?.url;
+
+            const storyToSave = {
+                title: storyTitle,
+                cover_image: coverObj?.url || fallbackUrl,
+                cover_prompt: generatedStory.cover_prompt,
+                pages: generatedStory.pages,
+                chapters: generatedStory.pages.map((p, i) => ({
+                    text: p.text,
+                    image_url: pageImgs[i]?.url || fallbackUrl,
+                    prompt: p.illustration_prompt
+                })),
+                universe: storyData.universe,
+                style: storyData.style || 'universe_default',
+                character_names: characterNames,
+                clothing_bible: generatedStory.clothing_bible || '',
+                character_appearance_bible: generatedStory.character_appearance_bible || '',
+                character_details: charactersDetails
+            };
+
+            const saveRes = await saveStory(storyToSave);
+            const finalStory = {
+                ...storyToSave,
+                id: saveRes?.storyId || crypto.randomUUID(),
+                storyId: saveRes?.storyId
+            };
+
+            // Registro de cota diária local
+            try {
+                const todayKey = `daily_stories_${new Date().toISOString().slice(0, 10)}`;
+                const currentCount = parseInt(localStorage.getItem(todayKey) || "0", 10);
+                localStorage.setItem(todayKey, (currentCount + 1).toString());
+            } catch (countErr) {
+                console.warn("Aviso ao registrar contador diário:", countErr);
             }
+
+            // Conclusão bem-sucedida
+            localStorage.removeItem('imaginaria_active_job');
+            setActiveJob(null);
+            clearSyncedJob();
+
+            setGenerationState({
+                isLoading: false,
+                step: 3,
+                stepProgress: 100,
+                result: finalStory,
+                error: null,
+                logs: ["Livro mágico concluído com sucesso!"]
+            });
+
+            setCompletedNotification({
+                title: storyTitle,
+                storyId: finalStory.id,
+                coverUrl: finalStory.cover_image
+            });
 
         } catch (error) {
             console.error("Erro na criação da história:", error);
+            const failedJob = {
+                id: jobId,
+                status: 'failed',
+                stepProgress: 0,
+                error: error.message,
+                message: `Ops! ${error.message || "Não foi possível gerar a história"}`
+            };
+            setActiveJob(failedJob);
+            localStorage.setItem('imaginaria_active_job', JSON.stringify(failedJob));
+            clearSyncedJob();
             setGenerationState(prev => ({
                 ...prev,
                 isLoading: false,
                 error: error.message,
                 logs: [...(prev.logs || []), `Erro: ${error.message}`]
             }));
-            setActiveJob(null);
-            localStorage.removeItem('imaginaria_active_job_id');
         }
-    }, [currentUser]);
+    }, [currentUser, safeSyncJob, clearSyncedJob, saveStory]);
 
     const regeneratePageImage = useCallback(async (chapterIndex, currentStory) => {
         const storyToUse = currentStory || generationState.result;
@@ -923,6 +902,13 @@ export function StoryProvider({ children }) {
         return newImageUrl;
     }, [currentUser, generationState.result]);
 
+    const dismissActiveJob = useCallback(() => {
+        setActiveJob(null);
+        localStorage.removeItem('imaginaria_active_job');
+        localStorage.removeItem('imaginaria_active_job_id');
+        clearSyncedJob();
+    }, [clearSyncedJob]);
+
     const resetGeneration = useCallback(() => {
         setGenerationState({
             isLoading: false,
@@ -932,15 +918,11 @@ export function StoryProvider({ children }) {
             step: 0,
             stepProgress: 0,
         });
-    }, []);
+        dismissActiveJob();
+    }, [dismissActiveJob]);
 
     const clearCompletedNotification = useCallback(() => {
         setCompletedNotification(null);
-    }, []);
-
-    const dismissActiveJob = useCallback(() => {
-        setActiveJob(null);
-        localStorage.removeItem('imaginaria_active_job_id');
     }, []);
 
     const value = {

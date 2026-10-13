@@ -43,8 +43,9 @@ const STEPS = [
 ];
 
 export default function LoadingAgent({ onCancel, onMinimize }) {
-    const { generationState, resetGeneration } = useStory();
-    const { step, stepProgress, error } = generationState;
+    const { generationState, resetGeneration, activeJob } = useStory();
+    const { step, stepProgress } = generationState;
+    const activeError = generationState.error || (activeJob?.status === 'failed' ? (activeJob.error || activeJob.message) : null);
     const [currentTip, setCurrentTip] = useState(0);
 
     // Troca a curiosidade a cada 4.5 segundos
@@ -61,7 +62,7 @@ export default function LoadingAgent({ onCancel, onMinimize }) {
     };
 
     // Tela de Erro Amigável e Tátil
-    if (error) {
+    if (activeError) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center relative overflow-hidden bg-[var(--color-bg-primary)] font-body">
                 <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-md border-2 border-[#EAE5DC] border-b-4 border-b-[#CDC4B6] flex flex-col items-center text-center relative z-10">
@@ -72,7 +73,7 @@ export default function LoadingAgent({ onCancel, onMinimize }) {
                         A Magia Encontrou um Desafio
                     </h3>
                     <p className="text-slate-600 text-sm mb-6 leading-relaxed bg-[#FAF8F5] p-4 rounded-2xl border border-[#EAE5DC]">
-                        {error}
+                        {activeError}
                     </p>
                     <button
                         onClick={handleCancel}

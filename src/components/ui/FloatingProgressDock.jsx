@@ -1,15 +1,16 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Sparkles, ChevronRight, X } from 'lucide-react';
+import { BookOpen, Sparkles, ChevronRight, X, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 
-export default function FloatingProgressDock({ activeJob, onOpen }) {
+export default function FloatingProgressDock({ activeJob, onOpen, onDismiss }) {
     const [isMinimized, setIsMinimized] = useState(false);
 
     if (!activeJob) return null;
 
+    const isFailed = activeJob.status === 'failed';
     const progress = Math.min(Math.max(activeJob.stepProgress || 5, 5), 100);
-    const title = activeJob.title || 'Criando Livro Mágico...';
-    const message = activeJob.message || 'Pintando ilustrações e escrevendo narrativa...';
+    const title = activeJob.title || (isFailed ? 'Ops! Houve uma pausa' : 'Criando Livro Mágico...');
+    const message = activeJob.message || (isFailed ? (activeJob.error || 'Não foi possível gerar a história') : 'Pintando ilustrações e escrevendo narrativa...');
 
     if (isMinimized) {
         return (
@@ -22,16 +23,88 @@ export default function FloatingProgressDock({ activeJob, onOpen }) {
                 <button
                     type="button"
                     onClick={() => setIsMinimized(false)}
-                    className="relative flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-slate-800 border-2 border-[#EAE5DC] hover:border-[#9D7FEA] shadow-lg hover:shadow-xl transition-all cursor-pointer font-bold text-xs group"
+                    className={`relative flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-slate-800 border-2 shadow-lg hover:shadow-xl transition-all cursor-pointer font-bold text-xs group ${
+                        isFailed ? 'border-red-300 hover:border-red-400' : 'border-[#EAE5DC] hover:border-[#9D7FEA]'
+                    }`}
                 >
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#9D7FEA] animate-ping" />
-                    <span className="text-[#7E57C2] font-extrabold">{progress}%</span>
-                    <span className="text-slate-600 font-semibold truncate max-w-[120px]">
-                        {activeJob.title || 'Criando...'}
-                    </span>
+                    {isFailed ? (
+                        <>
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                            <span className="text-red-500 font-extrabold">Aviso</span>
+                            <span className="text-slate-600 font-semibold truncate max-w-[120px]">
+                                Falha na criação
+                            </span>
+                        </>
+                    ) : (
+                        <>
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#9D7FEA] animate-ping" />
+                            <span className="text-[#7E57C2] font-extrabold">{progress}%</span>
+                            <span className="text-slate-600 font-semibold truncate max-w-[120px]">
+                                {activeJob.title || 'Criando...'}
+                            </span>
+                        </>
+                    )}
                     <ChevronRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                 </button>
             </motion.div>
+        );
+    }
+
+    if (isFailed) {
+        return (
+            <AnimatePresence>
+                <motion.div
+                    initial={{ y: 50, opacity: 0, scale: 0.95 }}
+                    animate={{ y: 0, opacity: 1, scale: 1 }}
+                    exit={{ y: 50, opacity: 0, scale: 0.95 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                    className="fixed bottom-5 right-4 sm:right-6 z-40 w-[calc(100vw-2rem)] sm:w-96 select-none"
+                >
+                    <div className="bg-white rounded-3xl border-2 border-red-200 border-b-4 border-b-red-300 p-4 shadow-xl relative overflow-hidden flex flex-col gap-2.5">
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-500 shrink-0">
+                                    <AlertCircle size={18} />
+                                </div>
+                                <div className="min-w-0">
+                                    <h4 className="text-xs font-bold text-slate-900 truncate font-heading leading-tight">
+                                        Não foi possível concluir
+                                    </h4>
+                                    <p className="text-[11px] text-red-600 font-medium line-clamp-2 leading-tight mt-0.5">
+                                        {message}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={onDismiss}
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                                title="Fechar aviso"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                            <button
+                                type="button"
+                                onClick={onOpen}
+                                className="text-[11px] text-slate-500 hover:text-slate-700 underline font-semibold cursor-pointer"
+                            >
+                                Ver tela de status
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onDismiss}
+                                className="flex items-center gap-1 px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all cursor-pointer"
+                            >
+                                <span>Entendido</span>
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            </AnimatePresence>
         );
     }
 

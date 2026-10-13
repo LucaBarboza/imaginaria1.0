@@ -27,6 +27,7 @@ function AppContent() {
         generationState,
         resetGeneration,
         activeJob,
+        dismissActiveJob,
         completedNotification,
         clearCompletedNotification
     } = useStory();
@@ -218,6 +219,7 @@ function AppContent() {
                 <FloatingProgressDock
                     activeJob={activeJob}
                     onOpen={() => setView('LOADING')}
+                    onDismiss={dismissActiveJob}
                 />
             )}
 
