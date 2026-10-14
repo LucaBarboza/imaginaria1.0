@@ -507,167 +507,181 @@ export default function StoryWizard({ onNext, onBack }) {
                         </AnimatePresence>
                     </div>
 
-                    {/* COLUNA DIREITA: Gênero (Acordeão Retrátil) & Ideia da História (Sempre Acessível) */}
-                    <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col justify-between transition-all">
-                        <div className="flex flex-col flex-1 min-h-0">
-                            {/* Header Clicável do Acordeão */}
-                            <button
-                                type="button"
-                                onClick={() => setIsGenreOpen(!isGenreOpen)}
-                                className="w-full flex items-center justify-between text-left cursor-pointer group"
-                            >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                    <span className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs transition-colors shrink-0 ${
-                                        currentGenre
-                                            ? 'bg-[#FBAE7B] text-white shadow-xs'
-                                            : 'bg-slate-100 text-slate-700'
-                                    }`}>
-                                        {currentGenre ? '✓' : '2'}
-                                    </span>
-                                    <div className="min-w-0">
-                                        <h2 className="font-heading font-bold text-slate-800 text-base leading-tight group-hover:text-[#D97736] transition-colors">
-                                            A Trama da História
-                                        </h2>
-                                        <p className="text-[11px] text-slate-400 truncate">
-                                            {currentGenre
-                                                ? `Tema: ${currentGenre.label}`
-                                                : 'Escolha o ritmo e o tema da narrativa'}
-                                        </p>
-                                    </div>
+                    {/* COLUNA DIREITA: Gênero da História (Acordeão Retrátil) */}
+                    <div className="tactile-card bg-white p-5 sm:p-6 flex flex-col transition-all">
+                        {/* Header Clicável do Acordeão */}
+                        <button
+                            type="button"
+                            onClick={() => setIsGenreOpen(!isGenreOpen)}
+                            className="w-full flex items-center justify-between text-left cursor-pointer group"
+                        >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <span className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs transition-colors shrink-0 ${
+                                    currentGenre
+                                        ? 'bg-[#FBAE7B] text-white shadow-xs'
+                                        : 'bg-slate-100 text-slate-700'
+                                }`}>
+                                    {currentGenre ? '✓' : '2'}
+                                </span>
+                                <div className="min-w-0">
+                                    <h2 className="font-heading font-bold text-slate-800 text-base leading-tight group-hover:text-[#D97736] transition-colors">
+                                        A Trama da História
+                                    </h2>
+                                    <p className="text-[11px] text-slate-400 truncate">
+                                        {currentGenre
+                                            ? `Tema: ${currentGenre.label}`
+                                            : 'Escolha o ritmo e o tema da narrativa'}
+                                    </p>
                                 </div>
-
-                                <div className="flex items-center gap-2 shrink-0">
-                                    {currentGenre && (
-                                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#FBAE7B] text-white shadow-2xs hidden sm:inline-block">
-                                            {currentGenre.label}
-                                        </span>
-                                    )}
-                                    <div className="w-7 h-7 rounded-lg bg-slate-50 group-hover:bg-orange-50 flex items-center justify-center text-slate-400 group-hover:text-[#D97736] transition-colors">
-                                        <ChevronDown
-                                            size={18}
-                                            className={`transition-transform duration-300 ${isGenreOpen ? 'rotate-180' : ''}`}
-                                        />
-                                    </div>
-                                </div>
-                            </button>
-
-                            {/* ESTADO FECHADO (Resumo Selecionado ou Estado Padrão Vazio) */}
-                            {!isGenreOpen && (
-                                <div className="mt-3.5">
-                                    {currentGenre ? (
-                                        <div
-                                            onClick={() => setIsGenreOpen(true)}
-                                            className="p-3.5 rounded-2xl bg-[#FFF5EE] border-2 border-[#FBAE7B] flex items-center justify-between gap-3 cursor-pointer hover:bg-[#FFEDE0] transition-all group"
-                                            title="Clique para trocar de tema"
-                                        >
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#D97736] flex items-center justify-center font-bold text-base shrink-0">
-                                                    ✓
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <h4 className="font-bold text-sm text-[#D97736] truncate">
-                                                        {currentGenre.label}
-                                                    </h4>
-                                                    <p className="text-[11px] text-slate-500 truncate">Tema e ritmo principal da história</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-xs font-bold text-[#D97736] group-hover:underline shrink-0">
-                                                Trocar
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <div
-                                            onClick={() => setIsGenreOpen(true)}
-                                            className="p-4 rounded-2xl bg-[#FAF8F5] border-2 border-dashed border-[#EAE5DC] hover:border-[#FBAE7B] hover:bg-[#FFFAF7] flex items-center justify-between gap-3 cursor-pointer transition-all group"
-                                            title="Clique para escolher o ritmo da história"
-                                        >
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-orange-50 text-slate-400 group-hover:text-[#D97736] flex items-center justify-center transition-colors shrink-0">
-                                                    <BookOpen size={20} />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-xs font-bold text-slate-700 group-hover:text-[#D97736] truncate">
-                                                        Nenhum tema selecionado
-                                                    </p>
-                                                    <p className="text-[11px] text-slate-400 truncate">
-                                                        Toque para escolher entre 16 gêneros
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <span className="text-xs font-bold text-[#D97736] px-3 py-1 rounded-full bg-white border border-[#EAE5DC] group-hover:border-[#FBAE7B] shadow-2xs shrink-0">
-                                                Escolher
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* CONTEÚDO SANFONADO (Aberto para Seleção de Gênero) */}
-                            <AnimatePresence>
-                                {isGenreOpen && (
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: 'auto', opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        transition={{ duration: 0.25 }}
-                                        className="overflow-hidden pt-3.5 border-t border-[#EAE5DC] mt-3.5"
-                                    >
-                                        <div className="max-h-[300px] overflow-y-auto pt-1 pb-2 [scrollbar-width:thin]">
-                                            <div className="grid grid-cols-2 gap-2 pr-1">
-                                                {GENRES.map((g) => {
-                                                    const isSelected = data.genre === g.id;
-                                                    return (
-                                                        <button
-                                                            key={g.id}
-                                                            type="button"
-                                                            onClick={() => handleSelectGenre(g.id)}
-                                                            className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all border text-left flex items-center justify-between cursor-pointer ${
-                                                                isSelected
-                                                                    ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-xs'
-                                                                    : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC] text-slate-700'
-                                                            }`}
-                                                        >
-                                                            <span className="truncate">{g.label}</span>
-                                                            {isSelected && <span className="text-xs font-bold shrink-0">✓</span>}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-
-                        {/* Bloco de Ideia da História (Sempre Presente e Acessível na Base da Coluna) */}
-                        <div className="pt-4 border-t border-[#EAE5DC] space-y-2 mt-4 shrink-0">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-bold text-slate-700">
-                                    Ideia da História <span className="text-[11px] font-normal text-slate-400">(opcional)</span>
-                                </label>
-                                <button
-                                    type="button"
-                                    onClick={handleRandomPrompt}
-                                    className="px-3 py-1 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#D97736] text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                                    title="Sugerir ideia criativa para o tema escolhido"
-                                >
-                                    <Shuffle size={12} />
-                                    <span>Sortear Ideia</span>
-                                </button>
                             </div>
-                            <textarea
-                                value={data.description}
-                                onChange={(e) => handleSelect('description', e.target.value)}
-                                placeholder={
-                                    data.genre
-                                        ? `Escreva um detalhe especial para esta aventura de ${currentGenre?.label || 'história'} ou clique em 'Sortear Ideia'...`
-                                        : "Selecione um tema acima ou clique em 'Sortear Ideia' para sugestões..."
-                                }
-                                className="w-full h-20 bg-[#FAF8F5] border border-[#EAE5DC] rounded-xl p-3 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#9D7FEA] focus:bg-white resize-none transition-all"
-                            />
-                        </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                                {currentGenre && (
+                                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#FBAE7B] text-white shadow-2xs hidden sm:inline-block">
+                                        {currentGenre.label}
+                                    </span>
+                                )}
+                                <div className="w-7 h-7 rounded-lg bg-slate-50 group-hover:bg-orange-50 flex items-center justify-center text-slate-400 group-hover:text-[#D97736] transition-colors">
+                                    <ChevronDown
+                                        size={18}
+                                        className={`transition-transform duration-300 ${isGenreOpen ? 'rotate-180' : ''}`}
+                                    />
+                                </div>
+                            </div>
+                        </button>
+
+                        {/* ESTADO FECHADO (Resumo Selecionado ou Estado Padrão Vazio) */}
+                        {!isGenreOpen && (
+                            <div className="mt-3.5">
+                                {currentGenre ? (
+                                    <div
+                                        onClick={() => setIsGenreOpen(true)}
+                                        className="p-3.5 rounded-2xl bg-[#FFF5EE] border-2 border-[#FBAE7B] flex items-center justify-between gap-3.5 cursor-pointer hover:bg-[#FFEDE0] transition-all group"
+                                        title="Clique para trocar de tema"
+                                    >
+                                        <div className="flex items-center gap-3.5 min-w-0">
+                                            <div className="w-11 h-11 rounded-xl bg-orange-100 text-[#D97736] flex items-center justify-center font-bold text-base shrink-0 shadow-xs">
+                                                ✓
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="font-bold text-sm text-[#D97736] truncate">
+                                                    {currentGenre.label}
+                                                </h4>
+                                                <p className="text-[11px] text-slate-500 truncate">Tema e ritmo principal da história</p>
+                                            </div>
+                                        </div>
+                                        <span className="text-xs font-bold text-[#D97736] group-hover:underline shrink-0">
+                                            Trocar
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div
+                                        onClick={() => setIsGenreOpen(true)}
+                                        className="p-4 rounded-2xl bg-[#FAF8F5] border-2 border-dashed border-[#EAE5DC] hover:border-[#FBAE7B] hover:bg-[#FFFAF7] flex items-center justify-between gap-3 cursor-pointer transition-all group"
+                                        title="Clique para escolher o ritmo da história"
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-orange-50 text-slate-400 group-hover:text-[#D97736] flex items-center justify-center transition-colors shrink-0">
+                                                <BookOpen size={20} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-slate-700 group-hover:text-[#D97736] truncate">
+                                                    Nenhum tema selecionado
+                                                </p>
+                                                <p className="text-[11px] text-slate-400 truncate">
+                                                    Toque para escolher entre 16 gêneros
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="text-xs font-bold text-[#D97736] px-3 py-1 rounded-full bg-white border border-[#EAE5DC] group-hover:border-[#FBAE7B] shadow-2xs shrink-0">
+                                            Escolher
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* CONTEÚDO SANFONADO (Aberto para Seleção de Gênero) */}
+                        <AnimatePresence>
+                            {isGenreOpen && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.25 }}
+                                    className="overflow-hidden pt-3.5 border-t border-[#EAE5DC] mt-3.5"
+                                >
+                                    <div className="max-h-[340px] overflow-y-auto pt-1 pb-2 [scrollbar-width:thin]">
+                                        <div className="grid grid-cols-2 gap-2 pr-1">
+                                            {GENRES.map((g) => {
+                                                const isSelected = data.genre === g.id;
+                                                return (
+                                                    <button
+                                                        key={g.id}
+                                                        type="button"
+                                                        onClick={() => handleSelectGenre(g.id)}
+                                                        className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all border text-left flex items-center justify-between cursor-pointer ${
+                                                            isSelected
+                                                                ? 'bg-[#9D7FEA] text-white border-[#8364D8] shadow-xs'
+                                                                : 'bg-[#FAF8F5] hover:bg-[#F3EFE9] border-[#EAE5DC] text-slate-700'
+                                                        }`}
+                                                    >
+                                                        <span className="truncate">{g.label}</span>
+                                                        {isSelected && <span className="text-xs font-bold shrink-0">✓</span>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
+                </div>
+
+                {/* BLOCO DE IDEIA DA HISTÓRIA (OPCIONAL) */}
+                <div className="tactile-card bg-white p-5 sm:p-6 transition-all">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
+                        <div className="flex items-center gap-2.5">
+                            <span className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm shrink-0 border border-amber-200/60 shadow-2xs">
+                                💡
+                            </span>
+                            <div>
+                                <h3 className="font-heading font-bold text-slate-800 text-sm sm:text-base leading-tight flex items-center gap-2">
+                                    Ideia da História
+                                    <span className="text-[11px] font-normal text-slate-400">
+                                        (opcional)
+                                    </span>
+                                </h3>
+                                <p className="text-[11px] text-slate-400">
+                                    Personalize sua aventura com detalhes ou deixe a imaginação da IA surpreender
+                                </p>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleRandomPrompt}
+                            className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#D97736] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                            title="Sugerir ideia criativa para o tema e universo escolhidos"
+                        >
+                            <Shuffle size={13} />
+                            <span>Sortear Ideia</span>
+                        </button>
+                    </div>
+
+                    <textarea
+                        value={data.description}
+                        onChange={(e) => handleSelect('description', e.target.value)}
+                        placeholder={
+                            data.genre
+                                ? `Ex: Era uma vez um aventureiro que descobriu um mapa secreto para o reino encantado...`
+                                : "Escreva uma ideia, personagem ou detalhe especial que gostaria de ver na história..."
+                        }
+                        rows={2}
+                        className="w-full bg-[#FAF8F5] border border-[#EAE5DC] rounded-xl p-3.5 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#9D7FEA] focus:bg-white resize-none transition-all leading-relaxed"
+                    />
                 </div>
 
                 {/* WIDGET EXPANSÍVEL: CONFIGURAÇÕES AVANÇADAS (Acordeão Retrátil Sólido) */}
