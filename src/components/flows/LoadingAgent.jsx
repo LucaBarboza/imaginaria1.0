@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, PenTool, Palette, BookOpen, Sparkles, AlertCircle, X, ArrowLeft, Check, Compass } from 'lucide-react';
 import { useStory } from '../../context/StoryContext';
@@ -61,6 +61,25 @@ export default function LoadingAgent({ onCancel, onMinimize }) {
         if (onCancel) onCancel();
     };
 
+    // Mensagem de erro amigável (sem despejo de JSON ou códigos técnicos crus)
+    const friendlyErrorMessage = useMemo(() => {
+        if (!activeError) return "";
+        const lower = String(activeError).toLowerCase();
+        if (lower.includes("moderation") || lower.includes("safety system") || lower.includes("policy") || lower.includes("moderation_blocked")) {
+            return "O filtro de segurança da IA identificou termos ou elementos sensíveis na história ou fotos. Experimente escolher outro universo ou suavizar a ideia da história para criar seu livro mágico!";
+        }
+        if (lower.includes("limite") || lower.includes("cota") || lower.includes("quota") || lower.includes("3 histórias")) {
+            return "Você atingiu o limite de 3 histórias mágicas por dia! Volte amanhã para criar novas aventuras.";
+        }
+        if (lower.includes("fetch") || lower.includes("network") || lower.includes("conexão") || lower.includes("internet")) {
+            return "Houve uma instabilidade na conexão com a internet. Verifique sua rede e tente novamente.";
+        }
+        if (activeError.includes("{") || activeError.includes("Error code:")) {
+            return "A magia oscilou temporariamente durante a criação das ilustrações. Por favor, tente criar novamente em instantes.";
+        }
+        return activeError;
+    }, [activeError]);
+
     // Tela de Erro Amigável e Tátil
     if (activeError) {
         return (
@@ -73,7 +92,7 @@ export default function LoadingAgent({ onCancel, onMinimize }) {
                         A Magia Encontrou um Desafio
                     </h3>
                     <p className="text-slate-600 text-sm mb-6 leading-relaxed bg-[#FAF8F5] p-4 rounded-2xl border border-[#EAE5DC]">
-                        {activeError}
+                        {friendlyErrorMessage}
                     </p>
                     <button
                         onClick={handleCancel}

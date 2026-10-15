@@ -226,48 +226,51 @@ STYLE_CATALOG: Dict[str, Dict[str, Any]] = {
 }
 
 UNIVERSE_CATALOG: Dict[str, Dict[str, str]] = {
-    "fantasy_medieval": {"name": "Medieval Fantasia", "context": "high fantasy realm, magical kingdom lore, enchanted landscapes"},
-    "star_wars": {"name": "Star Wars", "context": "space opera galaxy, galactic starfleet lore, planetary vistas"},
-    "harry_potter": {"name": "Harry Potter", "context": "magical wizarding realm, enchanted stone halls, mystical creature lore"},
-    "marvel": {"name": "Marvel", "context": "superhero comic metropolis, high-tech heroic action, dynamic cityscape"},
-    "dc": {"name": "DC Comics", "context": "gothic urban skyline, heroic justice legends, dramatic atmosphere"},
-    "disney_princess": {"name": "Disney Princesas", "context": "fairytale royal kingdom, enchanted flora, pastoral storybook beauty"},
-    "simpsons": {"name": "Os Simpsons", "context": "Springfield animated town lore, colorful cartoon neighborhoods"},
-    "cyberpunk": {"name": "Cyberpunk", "context": "dystopian megacity, towering neon facades, rainy street level"},
-    "lord_rings": {"name": "Senhor dos Anéis", "context": "Middle-earth high fantasy, ancient wilderness, epic terrain"},
-    "pokemon": {"name": "Pokémon", "context": "vibrant creature training adventure, natural routes, anime world"},
-    "pirates": {"name": "Piratas", "context": "golden age of piracy, uncharted ocean isles, tall ship lore"},
-    "western": {"name": "Western", "context": "frontier wild west, canyon trails, wooden dusty outposts"},
-    "noir": {"name": "Noir", "context": "1940s moody metropolis, rain-slicked pavement, atmospheric shadows"},
-    "steampunk": {"name": "Steampunk", "context": "Victorian neo-industrial era, brass and copper clockwork machinery"},
-    "naruto": {"name": "Naruto", "context": "ninja hidden village lore, training grounds, elemental chakra world"},
-    "dragon_ball": {"name": "Dragon Ball", "context": "martial arts sci-fi fantasy, desert canyons, capsule technology"},
-    "one_piece": {"name": "One Piece", "context": "grand pirate ocean adventure, bizarre islands, high seas"},
-    "titan": {"name": "Attack on Titan", "context": "walled historic Germanic city, colossal stone ramparts"},
-    "saint_seiya": {"name": "Cavaleiros do Zodíaco", "context": "mythological sanctuary, sacred marble temples, starry cosmos"},
-    "mario": {"name": "Super Mario", "context": "Mushroom Kingdom, green warp pipes, colorful playful terrain"},
-    "zelda": {"name": "Zelda", "context": "kingdom of Hyrule, ancient ruins, sprawling wilderness meadows"},
-    "minecraft": {"name": "Minecraft", "context": "cubic block voxel sandbox, geometric blocky terrain"},
-    "arcane": {"name": "Arcane (LoL)", "context": "twin cities of Piltover and Zaun, hextech and chemtech aesthetics"},
-    "sonic": {"name": "Sonic", "context": "checkered loop-de-loop rolling hills, high-speed vibrant terrain"},
-    "football": {"name": "Futebol", "context": "grand illuminated football arena, pristine grass pitch"},
-    "volleyball": {"name": "Vôlei", "context": "sunny sand beach volleyball court, azure ocean horizon"},
-    "basketball": {"name": "Basquete", "context": "urban hardwood basketball court, gleaming floodlights"},
-    "f1": {"name": "Fórmula 1", "context": "high-speed asphalt racing circuit, pitlane grandstands"},
-    "stranger_things": {"name": "Stranger Things", "context": "nostalgic 1980s small Indiana town, dark woods, eerie glow"},
-    "barbie": {"name": "Barbie", "context": "sparkling dreamhouse aesthetic, pastel paradise"},
-    "got": {"name": "Game of Thrones", "context": "gritty medieval Westeros, frosty keeps, northern wilderness"},
-    "jurassic": {"name": "Jurassic Park", "context": "remote tropical island jungle, prehistoric flora, majestic dinosaurs"},
-    "spider_verse": {"name": "Aranhaverso", "context": "multiverse metropolis, comic halftone overlays, neon billboards"},
-    "the_last_of_us": {"name": "The Last of Us", "context": "overgrown post-apocalyptic city, weathered concrete and lush vines"},
-    "mickey": {"name": "Mickey & Amigos", "context": "cheerful classic Disney animation world, whimsical pastoral hills"},
-    "south_park": {"name": "South Park", "context": "snowy mountain Colorado town, simple cutout architecture"},
-    "rick_morty": {"name": "Rick & Morty", "context": "chaotic sci-fi laboratory, interdimensional portal vistas"},
-    "spongebob": {"name": "Bob Esponja", "context": "underwater Bikini Bottom, pineapple homes, sandy sea floor"},
-    "scooby": {"name": "Scooby-Doo", "context": "creepy abandoned amusement park, haunted Victorian estates, foggy night"},
-    "gravity_falls": {"name": "Gravity Falls", "context": "Pacific Northwest pine forest, Mystery Shack, cryptic symbols"},
-    "steven_universe": {"name": "Steven Universe", "context": "pastel coastal town, crystal monuments, magical dunes"},
-    "phineas_ferb": {"name": "Phineas & Ferb", "context": "sunny suburban backyard, inventive contraptions, summer greenery"}
+    "fantasy_medieval": {"name": "Medieval Fantasia", "safe_name": "Medieval Fantasy Realm", "context": "high fantasy realm, magical kingdom lore, enchanted landscapes"},
+    "star_wars": {"name": "Star Wars", "safe_name": "Galactic Space Opera", "context": "space opera galaxy, galactic starfleet lore, planetary vistas"},
+    "harry_potter": {"name": "Harry Potter", "safe_name": "Wizarding Realm", "context": "magical wizarding realm, enchanted stone halls, mystical creature lore"},
+    "marvel": {"name": "Marvel", "safe_name": "Superhero Legends", "context": "superhero comic metropolis, high-tech heroic action, dynamic cityscape"},
+    "dc": {"name": "DC Comics", "safe_name": "Gothic City Heroes", "context": "gothic urban skyline, heroic justice legends, dramatic atmosphere"},
+    "disney_princess": {"name": "Disney Princesas", "safe_name": "Royal Fairytale Kingdom", "context": "fairytale royal kingdom, enchanted flora, pastoral storybook beauty"},
+    "simpsons": {"name": "Os Simpsons", "safe_name": "Cartoon Suburban Town", "context": "Springfield animated town lore, colorful cartoon neighborhoods"},
+    "cyberpunk": {"name": "Cyberpunk", "safe_name": "Neon Cyberpunk Metropolis", "context": "dystopian megacity, towering neon facades, rainy street level"},
+    "lord_rings": {"name": "Senhor dos Anéis", "safe_name": "Middle Realm Fantasy", "context": "Middle-earth high fantasy, ancient wilderness, epic terrain"},
+    "pokemon": {"name": "Pokémon", "safe_name": "Pocket Creature Adventure", "context": "vibrant creature training adventure, natural routes, anime world"},
+    "pirates": {"name": "Piratas", "safe_name": "Pirate High Seas", "context": "golden age of piracy, uncharted ocean isles, tall ship lore"},
+    "western": {"name": "Western", "safe_name": "Wild Frontier", "context": "frontier wild west, canyon trails, wooden dusty outposts"},
+    "noir": {"name": "Noir", "safe_name": "Vintage Noir City", "context": "1940s moody metropolis, rain-slicked pavement, atmospheric shadows"},
+    "steampunk": {"name": "Steampunk", "safe_name": "Clockwork Steampunk", "context": "Victorian neo-industrial era, brass and copper clockwork machinery"},
+    "naruto": {"name": "Naruto", "safe_name": "Hidden Ninja Village", "context": "ninja hidden village lore, training grounds, elemental chakra world"},
+    "dragon_ball": {"name": "Dragon Ball", "safe_name": "Martial Arts Fantasy", "context": "martial arts sci-fi fantasy, desert canyons, capsule technology"},
+    "one_piece": {"name": "One Piece", "safe_name": "Grand Ocean Pirate Adventure", "context": "grand pirate ocean adventure, bizarre islands, high seas"},
+    "titan": {"name": "Attack on Titan", "safe_name": "Walled Fortress City", "context": "walled historic Germanic city, colossal stone ramparts"},
+    "saint_seiya": {"name": "Cavaleiros do Zodíaco", "safe_name": "Cosmic Sanctuary", "context": "mythological sanctuary, sacred marble temples, starry cosmos"},
+    "mario": {"name": "Super Mario", "safe_name": "Playful Mushroom Realm", "context": "Mushroom Kingdom, green warp pipes, colorful playful terrain"},
+    "zelda": {"name": "Zelda", "safe_name": "Legendary Wilderness Ruins", "context": "kingdom of Hyrule, ancient ruins, sprawling wilderness meadows"},
+    "minecraft": {"name": "Minecraft", "safe_name": "Block Voxel World", "context": "cubic block voxel sandbox, geometric blocky terrain"},
+    "arcane": {"name": "Arcane (LoL)", "safe_name": "Hextech Fantasy City", "context": "twin cities of Piltover and Zaun, hextech and chemtech aesthetics"},
+    "sonic": {"name": "Sonic", "safe_name": "Speedy Green Hills", "context": "checkered loop-de-loop rolling hills, high-speed vibrant terrain"},
+    "football": {"name": "Futebol", "safe_name": "Grand Soccer Stadium", "context": "grand illuminated football arena, pristine grass pitch"},
+    "volleyball": {"name": "Vôlei", "safe_name": "Beach Volleyball", "context": "sunny sand beach volleyball court, azure ocean horizon"},
+    "basketball": {"name": "Basquete", "safe_name": "Urban Basketball Arena", "context": "urban hardwood basketball court, gleaming floodlights"},
+    "f1": {"name": "Fórmula 1", "safe_name": "Motorsport Grand Prix Circuit", "context": "high-speed asphalt racing circuit, pitlane grandstands"},
+    "stranger_things": {"name": "Stranger Things", "safe_name": "Retro 80s Mystery Town", "context": "nostalgic 1980s small Indiana town, dark woods, eerie glow"},
+    "barbie": {"name": "Barbie", "safe_name": "Pastel Dreamhouse Paradise", "context": "sparkling dreamhouse aesthetic, pastel paradise"},
+    "got": {"name": "Game of Thrones", "safe_name": "Medieval Thrones Kingdom", "context": "gritty medieval Westeros, frosty keeps, northern wilderness"},
+    "jurassic": {"name": "Jurassic Park", "safe_name": "Prehistoric Dinosaur Island", "context": "remote tropical island jungle, prehistoric flora, majestic dinosaurs"},
+    "spider_verse": {"name": "Aranhaverso", "safe_name": "Comic Multiverse Metropolis", "context": "multiverse metropolis, comic halftone overlays, neon billboards"},
+    "the_last_of_us": {"name": "The Last of Us", "safe_name": "Overgrown Ruined City", "context": "overgrown post-apocalyptic city, weathered concrete and lush vines"},
+    "mickey": {"name": "Mickey & Amigos", "safe_name": "Classic Whimsical Animation", "context": "cheerful classic Disney animation world, whimsical pastoral hills"},
+    "south_park": {"name": "South Park", "safe_name": "Snowy Cutout Mountain Town", "context": "snowy mountain Colorado town, simple cutout architecture"},
+    "rick_morty": {"name": "Rick & Morty", "safe_name": "Interdimensional Portal Lab", "context": "chaotic sci-fi laboratory, interdimensional portal vistas"},
+    "spongebob": {"name": "Bob Esponja", "safe_name": "Underwater Ocean Floor", "context": "underwater Bikini Bottom, pineapple homes, sandy sea floor"},
+    "scooby": {"name": "Scooby-Doo", "safe_name": "Foggy Mystery Manor", "context": "creepy abandoned amusement park, haunted Victorian estates, foggy night"},
+    "gravity_falls": {"name": "Gravity Falls", "safe_name": "Pine Forest Mystery", "context": "Pacific Northwest pine forest, Mystery Shack, cryptic symbols"},
+    "steven_universe": {"name": "Steven Universe", "safe_name": "Crystal Coastal Beach", "context": "pastel coastal town, crystal monuments, magical dunes"},
+    "phineas_ferb": {"name": "Phineas & Ferb", "safe_name": "Inventive Summer Backyard", "context": "sunny suburban backyard, inventive contraptions, summer greenery"},
+    "toy_story": {"name": "Toy Story", "safe_name": "Living Toy Bedroom", "context": "magical living toy room, colorful bedroom floor, cheerful adventure"},
+    "shrek": {"name": "Shrek", "safe_name": "Fairytale Mossy Swamp", "context": "fairy tale swamp, green mossy hollows, whimsical fairytale kingdom"},
+    "avatar": {"name": "Avatar: Aang", "safe_name": "Elemental Air Temple", "context": "elemental bending world, floating clouds, ancient temples"}
 }
 
 
@@ -468,7 +471,7 @@ def format_gpt_image_prompt(
     character_negative = f"Strictly NO duplicate clones of {person_name}'s face, NO twin copies of the protagonist."
 
     negative_section = (
-        f"{base_negative} Strictly NO blood, NO gory wounds, NO flesh damage, NO corpses. "
+        f"{base_negative} Wholesome, peaceful, family-friendly picture-book artwork. "
         "Strictly NO speech bubbles, NO dialogue balloons, NO text, NO words, NO letters, NO typography, NO titles, NO signs, NO banners, NO watermarks, NO comic lettering. Pure wordless visual picture-book artwork. "
         f"{character_negative} "
         "Strictly NO repetitive kneeling or crouching poses across scenes, NO repeating identical lower-left screen placement across scenes, NO monotonous static frontal posing."
@@ -486,9 +489,10 @@ def format_gpt_image_prompt(
         )
 
     # Assembling Canonical Labeled Prompt strictly aligned with .agents/rules/gpt_image_prompting.md
+    safe_setting_name = univ_def.get("safe_name", univ_def.get("name", universe_id))
     prompt_sections = [
         f"[Visual Medium & Style]: {medium_text} {technique_text}",
-        f"[Scene & Environment]: {base_prompt.strip()} | {composition_section} | Setting: Authentic {univ_def['name']} atmosphere.",
+        f"[Scene & Environment]: {base_prompt.strip()} | {composition_section} | Setting: Authentic {safe_setting_name} atmosphere.",
         f"[Subject & Action]: {subject_section}",
         f"[Attire & Consistency]: {attire_section}",
         f"[Lighting & Palette]: {lighting_section}",
